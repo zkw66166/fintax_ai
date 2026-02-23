@@ -1,0 +1,10 @@
+.wrap {
+  display: flex;
+  align-items: center;
+  margin-bottom: 4px;
+}
+.text {
+  font-size: 14px;
+  font-weight: 700;
+  color: #333333;
+}

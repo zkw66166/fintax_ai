@@ -1,0 +1,52 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.egg
+dist/
+build/
+.eggs/
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment / secrets
+.env
+.env.*
+config/settings.py
+
+# Claude Code / MCP local config
+.claude/settings.local.json
+.mcp.json
+.mcp - 副本.json
+.playwright-mcp/
+
+# Node
+node_modules/
+frontend/node_modules/
+
+# Session logs (Claude Code conversation exports)
+2026-*.txt
+
+# Temp / planning files
+task_plan.md
+findings.md
+progress.md
+query_history.json
+
+# Misc
+新建文件夹/
+D:fintax_ai*/
+profile_v3_full.png

@@ -1,0 +1,84 @@
+.header {
+  grid-area: header;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  background: var(--color-header-bg);
+  border-bottom: 1px solid var(--color-border);
+  z-index: 10;
+}
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.logoIcon {
+  font-size: 24px;
+}
+.logoTitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+.logoSub {
+  font-size: 10px;
+  color: var(--color-text-secondary);
+  letter-spacing: 0.5px;
+}
+.companySelect {
+  padding: 6px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  font-size: 13px;
+  background: #fff;
+  cursor: pointer;
+}
+.rightInfo {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+.clock {
+  font-variant-numeric: tabular-nums;
+}
+.bell {
+  position: relative;
+  cursor: pointer;
+  font-size: 18px;
+}
+.badge {
+  position: absolute;
+  top: -6px;
+  right: -8px;
+  background: var(--color-error);
+  color: #fff;
+  font-size: 10px;
+  padding: 1px 4px;
+  border-radius: 8px;
+  line-height: 1;
+}
+.user {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+.userName {
+  font-size: 13px;
+  color: var(--color-text);
+  font-weight: 500;
+}
+.userRole {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+}
+.logout {
+  cursor: pointer;
+  font-size: 18px;
+  color: var(--color-text-secondary);
+}
+.logout:hover {
+  color: var(--color-error);
+}

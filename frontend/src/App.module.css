@@ -1,0 +1,16 @@
+.layout {
+  display: grid;
+  grid-template:
+    "header  header  header"  var(--header-height)
+    "sidebar main    history" 1fr
+    "footer  footer  footer"  var(--footer-height)
+    / var(--sidebar-width) 1fr var(--history-width);
+  height: 100vh;
+}
+.layout[data-page="profile"] {
+  grid-template:
+    "header  header  header"  var(--header-height)
+    "sidebar main    main"    1fr
+    "footer  footer  footer"  var(--footer-height)
+    / var(--sidebar-width) 1fr 0px;
+}

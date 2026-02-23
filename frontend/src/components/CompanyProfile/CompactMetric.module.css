@@ -1,0 +1,26 @@
+.row {
+  display: flex;
+  align-items: center;
+  padding: 3px 0;
+  gap: 6px;
+  min-height: 24px;
+}
+.label {
+  color: #666666;
+  font-size: 13px;
+  min-width: 110px;
+  flex-shrink: 0;
+}
+.value {
+  font-weight: 600;
+  font-size: 13px;
+  color: #333333;
+}
+.unit {
+  font-size: 12px;
+  color: #999999;
+}
+.suffix {
+  font-size: 12px;
+  color: #1677ff;
+}

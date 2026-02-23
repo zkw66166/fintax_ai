@@ -1,0 +1,669 @@
+Ready to code?
+
+ Here is Claude's plan:
+╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
+ fintax_ai 增值税 NL2SQL MVP 实施方案
+
+ Context
+
+ 项目处于纯文档设计阶段，无任何代码。需要根据 docs/增值税申报表 NL2SQL 数据模型方案文档v1.3--.md 和 docs/企业维度表增强
+  文档，完成三件事：
+ 1. 创建全套 SQLite 数据库（表、视图、索引、种子数据）
+ 2. 设计示例数据验证关键设计（维度拍平、修订版本、跨类型对比）
+ 3. 开发最小 MVP 脚本验证完整 NL2SQL 管线
+
+ 文件结构
+
+ D:\fintax_ai\
+ ├── database/
+ │   ├── __init__.py
+ │   ├── init_db.py              # 全部 DDL：表、视图、索引
+ │   ├── seed_data.py            # 栏次映射 + 同义词(~400条) + 字典表 + metric_registry
+ │   └── sample_data.py          # 2个纳税人 + 3个月VAT申报数据 + 修订测试数据
+ ├── modules/
+ │   ├── __init__.py
+ │   ├── schema_catalog.py       # 静态白名单：域→视图、视图→列
+ │   ├── entity_preprocessor.py  # 实体提取 + 同义词标准化（最长匹配优先）
+ │   ├── intent_parser.py        # 阶段1：LLM → 严格JSON
+ │   ├── constraint_injector.py  # 约束注入：从JSON派生allowed_views/columns
+ │   ├── sql_writer.py           # 阶段2：LLM → SQL
+ │   └── sql_auditor.py          # SQL审核器（正则硬拦截）
+ ├── config/
+ │   ├── __init__.py
+ │   └── settings.py             # LLM API配置、DB路径、常量
+ ├── prompts/
+ │   ├── stage1_system.txt       # 阶段1系统提示词（意图解析→JSON）
+ │   └── stage2_vat.txt          # 阶段2系统提示词（VAT域SQL生成）
+ ├── mvp_pipeline.py             # 主入口：完整管线编排
+ └── run_tests.py                # 测试场景 + 预期结果验证
+
+ 实施步骤
+
+ Phase 1: 数据库基础（无LLM依赖）
+
+ Step 1: config/settings.py
+ - DB_PATH = database/fintax_ai.db
+ - LLM_API_BASE / LLM_API_KEY / LLM_MODEL 通过环境变量配置（默认 DeepSeek）
+ - MAX_ROWS=1000, MAX_PERIOD_MONTHS=36
+
+ Step 2: database/init_db.py — 全部DDL，按依赖顺序创建：
+ - 字典表：dim_industry, dim_tax_authority, dim_region
+ - 主维表：taxpayer_info + 快照表 taxpayer_profile_snapshot_month, taxpayer_credit_grade_year
+ - 明细表：vat_return_general(41指标), vat_return_small(25指标) — DDL原样照搬文档
+ - ETL支撑：vat_general_column_mapping, vat_small_column_mapping
+ - NL2SQL支撑：vat_synonyms, metric_registry, metric_definition, metric_synonyms
+ - 日志表：user_query_log, unmatched_phrases, etl_error_log
+ - 视图：vw_vat_return_general, vw_vat_return_small（原样照搬文档）
+ - 其他域桩视图（空结构）：vw_EIT_return_annual, vw_EIT_return_quarter, vw_financial_statement, vw_account_balance,
+ vw_invoice, vw_enterprise_profile
+ - 全部使用 IF NOT EXISTS，幂等可重复执行
+
+ Step 3: database/seed_data.py — 结构性种子数据：
+ - 41条一般纳税人栏次映射 + 25条小规模栏次映射（原样照搬文档）
+ - ~400条同义词（原样照搬文档），补充 scope_view/taxpayer_type 字段：
+   - 一般纳税人同义词 → scope_view='vw_vat_return_general'
+   - 小规模同义词 → scope_view='vw_vat_return_small'
+   - 共用短语（城建税等）→ scope_view=NULL
+ - 字典表示例数据（5个行业、3个税务机关、3个区划）
+ - metric_registry/definition/synonyms 示例
+
+ Step 4: database/sample_data.py — 测试数据：
+
+ ┌──────────────────┬────────────────────┬──────────────┬──────────────────────┐
+ │      纳税人      │         ID         │     类型     │         行业         │
+ ├──────────────────┼────────────────────┼──────────────┼──────────────────────┤
+ │ 华兴科技有限公司 │ 91310000MA1FL8XQ30 │ 一般纳税人   │ 软件和信息技术服务业 │
+ ├──────────────────┼────────────────────┼──────────────┼──────────────────────┤
+ │ 鑫源贸易商行     │ 92440300MA5EQXL17P │ 小规模纳税人 │ 其他综合零售         │
+ └──────────────────┴────────────────────┴──────────────┴──────────────────────┘
+
+ 一般纳税人数据（华兴科技，3个月，验证 tax_payable = output_tax - input_tax + transfer_out）：
+
+ ┌───────────────┬────────────┬───────────┬──────────────┬─────────────┬───────────────────┐
+ │     月份      │ output_tax │ input_tax │ transfer_out │ tax_payable │ total_tax_payable │
+ ├───────────────┼────────────┼───────────┼──────────────┼─────────────┼───────────────────┤
+ │ 2025-01       │ 130,000    │ 95,000    │ 2,000        │ 37,000      │ 37,000            │
+ ├───────────────┼────────────┼───────────┼──────────────┼─────────────┼───────────────────┤
+ │ 2025-02       │ 150,000    │ 110,000   │ 3,000        │ 43,000      │ 43,000            │
+ ├───────────────┼────────────┼───────────┼──────────────┼─────────────┼───────────────────┤
+ │ 2025-03 rev=0 │ 180,000    │ 140,000   │ 5,000        │ 45,000      │ 45,000            │
+ ├───────────────┼────────────┼───────────┼──────────────┼─────────────┼───────────────────┤
+ │ 2025-03 rev=1 │ 185,000    │ 140,000   │ 5,000        │ 50,000      │ 50,000            │
+ └───────────────┴────────────┴───────────┴──────────────┴─────────────┴───────────────────┘
+
+ 小规模数据（鑫源贸易，3个月，验证 tax_due_current = sales_3percent × 3%）：
+
+ ┌─────────┬────────────────┬─────────────────┬───────────────┐
+ │  月份   │ sales_3percent │ tax_due_current │ tax_due_total │
+ ├─────────┼────────────────┼─────────────────┼───────────────┤
+ │ 2025-01 │ 200,000        │ 6,000           │ 6,000         │
+ ├─────────┼────────────────┼─────────────────┼───────────────┤
+ │ 2025-02 │ 250,000        │ 7,500           │ 7,500         │
+ ├─────────┼────────────────┼─────────────────┼───────────────┤
+ │ 2025-03 │ 180,000        │ 5,400           │ 5,400         │
+ └─────────┴────────────────┴─────────────────┴───────────────┘
+
+ Phase 2: 管线模块（可独立测试）
+
+ Step 5: modules/schema_catalog.py
+ - DOMAIN_VIEWS 字典：域→允许视图列表
+ - VIEW_COLUMNS 字典：视图→允许列列表（维度+指标完整列举）
+ - DENIED_KEYWORDS, DENIED_FUNCTIONS, SYSTEM_TABLES 黑名单
+
+ Step 6: modules/entity_preprocessor.py
+ - detect_entities(): 正则提取纳税人ID/名称、期次（"2025年1月"/"2025-01"等）、taxpayer_type
+ - normalize_query(): 最长匹配优先 + 不重叠替换同义词，返回 (normalized_query, hits, unmatched)
+ - 查 taxpayer_info 确定纳税人类型 → 选择 scope_view → 过滤同义词
+
+ Step 7: modules/sql_auditor.py — 纯正则实现，10条核心规则：
+ 1. 单语句（无中间分号）
+ 2. 只读（SELECT/WITH开头）
+ 3. 禁用危险关键字
+ 4. 视图白名单（FROM/JOIN对象必须在allowed_views内）
+ 5. 禁止系统表
+ 6. 禁止 SELECT *
+ 7. 必须含 taxpayer_id 过滤
+ 8. 必须含期间过滤
+ 9. 必须有 LIMIT
+ 10. 禁用危险函数
+
+ Phase 3: LLM集成
+
+ Step 8: 提示词文件
+ - prompts/stage1_system.txt: 意图解析器，输出严格JSON Schema（domain/views/metrics/filters/clarification）
+ - prompts/stage2_vat.txt: VAT域SQL生成器，基于文档6.2.5.1适配
+
+ Step 9: modules/intent_parser.py
+ - 使用 openai 库调用 DeepSeek（OpenAI兼容接口）
+ - 设置 response_format={"type":"json_object"}
+ - 构造用户消息：原始问题 + 已识别实体 + 同义词命中
+
+ Step 10: modules/constraint_injector.py
+ - 从阶段1 JSON读取 domain/views/metrics
+ - 查 schema_catalog 获取允许列
+ - 生成格式化 schema 文本块注入阶段2
+
+ Step 11: modules/sql_writer.py
+ - 加载域对应的 system prompt + 动态注入 schema 白名单
+ - 调用 LLM 生成 SQL
+
+ Phase 4: 编排与测试
+
+ Step 12: mvp_pipeline.py — 完整管线：
+ 用户问题 → 实体预处理 → 同义词标准化 → 阶段1(LLM→JSON)
+   → 需要澄清? → 返回澄清问题
+   → 约束注入 → 阶段2(LLM→SQL) → SQL审核
+   → 审核失败? → 重试一次（带错误反馈）
+   → 参数化执行 → 记录日志 → 返回结果
+ 支持命令行和交互模式。
+
+ Step 13: run_tests.py — 5个测试场景：
+
+ ┌─────┬─────────────────────────────────────────┬──────────────────────────────────────────────────┐
+ │ ID  │                  查询                   │                       预期                       │
+ ├─────┼─────────────────────────────────────────┼──────────────────────────────────────────────────┤
+ │ T1  │ "查询华兴科技2025年1月的销项税额"       │ domain=vat, view=general, output_tax=130000      │
+ ├─────┼─────────────────────────────────────────┼──────────────────────────────────────────────────┤
+ │ T2  │ "华兴科技2025年1月到3月的应纳税额趋势"  │ 3行结果: 37000→43000→50000(rev=1)                │
+ ├─────┼─────────────────────────────────────────┼──────────────────────────────────────────────────┤
+ │ T3  │ "查询鑫源贸易商行的3%征收率销售额"      │ 触发澄清（缺期间）                               │
+ ├─────┼─────────────────────────────────────────┼──────────────────────────────────────────────────┤
+ │ T4  │ "鑫源贸易商行2025年2月的3%征收率销售额" │ domain=vat, view=small, sales_3percent=250000    │
+ ├─────┼─────────────────────────────────────────┼──────────────────────────────────────────────────┤
+ │ T5  │ "华兴科技2025年3月的进项税额和销项税额" │ 多字段查询, 取rev=1: input=140000, output=185000 │
+ └─────┴─────────────────────────────────────────┴──────────────────────────────────────────────────┘
+
+ 关键设计决策
+
+ 1. LLM: 使用 openai 库 + DeepSeek API（OpenAI兼容），通过环境变量配置
+ 2. 其他域: 桩视图（空结构），确保管线域路由不崩溃，但不含实际数据
+ 3. SQL审核: MVP用正则，后续可升级到 sqlglot AST
+ 4. 同义词scope: 一般/小规模同义词分别标记 scope_view，共用短语留NULL
+ 5. 修订版本: 默认取最新（ROW_NUMBER + revision_no DESC），测试数据含 rev=0 和 rev=1
+
+ 验证方式
+
+ 1. 数据库创建后，用 sqlite3 CLI 验证：
+   - SELECT COUNT(*) FROM vat_synonyms → ~400
+   - SELECT * FROM vw_vat_return_general WHERE taxpayer_id='91310000MA1FL8XQ30' AND period_month=1 → 返回数据
+ 2. 实体预处理单元测试：输入"华兴科技2025年1月" → 提取出正确实体
+ 3. SQL审核器单元测试：构造违规SQL → 全部被拦截
+ 4. 完整管线测试：运行 run_tests.py，5个场景全部通过
+╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
+
+ Claude has written up a plan and is ready to execute. Would you like to proceed?
+
+ > 1. Yes, clear context and bypass permissions
+   2. Yes, and bypass permissions
+   3. Yes, manually approve edits
+   4. Type here to tell Claude what to change
+
+ ctrl-g to edit in Notepad · C:\Users\ciciy\.claude\plans\tidy-enchanting-moon.md
+
+ ▐▛███▜▌   Claude Code v2.1.41
+▝▜█████▛▘  Opus 4.6 (1M context) · API Usage Billing
+  ▘▘ ▝▝    D:\fintax_ai
+
+> /status
+  ⎿  Status dialog dismissed
+
+> ##你是一位系统架构师兼LLM应用工程师，并且精通nl2sql，精通财税数据分析。
+
+  ##根据"D:\fintax_ai\docs\增值税申报表 NL2SQL 数据模型方案文档v1.3--.md"描述以及claude.md完成任务：
+
+  1，按文档描述创建全套数据库；
+  2，设计示例数据验证数据库关键设计；
+  3，开发最小脚本MVP验证从用户问题经过意图识别、域判断、增值税申报表具体问题查询结果的全套逻辑。
+
+  ##文档中主要描述了增值税纳税申报表相关详细设计，其他域只提到相关视图，但没有相关详细设计，需要你适当补充已完成整
+  体流程的验证。
+
+  ##先制定方案，待确认方案后立即执行，之后遇到所有问题都需要你以“系统架构师兼LLM应用工程师，并且精通nl2sql，精通财
+  税数据分析”的角色自行深度思考后解决，无需与我交互。
+
+● Let me start by exploring the codebase and reading the design document thoroughly.
+
+● 3 Explore agents finished (ctrl+o to expand)
+   ├─ Explore project structure · 8 tool uses · 20.6k tokens
+   │  ⎿  Done
+   ├─ Read main design document · 1 tool use · 18.8k tokens
+   │  ⎿  Done
+   └─ Read supplementary design docs · 7 tool uses · 19.6k tokens
+      ⎿  Done
+
+● Good, I have a thorough understanding of the project. Let me now read the actual DDL from the design document to
+  ensure accuracy, then design the implementation plan.
+
+● Read 1 file (ctrl+o to expand)
+
+● Now let me read the rest of the document to get the SQL auditor rules and remaining sections.
+
+● Read 1 file (ctrl+o to expand)
+
+● I've now read the entire design document. Let me launch a Plan agent to design the implementation.
+
+● Plan(Design MVP implementation plan)
+  ⎿  Done (12 tool uses · 73.6k tokens · 3m 45s)
+  (ctrl+o to expand)
+
+● Excellent. I now have all the information needed. Let me write the final plan.
+
+● Updated plan
+  ⎿  /plan to preview
+
+● 方案已写好。核心思路：
+
+  - 13个文件，4个阶段递进实施
+  - 数据库完全照搬文档DDL，含全部表/视图/索引/~400条同义词
+  - 2个纳税人（一般+小规模）× 3个月测试数据，含修订版本验证
+  - 完整两阶段管线：实体预处理 → 意图解析(LLM→JSON) → 约束注入 → SQL生成(LLM) → 审核 → 执行
+  - 其他域用桩视图保证管线完整性
+  - 5个端到端测试场景覆盖单字段/趋势/澄清/小规模/多字段
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Ready to code?
+
+ Here is Claude's plan:
+╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
+ fintax_ai 增值税 NL2SQL MVP 实施方案
+
+ Context
+
+ 项目处于纯文档设计阶段，无任何代码。需要根据 docs/增值税申报表 NL2SQL 数据模型方案文档v1.3--.md 和 docs/企业维度表增强
+  文档，完成三件事：
+ 1. 创建全套 SQLite 数据库（表、视图、索引、种子数据）
+ 2. 设计示例数据验证关键设计（维度拍平、修订版本、跨类型对比）
+ 3. 开发最小 MVP 脚本验证完整 NL2SQL 管线
+
+ 文件结构
+
+ D:\fintax_ai\
+ ├── database/
+ │   ├── __init__.py
+ │   ├── init_db.py              # 全部 DDL：表、视图、索引
+ │   ├── seed_data.py            # 栏次映射 + 同义词(~400条) + 字典表 + metric_registry
+ │   └── sample_data.py          # 2个纳税人 + 3个月VAT申报数据 + 修订测试数据
+ ├── modules/
+ │   ├── __init__.py
+ │   ├── schema_catalog.py       # 静态白名单：域→视图、视图→列
+ │   ├── entity_preprocessor.py  # 实体提取 + 同义词标准化（最长匹配优先）
+ │   ├── intent_parser.py        # 阶段1：LLM → 严格JSON
+ │   ├── constraint_injector.py  # 约束注入：从JSON派生allowed_views/columns
+ │   ├── sql_writer.py           # 阶段2：LLM → SQL
+ │   └── sql_auditor.py          # SQL审核器（正则硬拦截）
+ ├── config/
+ │   ├── __init__.py
+ │   └── settings.py             # LLM API配置、DB路径、常量
+ ├── prompts/
+ │   ├── stage1_system.txt       # 阶段1系统提示词（意图解析→JSON）
+ │   └── stage2_vat.txt          # 阶段2系统提示词（VAT域SQL生成）
+ ├── mvp_pipeline.py             # 主入口：完整管线编排
+ └── run_tests.py                # 测试场景 + 预期结果验证
+
+ 实施步骤
+
+ Phase 1: 数据库基础（无LLM依赖）
+
+ Step 1: config/settings.py
+ - DB_PATH = database/fintax_ai.db
+ - LLM_API_BASE / LLM_API_KEY / LLM_MODEL 通过环境变量配置（默认 DeepSeek）
+ - MAX_ROWS=1000, MAX_PERIOD_MONTHS=36
+
+ Step 2: database/init_db.py — 全部DDL，按依赖顺序创建：
+ - 字典表：dim_industry, dim_tax_authority, dim_region
+ - 主维表：taxpayer_info + 快照表 taxpayer_profile_snapshot_month, taxpayer_credit_grade_year
+ - 明细表：vat_return_general(41指标), vat_return_small(25指标) — DDL原样照搬文档
+ - ETL支撑：vat_general_column_mapping, vat_small_column_mapping
+ - NL2SQL支撑：vat_synonyms, metric_registry, metric_definition, metric_synonyms
+ - 日志表：user_query_log, unmatched_phrases, etl_error_log
+ - 视图：vw_vat_return_general, vw_vat_return_small（原样照搬文档）
+ - 其他域桩视图（空结构）：vw_EIT_return_annual, vw_EIT_return_quarter, vw_financial_statement, vw_account_balance,
+ vw_invoice, vw_enterprise_profile
+ - 全部使用 IF NOT EXISTS，幂等可重复执行
+
+ Step 3: database/seed_data.py — 结构性种子数据：
+ - 41条一般纳税人栏次映射 + 25条小规模栏次映射（原样照搬文档）
+ - ~400条同义词（原样照搬文档），补充 scope_view/taxpayer_type 字段：
+   - 一般纳税人同义词 → scope_view='vw_vat_return_general'
+   - 小规模同义词 → scope_view='vw_vat_return_small'
+   - 共用短语（城建税等）→ scope_view=NULL
+ - 字典表示例数据（5个行业、3个税务机关、3个区划）
+ - metric_registry/definition/synonyms 示例
+
+ Step 4: database/sample_data.py — 测试数据：
+
+ ┌──────────────────┬────────────────────┬──────────────┬──────────────────────┐
+ │      纳税人      │         ID         │     类型     │         行业         │
+ ├──────────────────┼────────────────────┼──────────────┼──────────────────────┤
+ │ 华兴科技有限公司 │ 91310000MA1FL8XQ30 │ 一般纳税人   │ 软件和信息技术服务业 │
+ ├──────────────────┼────────────────────┼──────────────┼──────────────────────┤
+ │ 鑫源贸易商行     │ 92440300MA5EQXL17P │ 小规模纳税人 │ 其他综合零售         │
+ └──────────────────┴────────────────────┴──────────────┴──────────────────────┘
+
+ 一般纳税人数据（华兴科技，3个月，验证 tax_payable = output_tax - input_tax + transfer_out）：
+
+ ┌───────────────┬────────────┬───────────┬──────────────┬─────────────┬───────────────────┐
+ │     月份      │ output_tax │ input_tax │ transfer_out │ tax_payable │ total_tax_payable │
+ ├───────────────┼────────────┼───────────┼──────────────┼─────────────┼───────────────────┤
+ │ 2025-01       │ 130,000    │ 95,000    │ 2,000        │ 37,000      │ 37,000            │
+ ├───────────────┼────────────┼───────────┼──────────────┼─────────────┼───────────────────┤
+ │ 2025-02       │ 150,000    │ 110,000   │ 3,000        │ 43,000      │ 43,000            │
+ ├───────────────┼────────────┼───────────┼──────────────┼─────────────┼───────────────────┤
+ │ 2025-03 rev=0 │ 180,000    │ 140,000   │ 5,000        │ 45,000      │ 45,000            │
+ ├───────────────┼────────────┼───────────┼──────────────┼─────────────┼───────────────────┤
+ │ 2025-03 rev=1 │ 185,000    │ 140,000   │ 5,000        │ 50,000      │ 50,000            │
+ └───────────────┴────────────┴───────────┴──────────────┴─────────────┴───────────────────┘
+
+ 小规模数据（鑫源贸易，3个月，验证 tax_due_current = sales_3percent × 3%）：
+
+ ┌─────────┬────────────────┬─────────────────┬───────────────┐
+ │  月份   │ sales_3percent │ tax_due_current │ tax_due_total │
+ ├─────────┼────────────────┼─────────────────┼───────────────┤
+ │ 2025-01 │ 200,000        │ 6,000           │ 6,000         │
+ ├─────────┼────────────────┼─────────────────┼───────────────┤
+ │ 2025-02 │ 250,000        │ 7,500           │ 7,500         │
+ ├─────────┼────────────────┼─────────────────┼───────────────┤
+ │ 2025-03 │ 180,000        │ 5,400           │ 5,400         │
+ └─────────┴────────────────┴─────────────────┴───────────────┘
+
+ Phase 2: 管线模块（可独立测试）
+
+ Step 5: modules/schema_catalog.py
+ - DOMAIN_VIEWS 字典：域→允许视图列表
+ - VIEW_COLUMNS 字典：视图→允许列列表（维度+指标完整列举）
+ - DENIED_KEYWORDS, DENIED_FUNCTIONS, SYSTEM_TABLES 黑名单
+
+ Step 6: modules/entity_preprocessor.py
+ - detect_entities(): 正则提取纳税人ID/名称、期次（"2025年1月"/"2025-01"等）、taxpayer_type
+ - normalize_query(): 最长匹配优先 + 不重叠替换同义词，返回 (normalized_query, hits, unmatched)
+ - 查 taxpayer_info 确定纳税人类型 → 选择 scope_view → 过滤同义词
+
+ Step 7: modules/sql_auditor.py — 纯正则实现，10条核心规则：
+ 1. 单语句（无中间分号）
+ 2. 只读（SELECT/WITH开头）
+ 3. 禁用危险关键字
+ 4. 视图白名单（FROM/JOIN对象必须在allowed_views内）
+ 5. 禁止系统表
+ 6. 禁止 SELECT *
+ 7. 必须含 taxpayer_id 过滤
+ 8. 必须含期间过滤
+ 9. 必须有 LIMIT
+ 10. 禁用危险函数
+
+ Phase 3: LLM集成
+
+ Step 8: 提示词文件
+ - prompts/stage1_system.txt: 意图解析器，输出严格JSON Schema（domain/views/metrics/filters/clarification）
+ - prompts/stage2_vat.txt: VAT域SQL生成器，基于文档6.2.5.1适配
+
+ Step 9: modules/intent_parser.py
+ - 使用 openai 库调用 DeepSeek（OpenAI兼容接口）
+ - 设置 response_format={"type":"json_object"}
+ - 构造用户消息：原始问题 + 已识别实体 + 同义词命中
+
+ Step 10: modules/constraint_injector.py
+ - 从阶段1 JSON读取 domain/views/metrics
+ - 查 schema_catalog 获取允许列
+ - 生成格式化 schema 文本块注入阶段2
+
+ Step 11: modules/sql_writer.py
+ - 加载域对应的 system prompt + 动态注入 schema 白名单
+ - 调用 LLM 生成 SQL
+
+ Phase 4: 编排与测试
+
+ Step 12: mvp_pipeline.py — 完整管线：
+ 用户问题 → 实体预处理 → 同义词标准化 → 阶段1(LLM→JSON)
+   → 需要澄清? → 返回澄清问题
+   → 约束注入 → 阶段2(LLM→SQL) → SQL审核
+   → 审核失败? → 重试一次（带错误反馈）
+   → 参数化执行 → 记录日志 → 返回结果
+ 支持命令行和交互模式。
+
+ Step 13: run_tests.py — 5个测试场景：
+
+ ┌─────┬─────────────────────────────────────────┬──────────────────────────────────────────────────┐
+ │ ID  │                  查询                   │                       预期                       │
+ ├─────┼─────────────────────────────────────────┼──────────────────────────────────────────────────┤
+ │ T1  │ "查询华兴科技2025年1月的销项税额"       │ domain=vat, view=general, output_tax=130000      │
+ ├─────┼─────────────────────────────────────────┼──────────────────────────────────────────────────┤
+ │ T2  │ "华兴科技2025年1月到3月的应纳税额趋势"  │ 3行结果: 37000→43000→50000(rev=1)                │
+ ├─────┼─────────────────────────────────────────┼──────────────────────────────────────────────────┤
+ │ T3  │ "查询鑫源贸易商行的3%征收率销售额"      │ 触发澄清（缺期间）                               │
+ ├─────┼─────────────────────────────────────────┼──────────────────────────────────────────────────┤
+ │ T4  │ "鑫源贸易商行2025年2月的3%征收率销售额" │ domain=vat, view=small, sales_3percent=250000    │
+ ├─────┼─────────────────────────────────────────┼──────────────────────────────────────────────────┤
+ │ T5  │ "华兴科技2025年3月的进项税额和销项税额" │ 多字段查询, 取rev=1: input=140000, output=185000 │
+ └─────┴─────────────────────────────────────────┴──────────────────────────────────────────────────┘
+
+ 关键设计决策
+
+ 1. LLM: 使用 openai 库 + DeepSeek API（OpenAI兼容），通过环境变量配置
+ 2. 其他域: 桩视图（空结构），确保管线域路由不崩溃，但不含实际数据
+ 3. SQL审核: MVP用正则，后续可升级到 sqlglot AST
+ 4. 同义词scope: 一般/小规模同义词分别标记 scope_view，共用短语留NULL
+ 5. 修订版本: 默认取最新（ROW_NUMBER + revision_no DESC），测试数据含 rev=0 和 rev=1
+
+ 验证方式
+
+ 1. 数据库创建后，用 sqlite3 CLI 验证：
+   - SELECT COUNT(*) FROM vat_synonyms → ~400
+   - SELECT * FROM vw_vat_return_general WHERE taxpayer_id='91310000MA1FL8XQ30' AND period_month=1 → 返回数据
+ 2. 实体预处理单元测试：输入"华兴科技2025年1月" → 提取出正确实体
+ 3. SQL审核器单元测试：构造违规SQL → 全部被拦截
+ 4. 完整管线测试：运行 run_tests.py，5个场景全部通过
+╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
+
+ Claude has written up a plan and is ready to execute. Would you like to proceed?
+
+   1. Yes, clear context and bypass permissions
+ > 2. Yes, and bypass permissions
+   3. Yes, manually approve edits
+   4. Type here to tell Claude what to change
+   
+   
+    Here is Claude's plan:
+╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
+ fintax_ai 增值税 NL2SQL MVP 实施方案
+
+ Context
+
+ 项目处于纯文档设计阶段，无任何代码。需要根据 docs/增值税申报表 NL2SQL 数据模型方案文档v1.3--.md 和 docs/企业维度表增强
+  文档，完成三件事：
+ 1. 创建全套 SQLite 数据库（表、视图、索引、种子数据）
+ 2. 设计示例数据验证关键设计（维度拍平、修订版本、跨类型对比）
+ 3. 开发最小 MVP 脚本验证完整 NL2SQL 管线
+
+ 文件结构
+
+ D:\fintax_ai\
+ ├── database/
+ │   ├── __init__.py
+ │   ├── init_db.py              # 全部 DDL：表、视图、索引
+ │   ├── seed_data.py            # 栏次映射 + 同义词(~400条) + 字典表 + metric_registry
+ │   └── sample_data.py          # 2个纳税人 + 3个月VAT申报数据 + 修订测试数据
+ ├── modules/
+ │   ├── __init__.py
+ │   ├── schema_catalog.py       # 静态白名单：域→视图、视图→列
+ │   ├── entity_preprocessor.py  # 实体提取 + 同义词标准化（最长匹配优先）
+ │   ├── intent_parser.py        # 阶段1：LLM → 严格JSON
+ │   ├── constraint_injector.py  # 约束注入：从JSON派生allowed_views/columns
+ │   ├── sql_writer.py           # 阶段2：LLM → SQL
+ │   └── sql_auditor.py          # SQL审核器（正则硬拦截）
+ ├── config/
+ │   ├── __init__.py
+ │   └── settings.py             # LLM API配置、DB路径、常量
+ ├── prompts/
+ │   ├── stage1_system.txt       # 阶段1系统提示词（意图解析→JSON）
+ │   └── stage2_vat.txt          # 阶段2系统提示词（VAT域SQL生成）
+ ├── mvp_pipeline.py             # 主入口：完整管线编排
+ └── run_tests.py                # 测试场景 + 预期结果验证
+
+ 实施步骤
+
+ Phase 1: 数据库基础（无LLM依赖）
+
+ Step 1: config/settings.py
+ - DB_PATH = database/fintax_ai.db
+ - DeepSeek API 直连配置（硬编码，验证阶段无需环境变量）：
+ LLM_API_KEY = "sk-6ba41d1831bd4c229d93e587a02d2414"
+ LLM_API_BASE = "https://api.deepseek.com"
+ LLM_MODEL = "deepseek-chat"  # DeepSeek-V3
+ LLM_MAX_RETRIES = 3
+ LLM_TIMEOUT = 60
+ - MAX_ROWS=1000, MAX_PERIOD_MONTHS=36
+
+ Step 2: database/init_db.py — 全部DDL，按依赖顺序创建：
+ - 字典表：dim_industry, dim_tax_authority, dim_region
+ - 主维表：taxpayer_info + 快照表 taxpayer_profile_snapshot_month, taxpayer_credit_grade_year
+ - 明细表：vat_return_general(41指标), vat_return_small(25指标) — DDL原样照搬文档
+ - ETL支撑：vat_general_column_mapping, vat_small_column_mapping
+ - NL2SQL支撑：vat_synonyms, metric_registry, metric_definition, metric_synonyms
+ - 日志表：user_query_log, unmatched_phrases, etl_error_log
+ - 视图：vw_vat_return_general, vw_vat_return_small（原样照搬文档）
+ - 其他域桩视图（空结构）：vw_EIT_return_annual, vw_EIT_return_quarter, vw_financial_statement, vw_account_balance,
+ vw_invoice, vw_enterprise_profile
+ - 全部使用 IF NOT EXISTS，幂等可重复执行
+
+ Step 3: database/seed_data.py — 结构性种子数据：
+ - 41条一般纳税人栏次映射 + 25条小规模栏次映射（原样照搬文档）
+ - ~400条同义词（原样照搬文档），补充 scope_view/taxpayer_type 字段：
+   - 一般纳税人同义词 → scope_view='vw_vat_return_general'
+   - 小规模同义词 → scope_view='vw_vat_return_small'
+   - 共用短语（城建税等）→ scope_view=NULL
+ - 字典表示例数据（5个行业、3个税务机关、3个区划）
+ - metric_registry/definition/synonyms 示例
+
+ Step 4: database/sample_data.py — 测试数据：
+
+ ┌──────────────────┬────────────────────┬──────────────┬──────────────────────┐
+ │      纳税人      │         ID         │     类型     │         行业         │
+ ├──────────────────┼────────────────────┼──────────────┼──────────────────────┤
+ │ 华兴科技有限公司 │ 91310000MA1FL8XQ30 │ 一般纳税人   │ 软件和信息技术服务业 │
+ ├──────────────────┼────────────────────┼──────────────┼──────────────────────┤
+ │ 鑫源贸易商行     │ 92440300MA5EQXL17P │ 小规模纳税人 │ 其他综合零售         │
+ └──────────────────┴────────────────────┴──────────────┴──────────────────────┘
+
+ 一般纳税人数据（华兴科技，3个月，验证 tax_payable = output_tax - input_tax + transfer_out）：
+
+ ┌───────────────┬────────────┬───────────┬──────────────┬─────────────┬───────────────────┐
+ │     月份      │ output_tax │ input_tax │ transfer_out │ tax_payable │ total_tax_payable │
+ ├───────────────┼────────────┼───────────┼──────────────┼─────────────┼───────────────────┤
+ │ 2025-01       │ 130,000    │ 95,000    │ 2,000        │ 37,000      │ 37,000            │
+ ├───────────────┼────────────┼───────────┼──────────────┼─────────────┼───────────────────┤
+ │ 2025-02       │ 150,000    │ 110,000   │ 3,000        │ 43,000      │ 43,000            │
+ ├───────────────┼────────────┼───────────┼──────────────┼─────────────┼───────────────────┤
+ │ 2025-03 rev=0 │ 180,000    │ 140,000   │ 5,000        │ 45,000      │ 45,000            │
+ ├───────────────┼────────────┼───────────┼──────────────┼─────────────┼───────────────────┤
+ │ 2025-03 rev=1 │ 185,000    │ 140,000   │ 5,000        │ 50,000      │ 50,000            │
+ └───────────────┴────────────┴───────────┴──────────────┴─────────────┴───────────────────┘
+
+ 小规模数据（鑫源贸易，3个月，验证 tax_due_current = sales_3percent × 3%）：
+
+ ┌─────────┬────────────────┬─────────────────┬───────────────┐
+ │  月份   │ sales_3percent │ tax_due_current │ tax_due_total │
+ ├─────────┼────────────────┼─────────────────┼───────────────┤
+ │ 2025-01 │ 200,000        │ 6,000           │ 6,000         │
+ ├─────────┼────────────────┼─────────────────┼───────────────┤
+ │ 2025-02 │ 250,000        │ 7,500           │ 7,500         │
+ ├─────────┼────────────────┼─────────────────┼───────────────┤
+ │ 2025-03 │ 180,000        │ 5,400           │ 5,400         │
+ └─────────┴────────────────┴─────────────────┴───────────────┘
+
+ Phase 2: 管线模块（可独立测试）
+
+ Step 5: modules/schema_catalog.py
+ - DOMAIN_VIEWS 字典：域→允许视图列表
+ - VIEW_COLUMNS 字典：视图→允许列列表（维度+指标完整列举）
+ - DENIED_KEYWORDS, DENIED_FUNCTIONS, SYSTEM_TABLES 黑名单
+
+ Step 6: modules/entity_preprocessor.py
+ - detect_entities(): 正则提取纳税人ID/名称、期次（"2025年1月"/"2025-01"等）、taxpayer_type
+ - normalize_query(): 最长匹配优先 + 不重叠替换同义词，返回 (normalized_query, hits, unmatched)
+ - 查 taxpayer_info 确定纳税人类型 → 选择 scope_view → 过滤同义词
+
+ Step 7: modules/sql_auditor.py — 纯正则实现，10条核心规则：
+ 1. 单语句（无中间分号）
+ 2. 只读（SELECT/WITH开头）
+ 3. 禁用危险关键字
+ 4. 视图白名单（FROM/JOIN对象必须在allowed_views内）
+ 5. 禁止系统表
+ 6. 禁止 SELECT *
+ 7. 必须含 taxpayer_id 过滤
+ 8. 必须含期间过滤
+ 9. 必须有 LIMIT
+ 10. 禁用危险函数
+
+ Phase 3: LLM集成
+
+ Step 8: 提示词文件
+ - prompts/stage1_system.txt: 意图解析器，输出严格JSON Schema（domain/views/metrics/filters/clarification）
+ - prompts/stage2_vat.txt: VAT域SQL生成器，基于文档6.2.5.1适配
+
+ Step 9: modules/intent_parser.py
+ - 使用 openai 库调用 DeepSeek（OpenAI兼容接口）
+ - 设置 response_format={"type":"json_object"}
+ - 构造用户消息：原始问题 + 已识别实体 + 同义词命中
+
+ Step 10: modules/constraint_injector.py
+ - 从阶段1 JSON读取 domain/views/metrics
+ - 查 schema_catalog 获取允许列
+ - 生成格式化 schema 文本块注入阶段2
+
+ Step 11: modules/sql_writer.py
+ - 加载域对应的 system prompt + 动态注入 schema 白名单
+ - 调用 LLM 生成 SQL
+
+ Phase 4: 编排与测试
+
+ Step 12: mvp_pipeline.py — 完整管线：
+ 用户问题 → 实体预处理 → 同义词标准化 → 阶段1(LLM→JSON)
+   → 需要澄清? → 返回澄清问题
+   → 约束注入 → 阶段2(LLM→SQL) → SQL审核
+   → 审核失败? → 重试一次（带错误反馈）
+   → 参数化执行 → 记录日志 → 返回结果
+ 支持命令行和交互模式。
+
+ Step 13: run_tests.py — 5个测试场景：
+
+ ┌─────┬─────────────────────────────────────────┬──────────────────────────────────────────────────┐
+ │ ID  │                  查询                   │                       预期                       │
+ ├─────┼─────────────────────────────────────────┼──────────────────────────────────────────────────┤
+ │ T1  │ "查询华兴科技2025年1月的销项税额"       │ domain=vat, view=general, output_tax=130000      │
+ ├─────┼─────────────────────────────────────────┼──────────────────────────────────────────────────┤
+ │ T2  │ "华兴科技2025年1月到3月的应纳税额趋势"  │ 3行结果: 37000→43000→50000(rev=1)                │
+ ├─────┼─────────────────────────────────────────┼──────────────────────────────────────────────────┤
+ │ T3  │ "查询鑫源贸易商行的3%征收率销售额"      │ 触发澄清（缺期间）                               │
+ ├─────┼─────────────────────────────────────────┼──────────────────────────────────────────────────┤
+ │ T4  │ "鑫源贸易商行2025年2月的3%征收率销售额" │ domain=vat, view=small, sales_3percent=250000    │
+ ├─────┼─────────────────────────────────────────┼──────────────────────────────────────────────────┤
+ │ T5  │ "华兴科技2025年3月的进项税额和销项税额" │ 多字段查询, 取rev=1: input=140000, output=185000 │
+ └─────┴─────────────────────────────────────────┴──────────────────────────────────────────────────┘
+
+ 关键设计决策
+
+ 1. LLM: 使用 openai 库 + DeepSeek API（OpenAI兼容），直连硬编码配置（api_key=sk-6ba41d1831bd4c229d93e587a02d2414,
+ model=deepseek-chat, max_retries=3, timeout=60）
+ 2. 其他域: 桩视图（空结构），确保管线域路由不崩溃，但不含实际数据
+ 3. SQL审核: MVP用正则，后续可升级到 sqlglot AST
+ 4. 同义词scope: 一般/小规模同义词分别标记 scope_view，共用短语留NULL
+ 5. 修订版本: 默认取最新（ROW_NUMBER + revision_no DESC），测试数据含 rev=0 和 rev=1
+
+ 验证方式
+
+ 1. 数据库创建后，用 sqlite3 CLI 验证：
+   - SELECT COUNT(*) FROM vat_synonyms → ~400
+   - SELECT * FROM vw_vat_return_general WHERE taxpayer_id='91310000MA1FL8XQ30' AND period_month=1 → 返回数据
+ 2. 实体预处理单元测试：输入"华兴科技2025年1月" → 提取出正确实体
+ 3. SQL审核器单元测试：构造违规SQL → 全部被拦截
+ 4. 完整管线测试：运行 run_tests.py，5个场景全部通过
+╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
+
+ Claude has written up a plan and is ready to execute. Would you like to proceed?
+
+   1. Yes, clear context and bypass permissions
+ > 2. Yes, and bypass permissions
+   3. Yes, manually approve edits
+   4. Type here to tell Claude what to change
+
+ ctrl-g to edit in Notepad · C:\Users\ciciy\.claude\plans\tidy-enchanting-moon.md

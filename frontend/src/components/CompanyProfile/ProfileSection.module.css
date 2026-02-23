@@ -1,0 +1,27 @@
+.section {
+  background: #ffffff;
+}
+.header {
+  display: flex;
+  align-items: center;
+  padding: 12px 0 8px;
+  cursor: pointer;
+  user-select: none;
+  gap: 8px;
+  border-top: 1px solid #eee;
+}
+.section:first-child .header { border-top: none; }
+.header:hover .title { color: #1677ff; }
+.title {
+  font-weight: 700;
+  font-size: 16px;
+  color: #333333;
+  flex: 1;
+}
+.toggle {
+  font-size: 12px;
+  color: #999999;
+}
+.body {
+  padding: 0 0 12px;
+}
