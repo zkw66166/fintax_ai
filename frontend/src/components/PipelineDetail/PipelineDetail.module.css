@@ -1,0 +1,51 @@
+.wrap {
+  margin-top: 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 8px 12px;
+  background: #f8fafc;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+.toggle:hover {
+  background: #f1f5f9;
+}
+.arrow {
+  transition: transform 0.2s;
+  font-size: 10px;
+}
+.arrowOpen {
+  transform: rotate(90deg);
+}
+.body {
+  padding: 10px 12px;
+  font-size: 12px;
+}
+.section {
+  margin-bottom: 10px;
+}
+.section h4 {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  margin-bottom: 4px;
+}
+.pre {
+  background: #f1f5f9;
+  padding: 8px;
+  border-radius: 4px;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+  font-family: "Cascadia Code", "Fira Code", monospace;
+  font-size: 12px;
+  line-height: 1.5;
+}
