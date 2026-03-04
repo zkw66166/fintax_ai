@@ -6,58 +6,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 fintax_ai is a Chinese tax and financial consulting platform (税务智能咨询系统) that uses a two-stage NL2SQL pipeline to answer natural language queries against structured tax return and financial data stored in SQLite.
 
-**Current status**: MVP complete with VAT, EIT, balance sheet, account balance, profit statement (利润表), cash flow statement (现金流量表), invoice (发票, 进项/销项), cross-domain queries (跨域), computed financial metrics (财务指标), and enterprise profile (企业画像) domains. Additionally supports tax incentive policy queries (税收优惠政策, via local `tax_incentives.db`) and external regulation knowledge base queries (法规知识库, via Coze RAG API). Frontend: FastAPI + React SPA with SSE streaming. LLM backend is DeepSeek (`deepseek-chat`) via OpenAI-compatible API.
+**Current status**: MVP complete with VAT, EIT, balance sheet, account balance, profit statement (利润表), cash flow statement (现金流量表), invoice (发票, 进项/销项), cross-domain queries (跨域), computed financial metrics (财务指标), and enterprise profile (企业画像) domains. Additionally supports tax incentive policy queries (税收优惠政策, via local `tax_incentives.db`) and external regulation knowledge base queries (法规知识库, via Coze RAG API). Includes JWT-based user auth with 5-role hierarchy and company-scoped data access, data browser (general + raw format modes), and data quality check service. Frontend: FastAPI + React SPA with SSE streaming, 5-page layout (工作台, AI智问, 企业画像, 数据管理, 系统设置). Dashboard (工作台) is the default landing page with 6 role-adaptive widgets. LLM backend is DeepSeek (`deepseek-chat`) via OpenAI-compatible API.
 
-## Commands
+**Sample data**: 6 taxpayers total — 2 original (华兴科技/一般纳税人, 鑫源贸易/小规模纳税人) + 4 additional (创智软件/一般纳税人, 大华智能制造/小规模纳税人, TSE科技/一般纳税人, 环球机械/小规模纳税人). Original 2 cover 2024.01–2026.02; additional 4 cover 2023.01–2025.12 across all domains.
 
-```bash
-# Install dependencies
-pip install -r requirements.txt
-
-# Run the NL2SQL pipeline test suite (5 test cases, rebuilds DB from scratch)
-python run_tests.py
-
-# Run real-world scenario tests (46 test cases covering all domains)
-python test_real_scenarios.py
-
-# Run comprehensive test (57 questions, 9 domains, single+cross-domain, ~96% pass rate)
-python test_comprehensive.py
-
-# Run balance sheet unit tests
-python -m unittest tests.test_bs
-
-# Run cache validation tests
-python test_cache.py
-
-# Run performance benchmarks
-python test_performance.py
-
-# Initialize database manually (app.py does this automatically if DB missing)
-python -c "from database.init_db import init_database; init_database()"
-python -c "from database.seed_data import seed_reference_data; seed_reference_data()"
-python -c "from database.sample_data import insert_sample_data; insert_sample_data()"
-
-# Add performance indexes
-python database/add_performance_indexes.py
-
-# Calculate financial metrics v1 (17 indicators, run after data changes)
-python database/calculate_metrics.py
-
-# Calculate financial metrics v2 (25 indicators, monthly/quarterly/yearly granularity)
-python database/calculate_metrics_v2.py
-
-# Migrate enterprise profile fields to taxpayer_info
-python database/migrate_profile.py
-
-# Run FastAPI backend (launches on http://0.0.0.0:8000, serves React SPA)
-uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
-
-# Run display formatter tests
-python -m pytest tests/test_display_formatter.py -v
-
-# Run concept registry tests
-python -m pytest tests/test_concept_registry.py -v
-```
 
 ## Architecture
 
@@ -66,12 +18,74 @@ python -m pytest tests/test_concept_registry.py -v
 All stages orchestrated in `run_pipeline()`, with three execution paths preceded by an intent router:
 
 **Intent Router** (`modules/intent_router.py`, enabled via `ROUTER_ENABLED` in settings):
-- Runs before all domain detection; classifies queries into three routes:
+- Runs before all domain detection; classifies queries into four routes:
   - `financial_data` → existing NL2SQL pipeline (9 domains)
   - `tax_incentive` → local tax incentive DB search + LLM summary
   - `regulation` → external Coze RAG API
+  - `mixed_analysis` → cross-route multi-turn synthesis (NEW, see below)
 - Multi-layer keyword classification (Layer -2 through Layer 1 + default), with fuzzy taxpayer name matching
 - Hot-reloadable config from `config/tax_query_config.json`
+
+**Multi-Turn Conversation System** (two-tier architecture):
+
+**Tier 1: Financial Data Multi-Turn** (`modules/conversation_manager.py`, `modules/entity_preprocessor.py`):
+- **Trigger**: User enables multi-turn conversation + history contains ONLY `financial_data` route
+- **Behavior**: Passes conversation history to NL2SQL pipeline for entity inheritance
+  - Inherits: `taxpayer_id`, `taxpayer_name`, `taxpayer_type`, `period_year`, `period_month`, `domain_hint`
+  - Pronoun resolution: "它/那/这个" → previous taxpayer
+  - Implicit inheritance: time/company/domain from previous turn
+  - Special handling: "N月呢？" pattern (extract month, inherit year)
+- **LLM integration**:
+  - Stage 1 (Intent Parser): passes last 2 turns (4 messages) as context
+  - Stage 2 (SQL Writer): passes previous SQL as context for pattern consistency
+- **Example**:
+  ```
+  Turn 1: "华兴科技2025年1月增值税"
+    → Route: financial_data
+  Turn 2: "2月呢"
+    → Route: financial_data (inherits taxpayer_id, period_year from Turn 1)
+  Turn 3: "3月呢"
+    → Route: financial_data (continues entity inheritance)
+  ```
+
+**Tier 2: Cross-Route Mixed Analysis** (`modules/mixed_analysis_detector.py`, `modules/mixed_analysis_executor.py`):
+- **Trigger conditions** (highest priority, checked BEFORE Tier 1):
+  1. User enables multi-turn conversation in frontend (conversation_depth ≥ 2)
+  2. Conversation history contains ≥2 different route types (e.g., tax_incentive + financial_data)
+  3. Current query requires synthesis (LLM auto-detection via keywords: "综合", "匹配", "建议", "筹划", "优化", etc.)
+- **Behavior**:
+  - Extracts ALL historical Q&A from different routes (not just entities)
+  - Feeds complete context to tax planning expert LLM (NOT to NL2SQL pipeline)
+  - Generates comprehensive analysis report with risk assessment, tax planning, financial optimization
+  - **Does NOT route to original 3 branches** (financial_data/tax_incentive/regulation)
+- **Output format**: 6-section structured report (📊 Data Overview, ✅ Applicable Policies, ⚠️ Risk Alerts, 💡 Tax Planning Suggestions, 📈 Optimization Directions, 🎯 Action Plan)
+- **Safety**: If user does NOT enable multi-turn conversation, this route is completely bypassed → original 3-route logic unchanged
+- **Prompt template**: `prompts/mixed_analysis_tax_planning.txt` (20-year tax consultant persona)
+- **Example**:
+  ```
+  Turn 1: "资产税收优惠有哪些"
+    → Route: tax_incentive
+  Turn 2: "TSE科技2025年末流动资产结构"
+    → Route: financial_data
+  Turn 3: "TSE可以享受哪些税收优惠，请结合上述数据分析"
+    → Route: mixed_analysis (auto-triggered, bypasses all 3 original routes)
+    → LLM receives: Turn 1 policies + Turn 2 data → generates synthesis report
+  ```
+
+**Routing Decision Flow**:
+```
+User query arrives
+  ↓
+Is multi-turn enabled? → NO → Route to original 3 branches (financial_data/tax_incentive/regulation)
+  ↓ YES
+Check conversation history routes
+  ↓
+≥2 different routes? → NO → Tier 1: Financial Data Multi-Turn (entity inheritance)
+  ↓ YES
+LLM detects synthesis need? → NO → Tier 1: Financial Data Multi-Turn
+  ↓ YES
+Tier 2: Cross-Route Mixed Analysis (comprehensive synthesis, bypasses original 3 routes)
+```
 
 **Path Selection** (in order):
 - **Metric path** → if query matches a computed metric (e.g. 资产负债率, ROE), bypasses LLM entirely
@@ -100,7 +114,6 @@ All stages orchestrated in `run_pipeline()`, with three execution paths preceded
 - Uses `UNION ALL` with aligned output schema
 
 **Metric path** (`modules/metric_calculator.py`):
-- 8 built-in financial ratios: 资产负债率, 净资产收益率/ROE, 毛利率, 总资产周转率, 净利润率, 流动比率, 现金债务保障比率
 - Each metric defines `sources` (cross-domain data requirements), `formula` (Python expression), `label`, `unit`
 - Deterministic SQL construction → Python formula evaluation → no LLM needed
 - Synonym mapping supports aliases (e.g. "ROE" → "净资产收益率")
@@ -108,7 +121,7 @@ All stages orchestrated in `run_pipeline()`, with three execution paths preceded
 ### Concept Registry (`modules/concept_registry.py`)
 
 Deterministic cross-domain query engine via pre-registered financial concept mappings:
-- 40+ pre-defined financial concepts (采购金额, 销售金额, 存货增加额, 经营现金流出, etc.)
+- 240+ pre-defined financial concepts (采购金额, 销售金额, 存货增加额, 经营现金流出, etc.)
 - Concept types: direct values, aggregated values, computed values (e.g. 存货增加额 = end - begin)
 - Quarterly strategies: `sum_months` (aggregate 3 months) vs `quarter_end` (take quarter-end month)
 - Alias resolution with fuzzy matching of user queries to canonical concept names
@@ -116,15 +129,36 @@ Deterministic cross-domain query engine via pre-registered financial concept map
 - When ≥2 concepts detected + time granularity → deterministic SQL construction, bypasses LLM entirely
 - Falls back to LLM-based cross-domain pipeline on failure
 
+### Dashboard (工作台) (`frontend/src/components/Dashboard/`)
+
+Role-adaptive landing page with 6 core widgets (Phase 1 MVP):
+- **Widget 1: Health Scorecard** — comprehensive health score (0-100) based on 4 key metrics (资产负债率, ROE, 毛利率, 营收增长率); color-coded evaluation levels; click to navigate to profile page
+- **Widget 3: Tax Burden Summary** — VAT, EIT, total tax, tax burden rate from profile API
+- **Widget 4: Data Quality Alert** — overall pass rate, 5-category breakdown (internal_consistency, reasonableness, cross_table, period_continuity, completeness), top 3 issues, manual check trigger
+- **Widget 7: Recent Queries** — last 5 AI queries with route badges, click to re-run
+- **Widget 9: Quick Query Shortcuts** — 6 pre-configured query buttons (本月增值税, 本年净利润, 资产负债率, 现金流, 发票统计, 税收优惠); click navigates to AI智问 with pre-filled query
+- **Widget 11: Client Portfolio** (firm/group/admin only) — table view of all accessible companies with health scores and quick actions
+
+
+**Backend API**:
+- `GET /api/dashboard/summary?company_id={id}` — aggregates health score, top 3 metrics, recent activity (from `user_query_log`)
+- `DashboardService` in `api/services/dashboard_service.py` — business logic for health score calculation, metric selection, activity aggregation
+
 ### FastAPI Backend (`api/`)
 
-REST API layer replacing Gradio as the primary frontend backend:
-- `api/main.py` — FastAPI entry point with CORS, static file serving for React SPA
+REST API layer with JWT auth, 9 route modules:
+- `api/main.py` — FastAPI entry point with CORS, static file serving for React SPA; registers 9 routers (auth, users, chat, history, company, profile, data_management, data_browser, dashboard)
+- `api/auth.py` — JWT utilities: `create_access_token()`, `get_current_user()` (dependency), `require_company_access(user, company_id)` (per-request company-level authorization)
+- `api/routes/auth.py` — `POST /api/auth/login` (returns JWT + user info + company_ids), `POST /api/auth/logout`, `GET /api/auth/me`
+- `api/routes/users.py` — user CRUD: `GET/POST /api/users`, `PUT/DELETE /api/users/{id}`, `GET/PUT /api/users/{id}/companies`; role-based creation rules via `CREATABLE_ROLES`
 - `api/routes/chat.py` — `POST /api/chat` SSE streaming endpoint wrapping `run_pipeline_stream()`; passes `original_query` (without company name prefix) so tax_incentive/regulation routes search on the raw user input
-- `api/routes/history.py` — `GET/POST/DELETE /api/chat/history` JSON file-based chat history (max 100 entries)
-- `api/routes/company.py` — `GET /api/companies` taxpayer list for UI dropdown
+- `api/routes/history.py` — `GET/POST/DELETE /api/chat/history` JSON file-based chat history (max 100 entries); `POST /api/chat/history/reinvoke` re-invocation endpoint with quick/think/deep mode support; enhanced schema with `conversation_history`, `result`, `thinking_mode`, `response_mode` fields for persistent re-invocation
+- `api/routes/company.py` — `GET /api/companies` taxpayer list for UI dropdown (filtered by user's company access)
 - `api/routes/profile.py` — `GET /api/profile/{taxpayer_id}?year=2025` enterprise profile aggregation endpoint
-- `api/schemas.py` — Pydantic request/response models (`ChatRequest`, `HistoryDeleteRequest`, `CompanyItem`)
+- `api/routes/data_browser.py` — `GET /api/data-browser/tables|periods|data` data browsing with `general` (flat view) and `raw` (domain-specific structured format) modes; 10 browsable domains; 300+ column→Chinese name mappings
+- `api/routes/data_management.py` — `GET /api/data-management/stats|companies-overview`, `POST /api/data-management/quality-check` data management and quality check endpoints
+- `api/routes/dashboard.py` — `GET /api/dashboard/summary?company_id={id}` dashboard aggregation endpoint (health score, top metrics, recent activity)
+- `api/schemas.py` — Pydantic models (`ChatRequest`, `LoginRequest`, `UserCreate`, `UserUpdate`, `HistoryDeleteRequest`, `CompanyItem`)
 - Attaches `display_data` (from `build_display_data()`) to financial_data route results before SSE emission
 
 ### Display Formatter (`modules/display_formatter.py`)
@@ -154,6 +188,38 @@ Company profile aggregation service (企业画像) that queries across all finan
   - `compliance_risk` — compliance risk assessment
 - Evaluation rules for 8 metrics (debt_ratio, current_ratio, quick_ratio, gross_margin, net_margin, ROE, revenue_growth, total_tax_burden) with threshold-based level/type classification
 - Exposed via `GET /api/profile/{taxpayer_id}?year=2025`
+
+### User Authentication & Permissions (`api/auth.py`, `api/routes/auth.py`, `api/routes/users.py`)
+
+JWT-based auth with 5-role hierarchy and company-scoped data access:
+- **Roles** (descending privilege): `sys` (超级管理员) > `admin` (系统管理员) > `firm` (事务所用户) / `group` (集团企业用户) > `enterprise` (普通企业用户)
+- **JWT**: HS256, 24h expiry, stored in `localStorage`; `bcrypt` password hashing
+- **Company-scoped access**: `user_company_access` table maps `user_id → taxpayer_id`; `sys`/`admin` bypass and see all companies
+- **Role-based creation**: `CREATABLE_ROLES` dict enforces who can create which roles (e.g. `firm` can only create `firm`/`enterprise`)
+- **Default company assignment**: `ROLE_DEFAULT_COMPANIES` maps roles to default taxpayer IDs; auto-assigned on user creation
+- **Seed users** (auto-created on fresh DB init): `sys/sys123`, `admin/admin123`, `user1/123456` (firm), `user2/123456` (group), `user3/123456` (group), `user4/123456` (enterprise), `sws2/123456` (firm)
+- **Captcha verification**: Login page has a captcha modal that validates against user1's password via `POST /api/auth/captcha/verify`; captcha automatically syncs when user1's password changes; backend uses bcrypt comparison without exposing password hash; max 3 attempts per session
+
+### Data Browser (`api/routes/data_browser.py`)
+
+Interactive data browsing API with dual view modes:
+- **10 browsable domains**: profit, balance_sheet, cash_flow, vat, eit_annual, eit_quarter, account_balance, purchase_invoice, sales_invoice, financial_metrics
+- **General mode**: flat wide-table rows via views (up to 500 rows), with column metadata (`key`, `label`, `align`, `col_type`)
+- **Raw mode**: domain-specific structured format mimicking official tax return layout; handlers for 6 domains: EAV (profit/cash_flow), balance sheet (dual-column assets/liabilities), VAT (pivoted per-field rows), EIT annual/quarter
+- **Column metadata**: 300+ static Chinese name mappings (`_COLUMN_CHINESE_NAMES`); fallback to `nl2sql_semantic_mapping` then domain-specific mapping tables
+- **Auth enforcement**: all endpoints require `get_current_user` + `require_company_access`
+
+### Data Quality Service (`api/services/data_quality.py`)
+
+`DataQualityChecker` with 5 check categories:
+1. **internal_consistency** — BS equation (assets = liabilities + equity), income statement operating profit formula, cash flow subtotals, VAT tax calculation, EIT formula checks, invoice amount checks
+2. **reasonableness** — threshold-based sanity checks
+3. **cross_table** — cross-domain consistency (e.g. profit net income vs BS retained earnings change)
+4. **period_continuity** — checks for gaps in monthly data sequences
+5. **completeness** — checks for missing required fields
+- Supports dual GAAP (ASBE/ASSE for BS, CAS/SAS for income statement and cash flow) and dual taxpayer types
+- Immutable `CheckResult` and `DomainCheckResult` dataclasses
+- Rule ID prefix → domain mapping: `SB`=account_balance, `BS`=balance_sheet, `IS`=income_statement, `CF`=cash_flow, `VAT`=vat_return, `EIT`=eit_return, `INV`=invoice, `REAS`=reasonableness, `CROSS`=cross_table, `CONT`=period_continuity
 
 ### Tax Incentive Query (`modules/tax_incentive_query.py`)
 
@@ -186,6 +252,37 @@ Four-level in-memory LRU cache (enabled via `CACHE_ENABLED` in `config/settings.
 - Stage 2 SQL cache: 500 entries, 1hr TTL
 - SQL result cache: 200 entries, 30min TTL
 - Cross-domain result cache: 100 entries, 30min TTL
+
+### Persistent Query Cache (`api/services/query_cache.py`)
+
+File-based persistent cache that survives server restarts and page refreshes:
+- Stores complete pipeline results (including `display_data` and `interpretation`) as JSON files in `cache/` directory
+- Cache key: MD5 hash of `company_id|normalized_query|response_mode`
+- LRU eviction: max 1000 files (`QUERY_CACHE_MAX_FILES`), oldest deleted when exceeded
+- In-memory index for fast lookups (rebuilt on startup from disk)
+- `get_cached_query()` — lookup by company_id + query + response_mode; updates access metadata on hit
+- `save_query_cache()` — save pipeline result + route + interpretation text
+- `update_cache_interpretation()` — write interpretation text back into existing cache entry
+- `invalidate_by_company(company_id, period_year?, period_month?)` — delete cache entries by company with optional period filter
+- `delete_query_caches(cache_keys)` — batch delete by cache key (used by history deletion cascade)
+
+**Three-mode cache interaction** (via `api/routes/chat.py`):
+- **Quick mode** (`thinking_mode="quick"`): returns cached result + cached interpretation instantly (no LLM call)
+- **Think mode** (`thinking_mode="think"`): returns cached result + sets `need_reinterpret=True` (frontend triggers fresh LLM interpretation via `/api/interpret`)
+- **Deep mode** (`thinking_mode="deep"`): clears in-memory pipeline caches, bypasses persistent cache, re-runs full pipeline
+
+### History Re-Invocation (`api/routes/history.py`)
+
+Endpoint `POST /api/chat/history/reinvoke` enables re-running historical queries after page refresh or re-login:
+- Request: `{ "history_index": int, "thinking_mode": "quick|think|deep" }`
+- Enhanced history entries store: `result` (full pipeline output), `conversation_history` (multi-turn context), `company_id`, `response_mode`, `thinking_mode`, `conversation_enabled`, `conversation_depth`
+- Quick mode: instant return from persistent cache (no LLM call)
+- Think mode: cached result + fresh LLM interpretation
+- Deep mode: full pipeline re-execution with restored conversation context
+- Returns SSE stream in same format as `/api/chat`
+- JWT auth + company access check enforced
+- Frontend: HistoryPanel shows "↻" re-invoke button on hover; ChatArea handles SSE response via `handleReinvokeInternal`
+- Backward compatible: old history entries without new fields receive defaults
 
 ### Schema Catalog (`modules/schema_catalog.py`)
 
@@ -223,83 +320,10 @@ Detection in `entity_preprocessor.py` follows this priority:
 
 NL2SQL never touches detail tables directly. Views join detail tables with `taxpayer_info` and serve as the only query entry points.
 
-Key tables:
-- `vat_return_general` / `vat_return_small` — VAT return data with dimension flattening (4 rows per taxpayer per period)
-- `taxpayer_info` — master dimension table (includes `accounting_standard` field: '企业会计准则' or '小企业会计准则'; profile fields: `registered_capital`, `registered_address`, `business_scope`, `operating_status`, `collection_method`)
-- `fs_balance_sheet_item` — balance sheet EAV table (纵表), PK: `(taxpayer_id, period_year, period_month, gaap_type, item_code, revision_no)`
-- `fs_balance_sheet_item_dict` — balance sheet item dictionary (ASBE 67 items, ASSE 53 items)
-- `fs_balance_sheet_synonyms` — balance sheet NL phrase → column mapping with gaap_type scope
-- `fs_income_statement_item` — profit statement EAV table (纵表), PK: `(taxpayer_id, period_year, period_month, gaap_type, item_code, revision_no)`
-- `fs_income_statement_item_dict` — profit statement item dictionary (CAS 42 items, SAS 32 items)
-- `fs_income_statement_synonyms` — profit statement NL phrase → column mapping with gaap_type scope
-- `fs_cash_flow_item` — cash flow statement EAV table (纵表), PK: `(taxpayer_id, period_year, period_month, gaap_type, item_code, revision_no)`; `gaap_type` ('CAS'/'SAS'), `current_amount` (本期), `cumulative_amount` (本年累计)
-- `fs_cash_flow_item_dict` — cash flow item dictionary (CAS 35 items, SAS 22 items)
-- `fs_cash_flow_synonyms` — cash flow NL phrase → column mapping with gaap_type scope
-- `vat_synonyms` — NL phrase → column mapping with scope disambiguation
-- `eit_synonyms` — EIT NL phrase → column mapping
-- `account_synonyms` — account balance NL phrase → account name mapping
-- `metric_registry` / `metric_definition` / `metric_synonyms` — cross-domain metric alignment
-- `financial_metrics` — pre-computed financial/tax metrics (17 indicators), PK: `(taxpayer_id, period_year, period_month, metric_code)`
-- `financial_metrics_item` — v2 pre-computed metrics (25 indicators) with monthly/quarterly/yearly granularity, PK: `(taxpayer_id, period_year, period_month, period_type, metric_code)`; includes `evaluation_level` from dict rules
-- `financial_metrics_item_dict` — metric code registry with name, category, unit, evaluation rules (`eval_rules` JSON, `eval_ascending`)
-- `financial_metrics_synonyms` — financial metrics NL phrase → column mapping
-- `inv_spec_purchase` — 进项发票宽表, PK: `(taxpayer_id, invoice_pk, line_no)`; buyer_tax_id = 我方; 含商品明细字段
-- `inv_spec_sales` — 销项发票宽表, PK: `(taxpayer_id, invoice_pk, line_no)`; seller_tax_id = 我方; 无商品明细字段
-- `inv_column_mapping` — 发票字段映射（中文→英文）
-- `inv_synonyms` — 发票 NL phrase → column mapping with scope_view scope
-- `taxpayer_profile_snapshot_month` — monthly profile snapshots (industry, tax authority, region, credit grade, employee/revenue scale), PK: `(taxpayer_id, period_year, period_month)`
-- `taxpayer_credit_grade_year` — annual credit grade records, PK: `(taxpayer_id, year)`
 
 Composite PK pattern: `(taxpayer_id, period_year, period_month, item_type, time_range, revision_no)` (VAT); `(taxpayer_id, period_year, period_month, gaap_type, item_code, revision_no)` (balance sheet, profit statement, cash flow)
 
 Revision handling: default query strategy is "latest" via `ROW_NUMBER` window function on `revision_no`.
-
-### Database Initialization
-
-`database/init_db.py` — all DDL (tables, views, indexes)
-`database/seed_data.py` — reference/dictionary data
-`database/sample_data.py` — sample taxpayer data for testing (calls `sample_data_extended.py` at end)
-`database/sample_data_extended.py` — extended sample data covering 2024.01–2026.02 for all domains (VAT, EIT, account balance, balance sheet, profit, cash flow, invoices); uses 2% monthly growth + seasonal sin() wave
-`database/seed_fs.py` — financial statement seed data
-`database/seed_cf.py` — cash flow statement seed data (item dict + synonyms)
-`database/calculate_metrics.py` — financial metrics calculation script v1 (17 indicators from profit/BS/CF/VAT/EIT data)
-`database/calculate_metrics_v2.py` — financial metrics calculation script v2 (25 indicators, monthly/quarterly/yearly granularity, writes to `financial_metrics_item` table with evaluation levels)
-`database/migrate_profile.py` — migration script adding 5 profile columns to `taxpayer_info` + sample data
-
-## Key Design Decisions
-
-- **Storage-query decoupling**: detail tables split by taxpayer type; views unify with `taxpayer_info`
-- **Balance sheet EAV→wide pivot**: `fs_balance_sheet_item` stores data as EAV rows; `vw_balance_sheet_eas`/`vw_balance_sheet_sas` views pivot to wide tables with `{item_code}_begin`/`{item_code}_end` columns via `MAX(CASE WHEN)` aggregation
-- **Balance sheet GAAP routing**: `gaap_type` field ('ASBE'/'ASSE') routes to the correct view; inferred from `taxpayer_info.accounting_standard` or `taxpayer_type`
-- **Domain disambiguation**: balance_sheet vs account_balance resolved by temporal markers ("年初"→BS, "期初"→AB), directional markers ("借"/"贷"/"发生额"→AB), and default-to-BS for unmodified item names; profit vs EIT resolved by "年度"/"季度"→EIT, "本期金额"/"本年累计金额"→profit, "借"/"贷"→AB, default-to-profit for shared items with month
-- **Profit statement EAV storage**: `fs_income_statement_item` stores data as EAV rows (纵表) with `gaap_type` ('CAS'/'SAS'), `item_code`, `current_amount` (本期), and `cumulative_amount` (本年累计); `vw_profit_eas`/`vw_profit_sas` views pivot to wide tables via `MAX(CASE WHEN)` + `CROSS JOIN` with `time_range` dimension ('本期'/'本年累计')
-- **Profit statement GAAP routing**: `gaap_type` field ('CAS'/'SAS') routes to `vw_profit_eas` or `vw_profit_sas`; inferred from `taxpayer_info.accounting_standard` or `taxpayer_type` (一般纳税人→CAS, 小规模纳税人→SAS)
-- **Cash flow statement EAV storage**: `fs_cash_flow_item` stores data as EAV rows (纵表) with `gaap_type` ('CAS'/'SAS'), `item_code`, `current_amount` (本期), and `cumulative_amount` (本年累计); `vw_cash_flow_eas`/`vw_cash_flow_sas` views pivot to wide tables via `MAX(CASE WHEN)` + `CROSS JOIN` with `time_range` dimension ('本期'/'本年累计')
-- **Cash flow GAAP routing**: `gaap_type` field ('CAS'/'SAS') routes to `vw_cash_flow_eas` or `vw_cash_flow_sas`; `accounting_standard` from `taxpayer_info` also filtered in view WHERE clause; inferred from `taxpayer_type` (一般纳税人→CAS, 小规模纳税人→SAS)
-- **Cash flow domain detection**: distinctive keywords ("现金流量", "经营活动现金", "投资活动现金", "筹资活动现金", etc.) have no overlap with other domains, making detection straightforward; checked first in the domain detection chain
-- **Field names = business terms**: e.g. `output_tax` for 销项税额, `input_tax` for 进项税额, `cash_end` for 货币资金期末余额, `operating_revenue` for 营业收入, `net_profit` for 净利润
-- **Three-tier error tolerance**: synonym table → column mapping → LLM semantic fallback
-- **Two-stage LLM pipeline**: separates intent understanding from SQL generation for control and auditability
-- **Cross-type comparison**: uses `UNION ALL` (not JOIN) with aligned output schema
-- **Cross-domain query system**: `cross_domain_calculator.py` supports compare, ratio, reconcile, list operations across domains; splits into sub-queries, executes independently, merges results
-- **Computed metrics system**: `metric_calculator.py` provides 8 financial ratios (资产负债率, ROE, 毛利率, etc.) via deterministic SQL + Python formula evaluation, bypassing LLM entirely; extensible via metric registry
-- **Materialized financial metrics**: `financial_metrics` table stores 17 pre-computed indicators (盈利能力, 偿债能力, 营运能力, 成长能力, 现金流, 税负率类, 增值税重点指标, 所得税重点指标, 风险预警类) via `calculate_metrics.py`; queryable through `vw_financial_metrics` view as a standard NL2SQL domain; coexists with G3 metric path for real-time computation
-- **Financial metrics v2**: `financial_metrics_item` table stores 25 indicators with monthly/quarterly/yearly granularity via `calculate_metrics_v2.py`; `financial_metrics_item_dict` provides metric definitions with evaluation rules; `vw_financial_metrics` view rebuilt to source from `financial_metrics_item`
-- **Enterprise profile aggregation**: `profile_service.py` queries across all domains (BS, profit, CF, VAT, EIT, invoices, metrics) to build a comprehensive company profile JSON; threshold-based evaluation for 8 key metrics; exposed via REST API (`/api/profile/{taxpayer_id}`); `taxpayer_info` extended with 5 profile columns via `migrate_profile.py`
-- **Relative date resolution**: converts NL temporal expressions ("今年", "去年", "上个月", "上个季度") to absolute dates before pipeline processing; context-aware for VAT "本月"
-- **Scope-aware view selection**: `get_scope_view()` routes queries to the correct view based on domain + taxpayer_type + accounting_standard combination
-- **Invoice dual-table design**: separate `inv_spec_purchase` (进项) and `inv_spec_sales` (销项) wide tables; purchase table has 8 extra detail columns (goods_name, specification, unit, quantity, unit_price, tax_rate, tax_category_code, special_business_type); `invoice_format` ('数电'/'非数电') + `invoice_pk` (数电票号码 or 发票号码) as logical key; `line_no` supports multi-line items per invoice
-- **Invoice domain conflict resolution**: "发票" keyword triggers invoice domain before VAT; "进项发票"→invoice, "进项税"→VAT; direction routing: purchase/sales/both
-- **SQL audit retry**: on first audit failure, feeds error message back to SQL Writer for one retry attempt
-- **Three-way intent router**: `IntentRouter` classifies queries before domain detection; multi-layer keyword priority (financial data > knowledge base > taxpayer name > tax incentive > default regulation); fuzzy prefix matching for taxpayer names; `ROUTER_ENABLED` master switch for safe rollback
-- **Tax incentive four-tier search**: structured → entity → keyword LIKE → FTS5 fallback; LIKE is the main workhorse (FTS5 unicode61 tokenizer has limited Chinese substring matching); config-driven keyword extraction with stopword removal
-- **Coze SSE streaming**: `resp.encoding = 'utf-8'` forced before `iter_lines()` (requests defaults to ISO-8859-1 for text/event-stream); card template JSON (`card_type`) filtered from answer accumulation
-- **Generator-based streaming**: `run_pipeline_stream()` yields event dicts; text routes stream chunk-by-chunk, financial data route uses existing non-streaming `run_pipeline()`
-- **Route-aware query isolation**: `chat.py` prepends company name to query for NL2SQL taxpayer identification, but passes `original_query` (raw user input) via `run_pipeline_stream(original_query=...)` so tax_incentive/regulation routes search without company name pollution (company name fragments in AND-based keyword LIKE search cause zero results)
-- **Concept-driven cross-domain**: `concept_registry.py` maps 40+ financial concepts to deterministic SQL; when ≥2 concepts + time granularity detected, bypasses LLM entirely; falls back to LLM cross-domain on failure; supports quarterly aggregation strategies (`sum_months` vs `quarter_end`)
-- **FastAPI + React SPA**: `api/` directory provides REST API with SSE streaming (`POST /api/chat`), chat history persistence (`/api/chat/history`), company listing (`/api/companies`), and enterprise profile (`/api/profile/{taxpayer_id}`); serves React build from `frontend/dist/`; coexists with Gradio `app.py`
-- **Structured display data**: `display_formatter.py` builds Chart.js-compatible JSON for React frontend; `ColumnMapper` singleton lazy-loads Chinese column names from all synonym tables; intelligent number formatting (亿/万 scaling); domain-specific layouts (KV, table, metric card, cross-domain grouping)
-- **Four-tier caching**: intent + SQL + result + cross-domain caches; result cache (200 entries, 30min) and cross-domain cache (100 entries, 30min) added to reduce repeated SQL execution
 
 ## Configuration
 
@@ -308,24 +332,129 @@ All config in `config/settings.py`:
 - `LLM_API_KEY` / `LLM_API_BASE` / `LLM_MODEL` — DeepSeek API settings
 - `LLM_MAX_RETRIES` / `LLM_TIMEOUT` — LLM call resilience (3 retries, 60s timeout)
 - `CACHE_ENABLED` / `CACHE_MAX_SIZE_*` / `CACHE_TTL_*` — four-tier cache tuning (intent, SQL, result, cross-domain)
+- `QUERY_CACHE_ENABLED` / `QUERY_CACHE_DIR` / `QUERY_CACHE_MAX_FILES` — persistent file-based query cache (default: enabled, `cache/` dir, max 1000 files)
 - `MAX_ROWS` / `MAX_PERIOD_MONTHS` — pipeline safety limits
 - `TAX_INCENTIVES_DB_PATH` — tax incentive policy database path
 - `COZE_API_URL` / `COZE_PAT_TOKEN` / `COZE_BOT_ID` / `COZE_USER_ID` / `COZE_TIMEOUT` — Coze RAG API settings
 - `ROUTER_ENABLED` — intent router master switch (set `False` to bypass routing, revert to original behavior)
+- `JWT_SECRET_KEY` / `JWT_ALGORITHM` / `JWT_EXPIRE_MINUTES` — JWT auth settings (HS256, 24h default)
+- `CONVERSATION_ENABLED` — multi-turn conversation master switch (default: `True`)
+- `CONVERSATION_MAX_TURNS` — default conversation depth (default: 3 turns = 6 messages)
+- `CONVERSATION_MIN_TURNS` / `CONVERSATION_MAX_TURNS_LIMIT` — min/max turn limits (2-5)
+- `CONVERSATION_TOKEN_BUDGET` — reserved tokens for conversation history (default: 4000)
+- `CONVERSATION_BETA_USERS` — beta user whitelist for multi-turn feature (list of usernames)
+- `MIXED_ANALYSIS_ENABLED` — mixed analysis route master switch (default: `True`)
+- `MIXED_ANALYSIS_MIN_ROUTES` — minimum number of different routes to trigger (default: 2)
+- `MIXED_ANALYSIS_LLM_MODEL` — LLM model for synthesis (default: `deepseek-chat`)
+- `MIXED_ANALYSIS_MAX_CONTEXT_TOKENS` — max tokens for historical context (default: 8000)
+- `MIXED_ANALYSIS_STREAM_CHUNK_SIZE` — streaming chunk size (default: 50)
 
 ## Documentation
 
 Design docs in `docs/` (Chinese):
 
-- `增值税申报表 NL2SQL 数据模型方案文档v1.3--.md` — main VAT design doc with DDL, views, synonyms, pipeline design, system prompts, auditor rules
-- `企业所得税申报表数据库设计文档.md` — EIT domain design
-- `科目余额表 NL2SQL 数据模型方案文档.md` — account balance domain
-- `资产负债表 NL2SQL 数据模型方案文档z.md` — balance sheet domain (ASBE/ASSE dual-GAAP, EAV storage, wide-view pivot, domain disambiguation rules)
-- `利润表 NL2SQL 数据模型修改方案文档v2.md` — profit statement domain (ASBE/SAS dual-standard, wide-table storage, time_range disambiguation, profit vs EIT vs account_balance domain routing)
-- `现金流量表 NL2SQL 数据模型方案文档z.md` — cash flow statement domain
-- `税收优惠政策查询系统 - 技术文档v2.md` — tax incentive query system
-- `基于用户提问的智能路由技术文档.md` — intent router design
-- `外部 API 知识库查询技术文档.md` — Coze RAG API integration
-- `财务数据库查询结果处理与前端展示_技术文档参考v2.2final.md` — display formatter and frontend rendering
-- `AI智能咨询前端交互技术文档.md` — React frontend interaction design
+## Multi-Turn Conversation (多轮对话)
+
+**Feature added**: 2024 (Tier 1: Financial Data), 2026-03-02 (Tier 2: Cross-Route Mixed Analysis)
+
+The system supports a two-tier multi-turn conversation architecture:
+
+### Tier 1: Financial Data Multi-Turn (财务数据多轮查询)
+
+**Purpose**: Entity inheritance for seamless financial data queries across multiple turns.
+
+**Trigger**: User enables multi-turn conversation + history contains ONLY `financial_data` route.
+
+**Behavior**:
+- Passes conversation history to NL2SQL pipeline for entity inheritance
+- Inherits: `taxpayer_id`, `taxpayer_name`, `taxpayer_type`, `period_year`, `period_month`, `domain_hint`
+- Pronoun resolution: "它/那/这个" → previous taxpayer
+- Implicit inheritance: time/company/domain from previous turn
+- Special handling: "N月呢？" pattern (extract month, inherit year)
+
+**Example**:
+```
+Frontend: Enable "Multi-turn Conversation" - "3 turns"
+
+Turn 1: "华兴科技2025年1月增值税"
+  → Route: financial_data
+  → Returns: VAT data for Jan 2025
+
+Turn 2: "2月呢"
+  → Route: financial_data (inherits taxpayer_id="华兴科技", period_year=2025)
+  → Returns: VAT data for Feb 2025
+
+Turn 3: "利润是多少"
+  → Route: financial_data (inherits taxpayer_id, period_year, switches domain to profit)
+  → Returns: Profit data for Feb 2025
+```
+
+**Key modules**:
+- `modules/conversation_manager.py` — Context preparation, dependency detection
+- `modules/entity_preprocessor.py` — Entity inheritance logic
+
+### Tier 2: Cross-Route Mixed Analysis (跨路由混合多轮查询)
+
+**Purpose**: Comprehensive synthesis when mixing different route types (financial_data + tax_incentive + regulation).
+
+**Trigger**: User enables multi-turn conversation + history contains ≥2 different route types + current query requires synthesis.
+
+**Behavior**:
+- Extracts ALL historical Q&A from different routes (not just entities)
+- Feeds complete context to tax planning expert LLM (NOT to NL2SQL pipeline)
+- Generates comprehensive analysis report with risk assessment, tax planning, financial optimization
+- **Does NOT route to original 3 branches** (financial_data/tax_incentive/regulation)
+
+**Example**:
+```
+Frontend: Enable "Multi-turn Conversation" - "3 turns"
+
+Turn 1: "What tax incentives are available for assets?"
+  → Route: tax_incentive
+  → Returns: Accelerated depreciation, R&D expense deduction policies...
+
+Turn 2: "TSE Tech's current asset structure at end of 2025"
+  → Route: financial_data
+  → Returns: Current asset details...
+
+Turn 3: "What tax incentives can TSE enjoy? Please analyze based on the above data."
+  → Route: mixed_analysis (auto-triggered, bypasses all 3 original routes)
+  → Returns: Comprehensive analysis report (matches Turn 1 policies + Turn 2 data)
+```
+
+**Output Format**: 6-section structured report:
+- 📊 Data Overview
+- ✅ Applicable Policies
+- ⚠️ Risk Alerts
+- 💡 Tax Planning Suggestions
+- 📈 Optimization Directions
+- 🎯 Action Plan
+
+**Key modules**:
+- `modules/mixed_analysis_detector.py` — Detection logic
+- `modules/mixed_analysis_executor.py` — Execution engine
+- `prompts/mixed_analysis_tax_planning.txt` — Tax planning expert prompt
+- Tests: `test_mixed_analysis.py`, `test_mixed_analysis_e2e.py`
+
+### Routing Decision Flow
+
+```
+User query arrives
+  ↓
+Is multi-turn enabled? → NO → Route to original 3 branches (financial_data/tax_incentive/regulation)
+  ↓ YES
+Check conversation history routes
+  ↓
+≥2 different routes? → NO → Tier 1: Financial Data Multi-Turn (entity inheritance)
+  ↓ YES
+LLM detects synthesis need? → NO → Tier 1: Financial Data Multi-Turn
+  ↓ YES
+Tier 2: Cross-Route Mixed Analysis (comprehensive synthesis, bypasses original 3 routes)
+```
+
+### Safety
+
+- **Frontend-controlled**: Only triggers when user enables multi-turn conversation
+- **Fully isolated**: Tier 2 is a new 4th route, zero impact on existing 3 routes and Tier 1
+- **Auto-fallback**: If detection fails, falls back to original routing logic
 
