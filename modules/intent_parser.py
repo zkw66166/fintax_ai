@@ -1,5 +1,6 @@
 """阶段1：LLM意图解析 → 严格JSON（域感知）"""
 import json
+from typing import List, Dict, Optional
 from openai import OpenAI
 from pathlib import Path
 import sys
@@ -18,8 +19,20 @@ def _get_client():
     return _client
 
 
-def parse_intent(user_query: str, entities: dict, synonym_hits: list) -> dict:
-    """调用LLM阶段1，返回意图JSON"""
+def parse_intent(user_query: str, entities: dict, synonym_hits: list, conversation_history: Optional[List[Dict]] = None) -> dict:
+    """调用LLM阶段1，返回意图JSON
+
+    Args:
+        user_query: 用户查询
+        entities: 实体字典
+        synonym_hits: 同义词命中列表
+        conversation_history: 对话历史（可选）
+
+    Returns:
+        意图JSON字典
+    """
+    from typing import List, Dict, Optional
+
     system_prompt = (PROMPTS_DIR / "stage1_system.txt").read_text(encoding='utf-8')
 
     # 构造用户消息
@@ -60,17 +73,35 @@ def parse_intent(user_query: str, entities: dict, synonym_hits: list) -> dict:
     client = _get_client()
 
     try:
+        # 构建消息列表
+        messages = [{"role": "system", "content": system_prompt}]
+
+        # 添加最近2轮对话作为上下文（如果有）
+        if conversation_history:
+            recent_turns = conversation_history[-(2*2):]  # 最近2轮（4条消息）
+            for msg in recent_turns:
+                messages.append({
+                    "role": msg["role"],
+                    "content": msg["content"]
+                })
+
+        # 添加当前用户消息
+        messages.append({"role": "user", "content": user_msg})
+
         resp = client.chat.completions.create(
             model=LLM_MODEL,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_msg},
-            ],
+            messages=messages,  # 多轮上下文
             response_format={"type": "json_object"},
             temperature=0.1,
             max_tokens=2000,
+            stream=True,
         )
-        content = resp.choices[0].message.content.strip()
+        content = ""
+        for chunk in resp:
+            delta = chunk.choices[0].delta
+            if delta and delta.content:
+                content += delta.content
+        content = content.strip()
         intent = json.loads(content)
 
         # 基本校验 — 域默认值

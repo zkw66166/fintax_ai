@@ -10,8 +10,14 @@
 【必备过滤】SQL 必须包含：
 1. taxpayer_id = :taxpayer_id
 2. 期间过滤（按用户问题选择）：
-   - 月：period_year = :year AND period_month = :month
-   - 范围（月）：(period_year*100+period_month) BETWEEN :start_yyyymm AND :end_yyyymm
+   - 单月：period_year = :year AND period_month = :month
+   - 月份范围：(period_year*100+period_month) BETWEEN :start_yyyymm AND :end_yyyymm
+   - 枚举月份（如"12月和3月"）：period_month IN (12, 3) 或 ((period_year=2024 AND period_month=12) OR (period_year=2025 AND period_month=3))
+   - 跨年枚举月份：必须使用 OR 连接，并用括号包裹整个条件，例如：
+     WHERE taxpayer_id = :taxpayer_id
+       AND ((period_year=2024 AND period_month=12) OR (period_year=2025 AND period_month=3))
+   注意：当实体信息包含 period_months=[12, 3] 时，表示只查询这些特定月份，不是范围查询
+   ⚠️ 重要：OR条件必须用括号包裹，避免与taxpayer_id条件混淆
 
 【修订版本处理】
 若需取最新修订版本，使用窗口函数：
@@ -40,12 +46,129 @@ SELECT <columns> FROM latest WHERE rn = 1
 - assets_end = liabilities_end + equity_end
 - assets_begin = liabilities_begin + equity_begin
 
+【核心原则：始终返回明细行】
+- 禁止只返回单个聚合数字。任何查询都必须包含维度列（期间等），让用户看到数据来源。
+- 即使用户问"总和"/"合计"，也必须先列出各项目明细行，再用 UNION ALL 追加合计行。
+- 跨期比较时，展示各期原始值 + 变动额，不能只返回一个差值。
+
+【占比/比例计算模式】★ 当用户问"占比"/"比例"/"比重"/"百分比"时必须使用此模式 ★
+当用户问某项目占总计的比例时（如"应收账款占流动资产的比例"），
+使用 ROUND(component * 100.0 / NULLIF(total, 0), 2) AS "占比(%)" 计算百分比。
+必须同时返回原始值列和占比列，让用户看到数据来源。
+季度末数据用 period_month IN (3, 6, 9, 12) 过滤。
+示例SQL（各季度末应收账款占流动资产比例）：
+WITH latest AS (
+  SELECT taxpayer_id, taxpayer_name, period_year, period_month, revision_no,
+         accounts_receivable_end, current_assets_end,
+    ROW_NUMBER() OVER (PARTITION BY taxpayer_id, period_year, period_month ORDER BY revision_no DESC) AS rn
+  FROM vw_balance_sheet_eas
+  WHERE taxpayer_id = :taxpayer_id AND period_year = :year AND period_month IN (3, 6, 9, 12)
+)
+SELECT period_year, period_month,
+       accounts_receivable_end AS "应收账款",
+       current_assets_end AS "流动资产",
+       ROUND(accounts_receivable_end * 100.0 / NULLIF(current_assets_end, 0), 2) AS "占比(%)"
+FROM latest WHERE rn = 1
+ORDER BY period_year, period_month
+LIMIT {max_rows}
+
+要点：
+- 用 NULLIF(total, 0) 防止除零
+- 占比列别名必须包含"占比(%)"
+- 同时保留原始值列（分子和分母）
+
+【结构分析/构成分析模式（UNPIVOT）】★ 当用户问"结构"/"构成"/"组成"/"各项占比"时必须使用此模式 ★
+当用户问某类资产/负债的结构组成时（如"流动资产的结构"/"流动资产构成"），
+需将宽表的多个组件列拆为行，每行一个组件，包含金额和占比。
+使用 UNION ALL 将各组件列拆为 (项目名称, 金额, "占比(%)") 行。
+
+⚠️ 重要：构成分析查询必须返回以下列：
+- period_year, period_month（如果有多个期间）
+- "项目名称"（字符串列，如"货币资金"、"应收账款"等）
+- "金额"（数值列）
+- "占比(%)"（百分比列）
+
+示例SQL（单期间流动资产结构分析）：
+WITH raw AS (
+  SELECT *, ROW_NUMBER() OVER (PARTITION BY taxpayer_id, period_year, period_month ORDER BY revision_no DESC) AS rn
+  FROM vw_balance_sheet_eas
+  WHERE taxpayer_id = :taxpayer_id AND period_year = :year AND period_month = :month
+),
+base AS (SELECT * FROM raw WHERE rn = 1),
+items AS (
+  SELECT '货币资金' AS "项目名称", cash_end AS "金额",
+         ROUND(cash_end * 100.0 / NULLIF(current_assets_end, 0), 2) AS "占比(%)" FROM base
+  UNION ALL
+  SELECT '应收账款', accounts_receivable_end,
+         ROUND(accounts_receivable_end * 100.0 / NULLIF(current_assets_end, 0), 2) FROM base
+  UNION ALL
+  SELECT '预付款项', prepayments_end,
+         ROUND(prepayments_end * 100.0 / NULLIF(current_assets_end, 0), 2) FROM base
+  UNION ALL
+  SELECT '其他应收款', other_receivables_end,
+         ROUND(other_receivables_end * 100.0 / NULLIF(current_assets_end, 0), 2) FROM base
+  UNION ALL
+  SELECT '存货', inventory_end,
+         ROUND(inventory_end * 100.0 / NULLIF(current_assets_end, 0), 2) FROM base
+  UNION ALL
+  SELECT '其他流动资产', other_current_assets_end,
+         ROUND(other_current_assets_end * 100.0 / NULLIF(current_assets_end, 0), 2) FROM base
+)
+SELECT "项目名称", "金额", "占比(%)" FROM items WHERE "金额" > 0
+ORDER BY "金额" DESC
+LIMIT {max_rows}
+
+示例SQL（多期间流动资产结构分析，如"2024年12月与2025年3月"）：
+WITH latest AS (
+  SELECT taxpayer_id, period_year, period_month, revision_no,
+         current_assets_end, cash_end, accounts_receivable_end, prepayments_end,
+         other_receivables_end, inventory_end, other_current_assets_end,
+         ROW_NUMBER() OVER (PARTITION BY taxpayer_id, period_year, period_month ORDER BY revision_no DESC) AS rn
+  FROM vw_balance_sheet_eas
+  WHERE taxpayer_id = :taxpayer_id
+    AND ((period_year=2024 AND period_month=12) OR (period_year=2025 AND period_month=3))
+),
+base AS (SELECT * FROM latest WHERE rn = 1),
+items AS (
+  SELECT period_year, period_month, '货币资金' AS "项目名称", cash_end AS "金额",
+         ROUND(cash_end * 100.0 / NULLIF(current_assets_end, 0), 2) AS "占比(%)" FROM base
+  UNION ALL
+  SELECT period_year, period_month, '应收账款', accounts_receivable_end,
+         ROUND(accounts_receivable_end * 100.0 / NULLIF(current_assets_end, 0), 2) FROM base
+  UNION ALL
+  SELECT period_year, period_month, '预付款项', prepayments_end,
+         ROUND(prepayments_end * 100.0 / NULLIF(current_assets_end, 0), 2) FROM base
+  UNION ALL
+  SELECT period_year, period_month, '其他应收款', other_receivables_end,
+         ROUND(other_receivables_end * 100.0 / NULLIF(current_assets_end, 0), 2) FROM base
+  UNION ALL
+  SELECT period_year, period_month, '存货', inventory_end,
+         ROUND(inventory_end * 100.0 / NULLIF(current_assets_end, 0), 2) FROM base
+  UNION ALL
+  SELECT period_year, period_month, '其他流动资产', other_current_assets_end,
+         ROUND(other_current_assets_end * 100.0 / NULLIF(current_assets_end, 0), 2) FROM base
+)
+SELECT period_year, period_month, "项目名称", "金额", "占比(%)" FROM items WHERE "金额" > 0
+ORDER BY period_year, period_month, "金额" DESC
+LIMIT {max_rows}
+
+要点：
+- CTE中 SELECT * FROM raw / SELECT * FROM base 是允许的（raw和base是CTE名称）
+- 每个 UNION ALL SELECT 对应一个组件，用字符串字面量标注项目名称
+- WHERE "金额" > 0 过滤零值组件
+- 按金额降序排列
+- 同样适用于：总资产结构（拆分流动资产合计+非流动资产合计）、负债结构、所有者权益结构等
+- 总资产结构：拆分 current_assets_end（流动资产）和 non_current_assets_end（非流动资产）等大类
+- 负债结构：拆分 short_term_loans_end, accounts_payable_end, employee_benefits_payable_end 等
+
 【输出要求】
 - 只输出SQL，不要解释
 - 严格禁止 SELECT *（包括CTE/子查询中也不允许）
 - CTE中必须明确列出维度列 + 需要的指标列
 - 维度列：taxpayer_id, taxpayer_name, accounting_standard, period_year, period_month, revision_no
 - 从【允许的列】中选择需要的列，从【用户意图JSON】的select.metrics中确定具体指标
+- 汇总类问题：先列明细行，再 UNION ALL 合计行（禁止只返回合计数字）。注意：SQLite的UNION ALL不支持ORDER BY中使用CASE表达式，必须用子查询包裹并添加sort_key列排序
+- 比较类问题：展示各期原始值 + 变动额（禁止只返回差值）
 - 明细/列表默认 LIMIT {max_rows}
 - 趋势类按 period_year, period_month 排序
 - 用户问"XX余额"默认取期末余额（_end列）

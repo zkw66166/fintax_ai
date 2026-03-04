@@ -2,9 +2,13 @@
 import re
 import sqlite3
 from datetime import date, timedelta
+from typing import List, Dict, Optional
 
 # 模块级缓存：纳税人列表（启动时加载一次）
 _taxpayer_cache = None
+
+# 模块级缓存：同义词表（按 (domain, scope_view, taxpayer_type) 缓存）
+_synonym_cache = {}
 
 # 科目余额域关键词（最高优先级 — 仅科目余额表独有）
 _ACCOUNT_BALANCE_KEYWORDS_HIGH = [
@@ -62,6 +66,7 @@ _BALANCE_SHEET_KEYWORDS_MED = [
     '负债和所有者权益', '流动资产合计', '非流动资产合计',
     '流动负债合计', '非流动负债合计', '负债及权益总计',
     '总资产', '总负债',
+    '流动资产', '非流动资产', '流动负债', '非流动负债',
 ]
 # 资产负债表特有项目（不与科目余额表/EIT重叠的项目）
 # 此处仅保留主表独有的汇总项或新准则下不常见于科目余额表的项目，
@@ -183,14 +188,10 @@ _VAT_KEYWORDS = [
     '一般计税方法应纳税额', '应税销售额', '免税销售额', '出口销售额', '适用税率',
     '本期实际抵扣税额', '上期留抵税额', '本期留抵税额', '期末留抵税额',
     '按适用税率计税销售额', '按简易办法计税销售额', '免抵退销售额', '出口免抵退销售额',
-    '进项税额抵扣', '进项转出', '进项税票', '增值税专用发票', '增值税普通发票',
-    '发票抵扣', '勾选确认', '申报抵扣', '进项税额结构明细', '增值税减免税明细',
-    '加计抵减', '加计扣除', '留抵退税', '增量留抵', '存量留抵',
-    '增值税纳税申报表', '增值税及附加税费申报表', '附列资料', '附表一', '附表二', '附表三', '附表四',
-    '减免税明细表', '税控设备', '税控盘', '税务UKey',
-    '小微企业免税销售额', '未达起征点销售额', '其他免税销售额', '本期应纳税额', '本期应纳税额减征额',
+    '进项税额抵扣', '进项转出', '进项税额结构明细', '增值税减免税明细',
+    '增值税纳税申报表', '增值税及附加税费申报表', '增值税附列资料', '增值税附表一', '增值税附表二', '增值税附表三', '增值税附表四',
+    '增值税减免税明细表', '其他免税销售额', '本期应纳税额', '本期应纳税额减征额',
     '进项税额结构明细表', '本期进项税额明细', '增值税减免税申报明细表',
-    '加计抵减政策', '留抵退税政策', '即征即退政策', '先征后退', '出口退税',
 ]
 
 # 发票域关键词（在VAT之前检测，含"发票"字样优先走invoice域）
@@ -301,7 +302,7 @@ _FINANCIAL_METRICS_ITEMS_UNIQUE = [
     '增值税税负率', '增值税税负', '企业所得税税负率', '所得税税负率',
     '综合税负率', '综合税负', '销项进项配比率', '进项税额转出占比',
     '应税所得率', '零申报率', '现金债务保障比率',
-    '净利润增长率', '利润增长率',
+    '净利润增长率', '利润增长率', '利润率',
     '管理费用率', '管理费用占比',
     '销售费用率', '销售费用占比',
     '应收款周转天数', '应收账款周转天数', '回款天数',
@@ -375,6 +376,31 @@ def _resolve_relative_dates(query: str, today: date = None) -> str:
     query = re.sub(r'去年上半年|上年上半年', f'{cur_year - 1}年1月到6月', query)
     # "去年下半年" → "(YYYY-1)年7月到12月"
     query = re.sub(r'去年下半年|上年下半年', f'{cur_year - 1}年7月到12月', query)
+
+    # 独立"上半年"/"下半年"（无"今年/去年"前缀）→ 默认当前年
+    query = re.sub(r'(?<!今年)(?<!本年)(?<!去年)(?<!上年)(?<!前年)(?<!\d年)上半年',
+                   f'{cur_year}年1月到6月', query)
+    query = re.sub(r'(?<!今年)(?<!本年)(?<!去年)(?<!上年)(?<!前年)(?<!\d年)下半年',
+                   f'{cur_year}年7月到12月', query)
+
+    # "X季度各月"/"X季度每月" → "N月到M月各月"（展开为月份范围，保留"各月"粒度标记）
+    _q_month_map = {'一': 1, '二': 2, '三': 3, '四': 4,
+                    '1': 1, '2': 2, '3': 3, '4': 4}
+
+    def _expand_quarter_months(q_char):
+        q = _q_month_map.get(q_char)
+        if q:
+            return f'{(q-1)*3+1}月到{q*3}月各月'
+        return None
+
+    # "YYYY年X季度各月" — 带年份前缀的直接展开
+    query = re.sub(r'(\d{4})\s*年\s*第?([一二三四1-4])季度\s*(?:各月|每月)',
+                   lambda m: f'{m.group(1)}年{_expand_quarter_months(m.group(2))}',
+                   query)
+    # 不带年份前缀的独立"X季度各月" — 加当前年份
+    query = re.sub(r'(?<!\d年)(?<!\d年 )第?([一二三四1-4])季度\s*(?:各月|每月)',
+                   lambda m: f'{cur_year}年{_expand_quarter_months(m.group(1))}',
+                   query)
 
     # "今年前N个月" → "YYYY年1月到N月"
     def _replace_first_n_months(m):
@@ -485,6 +511,16 @@ def _resolve_relative_dates(query: str, today: date = None) -> str:
     if not has_vat_context:
         query = re.sub(r'(?:本月|这个月)', f'{cur_year}年{cur_month}月', query)
 
+    # "最新" → 上个月（假设当前月数据尚未完整，取上个月作为最新完整数据）
+    # 对于年度数据，"最新"会被解析为去年
+    last_year = cur_year - 1
+    last_month_year, last_month = (cur_year, cur_month - 1) if cur_month > 1 else (cur_year - 1, 12)
+    # 如果查询包含"年度"/"年报"等年度关键词，"最新"→去年；否则→上个月
+    if any(kw in query for kw in ['年度', '年报', '全年', '年末', '年初']):
+        query = re.sub(r'最新', f'{last_year}年', query)
+    else:
+        query = re.sub(r'最新', f'{last_month_year}年{last_month}月', query)
+
     # --- 2位年份范围 → 4位年份 ---
 
     # "23-25年" / "23至25年" / "23到25年" → "2023年到2025年"
@@ -505,11 +541,21 @@ def _resolve_relative_dates(query: str, today: date = None) -> str:
     query = re.sub(r'今年\s*(?=Q|第?\s*[一二三四1-4]\s*季度)', f'{cur_year}年', query)
     query = re.sub(r'去年\s*(?=Q|第?\s*[一二三四1-4]\s*季度)', f'{cur_year - 1}年', query)
 
+    # "YYYY一季度" / "YYYY年一季度" 等（缺少"第"字的格式）→ "YYYY年第X季度"
+    # 注意：必须在其他季度处理之前，补全"第"字
+    # 匹配 "YYYY一季度" 或 "YYYY年一季度"（都缺少"第"字）
+    query = re.sub(r'(\d{4})\s*年?\s*([一二三四1-4])\s*季度', r'\1年第\2季度', query)
+
     # "今年N-M月" / "今年N月到M月" → "YYYY年N月到M月"
     query = re.sub(r'(?:今年|本年)(\d{1,2})\s*[-到至]\s*(\d{1,2})\s*月',
                    lambda m: f'{cur_year}年{m.group(1)}月到{m.group(2)}月', query)
     query = re.sub(r'(?:去年|上年)(\d{1,2})\s*[-到至]\s*(\d{1,2})\s*月',
                    lambda m: f'{cur_year - 1}年{m.group(1)}月到{m.group(2)}月', query)
+
+    # "YYYY年N-M月" → "YYYY年N月到M月" (短格式月份范围，如"2025年1-12月")
+    # 注意：必须在"今年N月"之前，且仅当首数字后无"月"时触发
+    query = re.sub(r'(\d{4})\s*年\s*(\d{1,2})\s*[-到至]\s*(\d{1,2})\s*月',
+                   lambda m: f'{m.group(1)}年{m.group(2)}月到{m.group(3)}月', query)
 
     # "今年N月" → "YYYY年N月"
     query = re.sub(r'(?:今年|本年)(\d{1,2})月', lambda m: f'{cur_year}年{m.group(1)}月', query)
@@ -637,12 +683,14 @@ def detect_entities(user_query: str, db_conn: sqlite3.Connection) -> dict:
         if has_shared_item:
             # 含"借"、"贷"或"发生额" → 科目余额表
             has_ab_signal = any(kw in user_query for kw in ['借方', '贷方', '发生额', '借', '贷', '账上', '账面', '账载'])
+            # 含"科目"修饰词（如"应收账款科目"、"科目编号1开头"）→ 科目余额表
+            has_ab_account = re.search(r'科目(?!余额)', user_query) is not None
             # 含"年初" → 资产负债表
             has_bs_time = any(kw in user_query for kw in _BS_TIME_MARKERS)
             # 含"期初" → 科目余额表
             has_ab_time = any(kw in user_query for kw in _AB_TIME_MARKERS)
 
-            if has_ab_signal:
+            if has_ab_signal or has_ab_account:
                 result['domain_hint'] = 'account_balance'
             elif has_bs_time:
                 result['domain_hint'] = 'balance_sheet'
@@ -749,7 +797,9 @@ def detect_entities(user_query: str, db_conn: sqlite3.Connection) -> dict:
         # 检查是否同时包含资产负债表关键词（含共有项目如"存货"）
         # 注意：account_balance 和 balance_sheet 共享大量项目，已在0e步骤消歧，
         # 不应因共有项目触发跨域升级
-        if detected not in ('balance_sheet', 'account_balance'):
+        # 注意：financial_metrics 域的指标名（如"资产负债率"）包含"资产负债"子串，
+        # 不应因此触发 balance_sheet 跨域升级
+        if detected not in ('balance_sheet', 'account_balance', 'financial_metrics'):
             has_bs = (
                 any(kw in user_query for kw in _BALANCE_SHEET_KEYWORDS_HIGH) or
                 any(kw in user_query for kw in _BALANCE_SHEET_KEYWORDS_MED) or
@@ -838,7 +888,7 @@ def detect_entities(user_query: str, db_conn: sqlite3.Connection) -> dict:
             result['period_end_month'] = q * 3
     # "Q1 2025" / "2025Q1" 格式
     if not result['period_quarter']:
-        m_q2 = re.search(r'(\d{4})\s*[Qq]\s*([1-4])', resolved_query)
+        m_q2 = re.search(r'(\d{4})年?\s*[Qq]\s*([1-4])', resolved_query)
         if m_q2:
             result['period_year'] = int(m_q2.group(1))
             result['period_quarter'] = int(m_q2.group(2))
@@ -848,6 +898,47 @@ def detect_entities(user_query: str, db_conn: sqlite3.Connection) -> dict:
                 q = result['period_quarter']
                 result['period_month'] = (q - 1) * 3 + 1
                 result['period_end_month'] = q * 3
+
+    # 2a1. "季度末"特殊处理：只取季度最后一个月，不展开为整个季度
+    # 必须在季度展开之前检测，避免被覆盖
+    if result['period_quarter'] and '季度末' in resolved_query:
+        # "季度末"只取该季度的最后一个月
+        q = result['period_quarter']
+        result['period_month'] = q * 3  # 季度末月份
+        result['period_end_month'] = None  # 清除范围，表示单月查询
+        result['quarter_end_mode'] = True  # 标记为季度末模式
+
+    # 2a2. 多季度比较: "2024年4季度与2025一季度" / "2024Q4与2025Q1"
+    # 注意：必须在单季度检测之后，避免覆盖已提取的第一个季度
+    if result['period_quarter']:
+        # 已提取第一个季度，检查是否有第二个季度
+        # 匹配模式: [与和跟及、] + YYYY年?第?[一二三四1-4]季度
+        m_second_q = re.search(
+            r'[与和跟及、]\s*(\d{4})\s*年?\s*第?\s*([一二三四1-4])\s*季度',
+            resolved_query
+        )
+        if m_second_q:
+            second_year = int(m_second_q.group(1))
+            second_quarter = q_map.get(m_second_q.group(2))
+            # 记录为跨期间查询
+            result['period_end_year'] = second_year
+            result['period_end_quarter'] = second_quarter
+
+            # "季度末"模式：只取两个季度的最后一个月
+            if result.get('quarter_end_mode'):
+                # 第一个季度末月份已设置，第二个季度末月份
+                result['period_end_month'] = second_quarter * 3
+                # 构建枚举月份列表：[第一季度末月, 第二季度末月]
+                first_month = result['period_month']
+                second_month = result['period_end_month']
+                result['period_months'] = [first_month, second_month]
+            elif result['domain_hint'] != 'eit':
+                # 非"季度末"模式：展开为月份范围
+                # 第一个季度的结束月
+                result['period_end_month'] = result['period_quarter'] * 3
+                # 第二个季度的结束月（跨年情况）
+                # 注意：这里不修改period_end_month，因为跨年跨季度需要特殊处理
+                # 让后续管线识别为多期间查询
 
     # 2b. "各季度"/"每个季度"/"每季度"/"所有季度"/"每季" → 全部4个季度
     if not result['period_quarter']:
@@ -892,16 +983,17 @@ def detect_entities(user_query: str, db_conn: sqlite3.Connection) -> dict:
             result['period_year'] = int(m.group(1))
             result['period_month'] = int(m.group(2))
 
-    # 范围: "2025年1月到3月"
-    m_range = re.search(r'(\d{4})\s*年\s*(\d{1,2})\s*月\s*[到至-]\s*(\d{1,2})\s*月', resolved_query)
+    # 范围: "2025年1月到3月" / "2025年1月与3月"
+    m_range = re.search(r'(\d{4})\s*年\s*(\d{1,2})\s*月\s*[到至与和跟及\-]\s*(\d{1,2})\s*月', resolved_query)
     if m_range:
         result['period_year'] = int(m_range.group(1))
         result['period_month'] = int(m_range.group(2))
         result['period_end_month'] = int(m_range.group(3))
 
-    # 跨年范围: "2024年1月到2025年3月"
+    # 跨年比较/范围: "2023年12月与2024年12月" / "2024年1月到2025年3月"
+    # 支持分隔符：到、至、-、与、和、跟、及
     m_cross_year = re.search(
-        r'(\d{4})\s*年\s*(\d{1,2})\s*月\s*[到至-]\s*(\d{4})\s*年\s*(\d{1,2})\s*月',
+        r'(\d{4})\s*年\s*(\d{1,2})\s*月\s*[到至与和跟及\-]\s*(\d{4})\s*年\s*(\d{1,2})\s*月',
         resolved_query
     )
     if m_cross_year:
@@ -918,13 +1010,20 @@ def detect_entities(user_query: str, db_conn: sqlite3.Connection) -> dict:
             result['period_end_year'] = end_y
             result['period_end_month'] = end_m
 
-    # 多年范围: "2024年到2026年"
-    m_year_range = re.search(r'(\d{4})\s*年\s*[到至-]\s*(\d{4})\s*年', resolved_query)
+    # 多年范围: "2024年到2026年" / "2024年与2026年" / "2024与2025年末"
+    m_year_range = re.search(r'(\d{4})\s*年?\s*[到至与和跟及\-]\s*(\d{4})\s*年', resolved_query)
     if m_year_range and not result.get('period_end_year'):
         start_y = int(m_year_range.group(1))
         end_y = int(m_year_range.group(2))
         result['period_year'] = start_y
         result['period_years'] = list(range(start_y, end_y + 1))
+
+    # "年末" → period_month=12, "年初" → period_month=1（仅在无月份时生效）
+    if not result.get('period_month'):
+        if '年末' in resolved_query:
+            result['period_month'] = 12
+        elif '年初' in resolved_query and result.get('domain_hint') != 'account_balance':
+            result['period_month'] = 1
 
     # 枚举月份: "2025年1月、2月、3月" 或 "1月、2月、3月"
     m_enum = re.search(r'(\d{4})\s*年\s*(\d{1,2})\s*月\s*[、,]\s*(\d{1,2})\s*月(?:\s*[、,]\s*(\d{1,2})\s*月)?', resolved_query)
@@ -1019,12 +1118,16 @@ def detect_entities(user_query: str, db_conn: sqlite3.Connection) -> dict:
     return result
 
 
-def normalize_query(user_query: str, scope_view: str, taxpayer_type: str,
-                    db_conn: sqlite3.Connection, domain: str = None) -> tuple:
-    """同义词替换：最长匹配优先 + 不重叠替换（域感知）"""
+# ── 同义词缓存加载 ──────────────────────────────────────────
+
+def _load_synonyms(db_conn, domain, scope_view, taxpayer_type):
+    """从缓存或 DB 加载同义词行。返回 [(phrase, column_name, priority), ...]"""
+    cache_key = (domain, scope_view, taxpayer_type)
+    if cache_key in _synonym_cache:
+        return _synonym_cache[cache_key]
+
     cur = db_conn.cursor()
 
-    # 根据域选择同义词表
     if domain == 'eit':
         rows = cur.execute(
             """SELECT phrase, column_name, priority FROM eit_synonyms
@@ -1033,14 +1136,12 @@ def normalize_query(user_query: str, scope_view: str, taxpayer_type: str,
             (scope_view,)
         ).fetchall()
     elif domain == 'account_balance':
-        # 科目余额使用 account_synonyms 表，column_name 取 account_name
         rows = cur.execute(
             """SELECT phrase, COALESCE(account_name, account_code) AS column_name, priority
             FROM account_synonyms
             ORDER BY priority DESC, LENGTH(phrase) DESC"""
         ).fetchall()
     elif domain == 'balance_sheet':
-        # 资产负债表使用 fs_balance_sheet_synonyms 表
         gaap_filter = None
         if scope_view == 'vw_balance_sheet_sas':
             gaap_filter = 'ASSE'
@@ -1053,7 +1154,6 @@ def normalize_query(user_query: str, scope_view: str, taxpayer_type: str,
             (gaap_filter,)
         ).fetchall()
     elif domain == 'profit':
-        # 利润表使用 fs_income_statement_synonyms 表
         gaap_filter = None
         if scope_view == 'vw_profit_sas':
             gaap_filter = 'SAS'
@@ -1066,7 +1166,6 @@ def normalize_query(user_query: str, scope_view: str, taxpayer_type: str,
             (gaap_filter,)
         ).fetchall()
     elif domain == 'cash_flow':
-        # 现金流量表使用 fs_cash_flow_synonyms 表
         gaap_filter = None
         if scope_view == 'vw_cash_flow_sas':
             gaap_filter = 'SAS'
@@ -1079,10 +1178,8 @@ def normalize_query(user_query: str, scope_view: str, taxpayer_type: str,
             (gaap_filter,)
         ).fetchall()
     elif domain == 'financial_metrics':
-        # 财务指标域不做同义词替换 — 指标名称需要保留在查询中供LLM生成WHERE条件
         rows = []
     elif domain == 'invoice':
-        # 发票域使用 inv_synonyms 表
         rows = cur.execute(
             """SELECT phrase, column_name, priority FROM inv_synonyms
             WHERE (scope_view IS NULL OR scope_view = ?)
@@ -1090,7 +1187,6 @@ def normalize_query(user_query: str, scope_view: str, taxpayer_type: str,
             (scope_view,)
         ).fetchall()
     else:
-        # 默认VAT同义词表
         rows = cur.execute(
             """SELECT phrase, column_name, priority FROM vat_synonyms
             WHERE (scope_view IS NULL OR scope_view = ?)
@@ -1098,6 +1194,16 @@ def normalize_query(user_query: str, scope_view: str, taxpayer_type: str,
             ORDER BY priority DESC, LENGTH(phrase) DESC""",
             (scope_view, taxpayer_type)
         ).fetchall()
+
+    result = [(r[0], r[1], r[2]) for r in rows]
+    _synonym_cache[cache_key] = result
+    return result
+
+
+def normalize_query(user_query: str, scope_view: str, taxpayer_type: str,
+                    db_conn: sqlite3.Connection, domain: str = None) -> tuple:
+    """同义词替换：最长匹配优先 + 不重叠替换（域感知）"""
+    rows = _load_synonyms(db_conn, domain, scope_view, taxpayer_type)
 
     hits = []
     occupied = [False] * len(user_query)
@@ -1162,3 +1268,82 @@ def get_scope_view(taxpayer_type: str, domain: str = None, report_type: str = No
     elif taxpayer_type == '小规模纳税人':
         return 'vw_vat_return_small'
     return None
+
+
+def detect_entities_with_context(
+    user_query: str,
+    db_conn: sqlite3.Connection,
+    conversation_history: Optional[List[Dict]] = None
+) -> dict:
+    """
+    增强版实体检测：支持对话上下文继承
+
+    三层解析策略：
+    1. 显式实体（当前查询中明确指定）— 最高优先级
+    2. 代词解析（"它/那/这个"→上一轮纳税人）
+    3. 隐式继承（时间/公司/域从上一轮继承）
+
+    Args:
+        user_query: 用户查询
+        db_conn: 数据库连接
+        conversation_history: 对话历史 [{"role": "user|assistant", "content": str, "metadata": {...}}, ...]
+
+    Returns:
+        实体字典（含继承的实体）
+    """
+    from typing import List, Dict, Optional
+    from .conversation_manager import (
+        _contains_pronouns,
+        _get_last_assistant_turn,
+        _resolve_pronouns,
+        _is_domain_neutral
+    )
+
+    # Step 1: 检测显式实体（优先级最高）
+    entities = detect_entities(user_query, db_conn)
+
+    # 如果没有对话历史，直接返回
+    if not conversation_history:
+        return entities
+
+    # Step 2: 代词解析
+    if _contains_pronouns(user_query):
+        resolved = _resolve_pronouns(user_query, conversation_history)
+        # 只有当前查询未指定纳税人时，才继承
+        if not entities.get('taxpayer_id') and resolved.get('taxpayer_id'):
+            entities['taxpayer_id'] = resolved['taxpayer_id']
+            entities['taxpayer_name'] = resolved.get('taxpayer_name')
+            entities['taxpayer_type'] = resolved.get('taxpayer_type')
+
+    # Step 3: 隐式上下文继承
+    last_turn = _get_last_assistant_turn(conversation_history)
+    if last_turn and last_turn.get('metadata'):
+        prev_entities = last_turn['metadata'].get('entities', {})
+
+        # 3a. 继承纳税人（如果当前查询未指定）
+        if not entities.get('taxpayer_id') and prev_entities.get('taxpayer_id'):
+            entities['taxpayer_id'] = prev_entities['taxpayer_id']
+            entities['taxpayer_name'] = prev_entities.get('taxpayer_name')
+            entities['taxpayer_type'] = prev_entities.get('taxpayer_type')
+
+        # 3b. 继承年份（如果只指定了月份，未指定年份）
+        if entities.get('period_month') and not entities.get('period_year'):
+            if prev_entities.get('period_year'):
+                entities['period_year'] = prev_entities['period_year']
+
+        # 3c. 特殊处理："N月呢？"模式 — 提取月份并继承年份
+        import re
+        month_match = re.search(r'(\d{1,2})月呢', user_query)
+        if month_match and not entities.get('period_month'):
+            month = int(month_match.group(1))
+            if 1 <= month <= 12:
+                entities['period_month'] = month
+                if prev_entities.get('period_year'):
+                    entities['period_year'] = prev_entities['period_year']
+
+        # 3d. 继承域（如果查询是域中性的）
+        if _is_domain_neutral(user_query) and not entities.get('domain_hint'):
+            if prev_entities.get('domain_hint'):
+                entities['domain_hint'] = prev_entities['domain_hint']
+
+    return entities

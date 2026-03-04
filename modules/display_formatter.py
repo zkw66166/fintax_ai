@@ -83,7 +83,8 @@ class ColumnMapper:
             return
         self._loaded = True
         try:
-            conn = sqlite3.connect(str(DB_PATH))
+            from modules.db_utils import get_connection
+            conn = get_connection()
             cur = conn.cursor()
             self._load_column_mappings(cur)
             self._load_item_dicts(cur)
@@ -470,6 +471,19 @@ CHART_COLORS = [
 ]
 CHART_BORDERS = [c.replace('0.8', '1') for c in CHART_COLORS]
 
+PIE_COLORS = [
+    'rgba(59, 130, 246, 0.8)',
+    'rgba(139, 92, 246, 0.8)',
+    'rgba(16, 185, 129, 0.8)',
+    'rgba(245, 158, 11, 0.8)',
+    'rgba(239, 68, 68, 0.8)',
+    'rgba(6, 182, 212, 0.8)',
+    'rgba(236, 72, 153, 0.8)',
+    'rgba(132, 204, 22, 0.8)',
+    'rgba(251, 146, 60, 0.8)',
+    'rgba(168, 85, 247, 0.8)',
+]
+
 
 def _make_period_label(row: dict) -> str:
     """从行数据生成期间标签"""
@@ -627,6 +641,143 @@ def _build_chart_data(rows: list, metric_cols: list, domain: str, view: str) -> 
     return chart
 
 
+def _detect_pie_chart(rows: list, query: str = '') -> bool:
+    """检测结果是否应使用饼图展示（结构/占比分析）。
+
+    检测规则（满足任一即可）：
+    1. 数据包含"占比"列 + 标签列（原有逻辑）
+    2. 查询包含"构成"/"结构"/"组成"等关键词 + 数据包含"占比"列
+    """
+    if not rows or len(rows) < 2:
+        return False
+    first = rows[0]
+    cols = list(first.keys())
+    has_pct = any('占比' in str(c) for c in cols)
+    if not has_pct:
+        return False
+    has_label = any(
+        isinstance(first.get(c), str) and c not in _DIM_COLS_SET and c not in HIDDEN_COLUMNS
+        for c in cols
+    )
+
+    # 原有逻辑：有占比列 + 标签列
+    if has_label:
+        return True
+
+    # 新增逻辑：查询包含构成/结构关键词 + 有占比列
+    if query:
+        composition_keywords = ['构成', '结构', '组成', '明细','占比分析', '比重', '份额']
+        if any(kw in query for kw in composition_keywords):
+            return True
+
+    return False
+
+
+def _build_pie_chart_data(rows: list, domain: str, view: str) -> Optional[dict]:
+    """为结构/占比分析结果生成 Chart.js 饼图数据。
+
+    如果数据包含多个期间，返回多个饼图的列表；否则返回单个饼图。
+    """
+    if len(rows) < 2:
+        return None
+    first = rows[0]
+    cols = list(first.keys())
+
+    label_col = None
+    for c in cols:
+        if isinstance(first.get(c), str) and c not in _DIM_COLS_SET and c not in HIDDEN_COLUMNS:
+            label_col = c
+            break
+    if not label_col:
+        return None
+
+    pct_col = None
+    for c in cols:
+        if '占比' in str(c):
+            pct_col = c
+            break
+    if not pct_col:
+        return None
+
+    # 检测是否有多个期间
+    has_period = any(r.get('period_year') or r.get('period_month') or r.get('period_quarter') or r.get('period') for r in rows)
+
+    if has_period:
+        # 按期间分组
+        period_groups = {}
+        for r in rows:
+            period_label = _make_period_label(r)
+            if not period_label:
+                period_label = '未知期间'
+            if period_label not in period_groups:
+                period_groups[period_label] = []
+            period_groups[period_label].append(r)
+
+        # 如果只有一个期间，按单期间处理
+        if len(period_groups) == 1:
+            has_period = False
+        else:
+            # 生成多个饼图
+            charts = []
+            for period_label in sorted(period_groups.keys()):
+                group_rows = period_groups[period_label]
+                labels = []
+                data = []
+                for r in group_rows:
+                    lbl = r.get(label_col, '')
+                    val = r.get(pct_col)
+                    if lbl and val is not None and isinstance(val, (int, float)) and val > 0:
+                        labels.append(str(lbl))
+                        data.append(round(val, 2))
+
+                if len(labels) >= 2:
+                    charts.append({
+                        'chartType': 'pie',
+                        'title': f'{period_label} {label_col} 占比分析',
+                        'labels': labels,
+                        'datasets': [{
+                            'data': data,
+                            'backgroundColor': PIE_COLORS[:len(labels)],
+                            'borderColor': '#ffffff',
+                            'borderWidth': 2,
+                        }],
+                    })
+
+            if not charts:
+                return None
+
+            # 返回多饼图结构
+            return {
+                'chartType': 'multi_pie',
+                'charts': charts,
+            }
+
+    # 单期间或无期间：生成单个饼图
+    labels = []
+    data = []
+    for r in rows:
+        lbl = r.get(label_col, '')
+        val = r.get(pct_col)
+        if lbl and val is not None and isinstance(val, (int, float)) and val > 0:
+            labels.append(str(lbl))
+            data.append(round(val, 2))
+
+    if len(labels) < 2:
+        return None
+
+    return {
+        'chartType': 'pie',
+        'title': f'{label_col} 占比分析',
+        'labels': labels,
+        'datasets': [{
+            'data': data,
+            'backgroundColor': PIE_COLORS[:len(labels)],
+            'borderColor': '#ffffff',
+            'borderWidth': 2,
+        }],
+    }
+
+
 def _format_table_rows(rows: list, domain: str, view: str) -> dict:
     """生成前端表格所需的结构化数据：headers + formatted rows"""
     if not rows:
@@ -664,7 +815,49 @@ def _format_table_rows(rows: list, domain: str, view: str) -> dict:
 
     return {'headers': headers, 'rows': formatted, 'columns': cols}
 
-def build_display_data(result: dict) -> dict:
+def _build_empty_data_message(result: dict) -> str:
+    """构建空结果的上下文提示信息。
+
+    Args:
+        result: 查询结果字典，包含 taxpayer_name, taxpayer_id, period, domain 等字段
+
+    Returns:
+        格式化的空结果提示信息
+    """
+    # 提取公司名称
+    company_name = result.get('taxpayer_name') or result.get('taxpayer_id', '')
+
+    # 提取期间信息
+    period = result.get('period', '')
+
+    # 提取领域信息并转换为中文
+    domain = result.get('domain', '')
+    domain_cn_map = {
+        'vat': '增值税申报',
+        'eit': '企业所得税',
+        'balance_sheet': '资产负债表',
+        'account_balance': '科目余额',
+        'profit': '利润表',
+        'cash_flow': '现金流量表',
+        'invoice': '发票',
+        'financial_metrics': '财务指标',
+        'cross_domain': '跨域查询',
+    }
+    domain_cn = domain_cn_map.get(domain, '')
+
+    # 构建消息
+    if company_name and period and domain_cn:
+        return f"{company_name} 在 {period} 暂无{domain_cn}数据，请导入数据或更换查询期间"
+    elif company_name and domain_cn:
+        return f"{company_name} 暂无{domain_cn}数据，请导入数据或更换查询期间"
+    elif company_name and period:
+        return f"{company_name} 在 {period} 暂无数据，请导入数据或更换查询期间"
+    elif company_name:
+        return f"{company_name} 暂无数据，请导入数据"
+    else:
+        return "当前查询条件下暂无数据，请检查查询期间或导入相关数据"
+
+def build_display_data(result: dict, query: str = '') -> dict:
     """构建前端展示所需的完整结构化数据。
 
     Returns:
@@ -676,12 +869,20 @@ def build_display_data(result: dict) -> dict:
             'display_type': 'kv' | 'table' | 'metric' | 'cross_domain',
             'metric_display': [...] | None,
             'sub_tables': [...] | None,  # 跨域 list 分组
+            'empty_data_message': str | None,  # 空结果提示信息
         }
     """
     rows = result.get('results', [])
     if not rows:
-        return {'table': {'headers': [], 'rows': [], 'columns': []},
-                'display_type': 'table', 'chart_data': None, 'growth': None}
+        # 构建空结果提示信息
+        empty_msg = _build_empty_data_message(result)
+        return {
+            'table': {'headers': [], 'rows': [], 'columns': []},
+            'display_type': 'table',
+            'chart_data': None,
+            'growth': None,
+            'empty_data_message': empty_msg
+        }
 
     # 计算指标路径
     if result.get('metric_results'):
@@ -728,6 +929,18 @@ def build_display_data(result: dict) -> dict:
     # 多行 → 表格 + 图表 + 增长
     table = _format_table_rows(rows, domain, view)
     metric_cols = _extract_metric_cols(rows)
+
+    # 饼图检测：结构/占比分析结果
+    if _detect_pie_chart(rows, query):
+        pie_data = _build_pie_chart_data(rows, domain, view)
+        if pie_data:
+            return {
+                'display_type': 'table',
+                'table': table,
+                'chart_data': pie_data,
+                'growth': None,
+            }
+
     chart_data = _build_chart_data(rows, metric_cols, domain, view)
     growth = _compute_growth(rows, metric_cols, domain, view)
 
