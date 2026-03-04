@@ -32,8 +32,8 @@ TAX_INCENTIVES_DB_PATH = PROJECT_ROOT / "database" / "tax_incentives.db"
 
 # 外部法规知识库 (Coze API)
 COZE_API_URL = "https://api.coze.cn/v3/chat"
-COZE_PAT_TOKEN = "your-coze-pat-token"
-COZE_BOT_ID = "your-coze-bot-id"
+COZE_PAT_TOKEN = "[REMOVED_COZE_TOKEN]"
+COZE_BOT_ID = "7592905400907989034"
 COZE_USER_ID = "123"
 COZE_TIMEOUT = 180
 

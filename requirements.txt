@@ -1,5 +1,27 @@
+# Core dependencies
+python-dotenv>=1.0.0
+
+# LLM API client
 openai>=1.0.0
-gradio==4.44.1
-huggingface-hub<0.25
+
+# Web framework
 fastapi>=0.115.0
 uvicorn[standard]>=0.30.0
+pydantic>=2.0.0
+
+# Authentication
+pyjwt>=2.8.0
+bcrypt>=4.0.0
+
+# HTTP client
+requests>=2.28.0
+
+# UI (optional, for Gradio interface)
+gradio==4.44.1
+huggingface-hub<0.25
+
+# Database (SQLite is built-in to Python)
+# No additional dependencies needed for SQLite
+
+# Utilities
+python-multipart>=0.0.6  # For FastAPI file uploads
