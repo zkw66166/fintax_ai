@@ -171,7 +171,23 @@ METRIC_SYNONYMS = {
     '管理费用占比': '管理费用率',
     '销售费用率': '销售费用率',
     '销售费用占比': '销售费用率',
+    '利润率': '净利润率',
 }
+
+
+def is_multi_period_query(entities: dict) -> bool:
+    """检测是否为多期间查询（比较/趋势），应绕过G3单点计算。"""
+    if entities.get('period_years') and len(entities['period_years']) > 1:
+        return True
+    if entities.get('period_end_year') and entities.get('period_year'):
+        if entities['period_end_year'] != entities['period_year']:
+            return True
+        if entities.get('period_end_month') and entities.get('period_month'):
+            if entities['period_end_month'] != entities['period_month']:
+                return True
+    if entities.get('time_granularity'):
+        return True
+    return False
 
 
 def detect_computed_metrics(query: str) -> list:

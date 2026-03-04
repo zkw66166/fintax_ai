@@ -8,7 +8,7 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from config.settings import DB_PATH, MAX_ROWS, CACHE_ENABLED, ROUTER_ENABLED
-from modules.entity_preprocessor import detect_entities, normalize_query, get_scope_view
+from modules.entity_preprocessor import detect_entities, detect_entities_with_context, normalize_query, get_scope_view
 from modules.intent_parser import parse_intent
 from modules.constraint_injector import inject_constraints
 from modules.sql_writer import generate_sql
@@ -16,6 +16,42 @@ from modules.sql_auditor import audit_sql
 from modules.cross_domain_calculator import detect_cross_domain_operation, merge_cross_domain_results
 from modules.metric_calculator import detect_computed_metrics, get_metric_required_domains, compute_metric, METRIC_FORMULAS
 from modules.concept_registry import resolve_concepts, detect_time_granularity, build_concept_sql, execute_computed_concept, merge_concept_results
+
+
+def is_multi_period_query(entities: dict) -> bool:
+    """检测是否为多期间查询（比较/趋势），应绕过概念管线单点查询。
+
+    多期间查询特征：
+    - 跨年: period_end_year != period_year
+    - 跨季度: period_end_quarter 存在
+    - 多年范围: period_years 长度 > 1
+    - 多月枚举: period_months 长度 > 1
+    - 月份范围: period_end_month != period_month (同年内)
+    """
+    # 跨年查询
+    if entities.get('period_end_year') and entities.get('period_year'):
+        if entities['period_end_year'] != entities['period_year']:
+            return True
+
+    # 跨季度查询（同年或跨年）
+    if entities.get('period_end_quarter'):
+        return True
+
+    # 多年范围
+    if entities.get('period_years') and len(entities['period_years']) > 1:
+        return True
+
+    # 多月枚举
+    if entities.get('period_months') and len(entities['period_months']) > 1:
+        return True
+
+    # 同年内月份范围（排除单月查询）
+    if entities.get('period_end_month') and entities.get('period_month'):
+        if entities['period_end_month'] != entities['period_month']:
+            return True
+
+    return False
+
 
 # 导入缓存管理器
 if CACHE_ENABLED:
@@ -28,8 +64,23 @@ if CACHE_ENABLED:
     )
 
 
-def run_pipeline_stream(user_query: str, db_path: str = None, progress_callback=None, original_query: str = None):
+def run_pipeline_stream(
+    user_query: str,
+    db_path: str = None,
+    progress_callback=None,
+    original_query: str = None,
+    conversation_history=None,
+    multi_turn_enabled: bool = False  # 新增：前端是否勾选多轮对话
+):
     """流式管线：对 tax_incentive / regulation 路由逐步 yield 文本片段。
+
+    Args:
+        user_query: 用户查询
+        db_path: 数据库路径
+        progress_callback: 进度回调函数
+        original_query: 原始查询（不含企业名前缀）
+        conversation_history: 对话历史（可选，用于多轮对话）
+        multi_turn_enabled: 前端是否勾选多轮对话
 
     Yields event dicts:
         {'type': 'stage', 'route': str, 'text': str}  — 阶段提示
@@ -40,7 +91,48 @@ def run_pipeline_stream(user_query: str, db_path: str = None, progress_callback=
     # 对 tax_incentive / regulation 路由使用原始查询（不含企业名前缀）
     raw_query = original_query or user_query
 
-    # 意图路由
+    # ⚠️ 关键：只有当用户勾选"多轮对话"时才进行混合分析检测
+    # 如果未勾选，直接跳到意图路由，走原有三大路由逻辑
+    if multi_turn_enabled and conversation_history and len(conversation_history) >= 2:
+        from modules.mixed_analysis_detector import should_trigger_mixed_analysis
+
+        should_trigger, reason = should_trigger_mixed_analysis(
+            user_query=user_query,
+            conversation_history=conversation_history,
+            conversation_depth=len(conversation_history) // 2,  # 估算轮数
+            multi_turn_enabled=multi_turn_enabled
+        )
+
+        if should_trigger:
+            # 路由到混合分析
+            yield {'type': 'stage', 'route': 'mixed_analysis', 'text': '检测到跨路由查询，启动综合分析模式...'}
+            if progress_callback:
+                progress_callback(0.10, "🎯 启动综合分析模式...")
+
+            from modules.mixed_analysis_executor import execute_mixed_analysis_stream
+
+            # 提取 taxpayer_id（如果有）
+            taxpayer_id = None
+            conn = sqlite3.connect(db_path)
+            conn.row_factory = sqlite3.Row
+            from modules.entity_preprocessor import detect_entities_with_context
+            entities = detect_entities_with_context(user_query, conn, conversation_history)
+            taxpayer_id = entities.get('taxpayer_id')
+            conn.close()
+
+            for event in execute_mixed_analysis_stream(
+                user_query=user_query,
+                conversation_history=conversation_history,
+                conversation_depth=len(conversation_history) // 2,
+                taxpayer_id=taxpayer_id
+            ):
+                yield event
+
+            if progress_callback:
+                progress_callback(1.0, "✅ 综合分析完成")
+            return  # 提前返回，不走后续路由
+
+    # 意图路由（现有逻辑完全保持不变）
     route = 'financial_data'
     if ROUTER_ENABLED:
         conn = sqlite3.connect(db_path)
@@ -87,11 +179,11 @@ def run_pipeline_stream(user_query: str, db_path: str = None, progress_callback=
         return
 
     # financial_data：使用现有非流式管线
-    result = run_pipeline(user_query, db_path=db_path, progress_callback=progress_callback)
+    result = run_pipeline(user_query, db_path=db_path, progress_callback=progress_callback, conversation_history=conversation_history)
     yield {'type': 'done', 'result': result}
 
 
-def run_pipeline(user_query: str, db_path: str = None, progress_callback=None) -> dict:
+def run_pipeline(user_query: str, db_path: str = None, progress_callback=None, conversation_history=None) -> dict:
     """
     完整NL2SQL管线：
     实体预处理 → 同义词标准化 → 阶段1(LLM→JSON) → 约束注入
@@ -151,7 +243,7 @@ def run_pipeline(user_query: str, db_path: str = None, progress_callback=None) -
 
             # route == 'financial_data' → 继续现有管线，零改动
 
-        # Step 1: 实体预处理
+        # Step 1: 实体预处理（支持多轮对话上下文）
         if progress_callback:
             progress_callback(0.05, "🔍 正在识别实体...")
 
@@ -159,9 +251,32 @@ def run_pipeline(user_query: str, db_path: str = None, progress_callback=None) -
         print(f"用户问题: {user_query}")
         print(f"{'='*60}")
 
-        entities = detect_entities(user_query, conn)
+        # 使用上下文感知的实体检测（如果有对话历史）
+        if conversation_history:
+            entities = detect_entities_with_context(user_query, conn, conversation_history)
+        else:
+            entities = detect_entities(user_query, conn)
         result['entities'] = entities
+
+        # 提取上下文信息用于空结果提示
+        result['taxpayer_id'] = entities.get('taxpayer_id')
+        result['taxpayer_name'] = entities.get('taxpayer_name')
+
+        # 构建期间字符串
+        period_year = entities.get('period_year')
+        period_month = entities.get('period_month')
+        period_quarter = entities.get('period_quarter')
+        if period_year and period_month:
+            result['period'] = f"{period_year}年{period_month}月"
+        elif period_year and period_quarter:
+            result['period'] = f"{period_year}年第{period_quarter}季度"
+        elif period_year:
+            result['period'] = f"{period_year}年"
+        else:
+            result['period'] = None
+
         domain_hint = entities.get('domain_hint')
+        result['domain'] = domain_hint  # 初始域提示，后续可能被intent覆盖
         resolved_query = entities.get('resolved_query', user_query)
         print(f"\n[1] 实体识别: {json.dumps(entities, ensure_ascii=False)}")
         if resolved_query != user_query:
@@ -268,7 +383,7 @@ def run_pipeline(user_query: str, db_path: str = None, progress_callback=None) -
         # 缓存未命中，调用LLM
         if intent is None:
             t0 = time.time()
-            intent = parse_intent(resolved_query, entities, hits)
+            intent = parse_intent(resolved_query, entities, hits, conversation_history=conversation_history)
             elapsed_ms = int((time.time() - t0) * 1000)
             print(f"    调用LLM ({elapsed_ms}ms)")
 
@@ -278,6 +393,7 @@ def run_pipeline(user_query: str, db_path: str = None, progress_callback=None) -
 
         result['intent'] = intent
         domain = intent.get('domain', domain_hint or 'vat')
+        result['domain'] = domain  # 更新为intent解析后的域
         print(f"    domain={domain}, need_clarification={intent.get('need_clarification')}")
 
         # 检查是否需要澄清（计算指标查询跳过澄清）
@@ -309,10 +425,12 @@ def run_pipeline(user_query: str, db_path: str = None, progress_callback=None) -
             return result
 
         # Step 3b2: 概念时序查询（单概念+时间粒度即可触发，非跨域也走概念管线）
+        # 注意：多期间比较查询（如"2024Q4与2025Q1"）应走标准管线，不走概念管线
         if domain != 'cross_domain':
             concepts = resolve_concepts(resolved_query, entities)
             time_gran = entities.get('time_granularity') or detect_time_granularity(resolved_query, entities)
-            if len(concepts) >= 1 and time_gran:
+            is_multi_period = is_multi_period_query(entities)
+            if len(concepts) >= 1 and time_gran and not is_multi_period:
                 print(f"[3b2] 单概念时序管线: {[c['name'] for c in concepts]}, 粒度={time_gran}")
                 if progress_callback:
                     progress_callback(0.50, "📊 正在执行概念查询...")
@@ -330,13 +448,17 @@ def run_pipeline(user_query: str, db_path: str = None, progress_callback=None) -
                         progress_callback(1.0, "✅ 概念查询完成")
                     return result
                 print(f"    概念管线失败，回退标准NL2SQL管线")
+            elif is_multi_period:
+                print(f"[3b2] 检测到多期间查询，跳过概念管线，走标准NL2SQL管线")
 
         # Step 3c: 跨域查询分支（G2）
         if domain == 'cross_domain':
             # 概念管线优先：尝试从查询中提取已注册概念
+            # 注意：多期间比较查询（如"2024Q4与2025Q1"）应走标准管线，不走概念管线
             concepts = resolve_concepts(resolved_query, entities)
             time_gran = entities.get('time_granularity') or detect_time_granularity(resolved_query, entities)
-            if len(concepts) >= 1 and time_gran:
+            is_multi_period = is_multi_period_query(entities)
+            if len(concepts) >= 1 and time_gran and not is_multi_period:
                 print(f"[3c] 概念管线: {[c['name'] for c in concepts]}, 粒度={time_gran}")
                 if progress_callback:
                     progress_callback(0.50, "📊 正在执行概念查询...")
@@ -354,12 +476,14 @@ def run_pipeline(user_query: str, db_path: str = None, progress_callback=None) -
                         progress_callback(1.0, "✅ 概念查询完成")
                     return result
                 print(f"    概念管线失败，回退LLM跨域管线")
+            elif is_multi_period:
+                print(f"[3c] 检测到多期间查询，跳过概念管线，走LLM跨域管线")
 
             print(f"[3c] 进入跨域查询管线...")
             if progress_callback:
                 progress_callback(0.50, "🔀 正在执行跨域查询...")
             cross_result = _run_cross_domain_pipeline(
-                conn, entities, intent, resolved_query, progress_callback, start_time
+                conn, entities, intent, resolved_query, progress_callback, start_time, conversation_history
             )
             result['success'] = cross_result.get('success', False)
             result['results'] = cross_result.get('results', [])
@@ -398,7 +522,7 @@ def run_pipeline(user_query: str, db_path: str = None, progress_callback=None) -
         # 缓存未命中，调用LLM
         if sql is None:
             t0 = time.time()
-            sql = generate_sql(constraints, domain=domain)
+            sql = generate_sql(constraints, domain=domain, conversation_history=conversation_history)
             elapsed_ms = int((time.time() - t0) * 1000)
             print(f"    调用LLM ({elapsed_ms}ms)")
 
@@ -424,7 +548,7 @@ def run_pipeline(user_query: str, db_path: str = None, progress_callback=None) -
                 progress_callback(0.70, "🔄 SQL审核失败，正在重试...")
 
             feedback = "; ".join(violations)
-            sql = generate_sql(constraints, retry_feedback=feedback, domain=domain)
+            sql = generate_sql(constraints, retry_feedback=feedback, domain=domain, conversation_history=conversation_history)
             result['sql'] = sql
             print(f"    重试SQL:\n    {sql}")
             passed, violations = audit_sql(sql, constraints['allowed_views'], constraints['max_rows'], domain=domain)
@@ -482,7 +606,7 @@ def run_pipeline(user_query: str, db_path: str = None, progress_callback=None) -
             print(f"    执行失败: {exec_error}, 重试中...")
             retry_feedback = f"SQL执行报错: {exec_error}。请修正SQL。注意：SQLite不支持RIGHT JOIN和FULL OUTER JOIN，请改用LEFT JOIN或UNION ALL。"
             try:
-                sql = generate_sql(constraints, retry_feedback=retry_feedback, domain=domain)
+                sql = generate_sql(constraints, retry_feedback=retry_feedback, domain=domain, conversation_history=conversation_history)
                 result['sql'] = sql
                 print(f"    重试SQL:\n    {sql}")
                 passed, violations = audit_sql(sql, constraints['allowed_views'], constraints['max_rows'], domain=domain)
@@ -520,8 +644,13 @@ def run_pipeline(user_query: str, db_path: str = None, progress_callback=None) -
     return result
 
 
-def _generate_subdomain_sql(sd, sub_constraints):
+def _generate_subdomain_sql(sd, sub_constraints, conversation_history=None):
     """子域SQL生成+审核（可在线程中并行执行，不涉及DB操作）。
+
+    Args:
+        sd: 子域名称
+        sub_constraints: 子域约束
+        conversation_history: 对话历史（可选）
 
     Returns:
         dict: {'domain': sd, 'sql': str} 或 {'domain': sd, 'error': str}
@@ -539,7 +668,7 @@ def _generate_subdomain_sql(sd, sub_constraints):
     # 缓存未命中，调用LLM
     if sql is None:
         try:
-            sql = generate_sql(sub_constraints, domain=sd)
+            sql = generate_sql(sub_constraints, domain=sd, conversation_history=conversation_history)
         except Exception as e:
             print(f"    [{sd}] SQL生成失败: {e}")
             return {'domain': sd, 'error': str(e)}
@@ -555,7 +684,7 @@ def _generate_subdomain_sql(sd, sub_constraints):
         print(f"    [{sd}] 审核失败: {violations}, 重试...")
         feedback = "; ".join(violations)
         try:
-            sql = generate_sql(sub_constraints, retry_feedback=feedback, domain=sd)
+            sql = generate_sql(sub_constraints, retry_feedback=feedback, domain=sd, conversation_history=conversation_history)
         except Exception as e:
             return {'domain': sd, 'error': f'SQL重试失败: {e}'}
         passed, violations = audit_sql(sql, sub_constraints['allowed_views'],
@@ -570,8 +699,17 @@ def _generate_subdomain_sql(sd, sub_constraints):
 
 
 def _run_cross_domain_pipeline(conn, entities, intent, resolved_query,
-                                progress_callback=None, start_time=None) -> dict:
+                                progress_callback=None, start_time=None, conversation_history=None) -> dict:
     """跨域查询管线：拆分为子域独立执行，然后Python端合并/计算。
+
+    Args:
+        conn: 数据库连接
+        entities: 实体字典
+        intent: 意图字典
+        resolved_query: 解析后的查询
+        progress_callback: 进度回调函数
+        start_time: 开始时间
+        conversation_history: 对话历史（可选）
 
     优化：Phase 2使用ThreadPoolExecutor并行执行LLM调用。
     """
@@ -686,7 +824,7 @@ def _run_cross_domain_pipeline(conn, entities, intent, resolved_query,
             print(f"    [{sd}] 执行失败: {exec_error}, 重试...")
             retry_fb = f"SQL执行报错: {exec_error}。请修正。SQLite不支持RIGHT JOIN和FULL OUTER JOIN，改用LEFT JOIN或UNION ALL。"
             try:
-                sql = generate_sql(sub_constraints, retry_feedback=retry_fb, domain=sd)
+                sql = generate_sql(sub_constraints, retry_feedback=retry_fb, domain=sd, conversation_history=conversation_history)
                 passed2, v2 = audit_sql(sql, sub_constraints['allowed_views'],
                                         sub_constraints['max_rows'], domain=sd)
                 if passed2:

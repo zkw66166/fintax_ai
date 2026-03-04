@@ -119,51 +119,113 @@ def _generate_cache_key(data: Any) -> str:
     return hashlib.md5(content.encode()).hexdigest()
 
 
+def _is_context_dependent_query(query: str) -> bool:
+    """检测查询是否依赖上下文（用于缓存键生成）"""
+    from modules.conversation_manager import is_context_dependent
+    return is_context_dependent(query)
+
+
+def _extract_entities_from_last_turn(conversation_history: List[Dict]) -> Dict:
+    """从最后一轮提取实体（用于缓存键生成）"""
+    from modules.conversation_manager import extract_last_turn_entities
+    return extract_last_turn_entities(conversation_history)
+
+
+def _generate_context_aware_cache_key(
+    normalized_query: str,
+    taxpayer_type: str,
+    synonym_hits: List[Dict],
+    conversation_history: Optional[List[Dict]] = None
+) -> str:
+    """
+    生成上下文感知的缓存键
+
+    策略：
+    - 独立查询：使用原始缓存键（向后兼容）
+    - 上下文依赖查询：包含上一轮实体签名
+
+    Args:
+        normalized_query: 标准化查询
+        taxpayer_type: 纳税人类型
+        synonym_hits: 同义词命中列表
+        conversation_history: 对话历史（可选）
+
+    Returns:
+        缓存键字符串
+    """
+    # 基础缓存数据
+    cache_data = {
+        'query': normalized_query,
+        'taxpayer_type': taxpayer_type,
+        'synonym_hits': [(h['phrase'], h['column_name']) for h in synonym_hits]
+    }
+
+    # 检测是否依赖上下文
+    if not conversation_history or not _is_context_dependent_query(normalized_query):
+        # 独立查询 — 使用原始缓存键（向后兼容）
+        return _generate_cache_key(cache_data)
+
+    # 上下文依赖查询 — 包含上一轮实体
+    prev_entities = _extract_entities_from_last_turn(conversation_history)
+    context_sig = {
+        'taxpayer_id': prev_entities.get('taxpayer_id'),
+        'period_year': prev_entities.get('period_year'),
+        'period_month': prev_entities.get('period_month'),
+        'domain_hint': prev_entities.get('domain_hint'),
+    }
+    cache_data['context'] = context_sig
+
+    return _generate_cache_key(cache_data)
+
+
 # ============ Stage 1 意图缓存 ============
 
-def get_cached_intent(normalized_query: str, taxpayer_type: str, synonym_hits: List[Dict]) -> Optional[Dict]:
+def get_cached_intent(normalized_query: str, taxpayer_type: str, synonym_hits: List[Dict], conversation_history: Optional[List[Dict]] = None) -> Optional[Dict]:
     """
-    获取缓存的意图解析结果
+    获取缓存的意图解析结果（支持上下文感知）
 
     Args:
         normalized_query: 标准化后的查询
         taxpayer_type: 纳税人类型
         synonym_hits: 同义词命中列表
+        conversation_history: 对话历史（可选）
 
     Returns:
         缓存的意图JSON，如果未命中则返回None
     """
     _init_caches()
 
-    # 生成缓存键
-    cache_data = {
-        'query': normalized_query,
-        'taxpayer_type': taxpayer_type,
-        'synonym_hits': [(h['phrase'], h['column_name']) for h in synonym_hits]  # 只保留关键信息
-    }
-    cache_key = _generate_cache_key(cache_data)
+    # 生成上下文感知的缓存键
+    cache_key = _generate_context_aware_cache_key(
+        normalized_query,
+        taxpayer_type,
+        synonym_hits,
+        conversation_history
+    )
 
     return _intent_cache.get(cache_key)
 
 
-def cache_intent(normalized_query: str, taxpayer_type: str, synonym_hits: List[Dict], intent: Dict):
+def cache_intent(normalized_query: str, taxpayer_type: str, synonym_hits: List[Dict], intent: Dict, conversation_history: Optional[List[Dict]] = None):
     """
-    缓存意图解析结果
+    缓存意图解析结果（支持上下文感知）
 
     Args:
         normalized_query: 标准化后的查询
         taxpayer_type: 纳税人类型
         synonym_hits: 同义词命中列表
         intent: 意图JSON
+        conversation_history: 对话历史（可选）
     """
     _init_caches()
 
-    cache_data = {
-        'query': normalized_query,
-        'taxpayer_type': taxpayer_type,
-        'synonym_hits': [(h['phrase'], h['column_name']) for h in synonym_hits]
-    }
-    cache_key = _generate_cache_key(cache_data)
+    # 生成上下文感知的缓存键
+    cache_key = _generate_context_aware_cache_key(
+        normalized_query,
+        taxpayer_type,
+        synonym_hits,
+        conversation_history
+    )
 
     _intent_cache.set(cache_key, intent)
 
@@ -222,6 +284,87 @@ def clear_cache():
     _sql_cache.clear()
     _result_cache.clear()
     _cross_cache.clear()
+
+
+def clear_all_caches() -> Dict[str, Any]:
+    """
+    清空所有缓存并返回清理统计
+
+    Returns:
+        {
+            'cleared_entries': {
+                'intent': int,
+                'sql': int,
+                'result': int,
+                'cross_domain': int,
+                'total': int
+            },
+            'message': str
+        }
+    """
+    _init_caches()
+
+    # 获取清理前的统计
+    intent_size = len(_intent_cache.cache)
+    sql_size = len(_sql_cache.cache)
+    result_size = len(_result_cache.cache)
+    cross_size = len(_cross_cache.cache)
+
+    # 清空所有缓存
+    _intent_cache.clear()
+    _sql_cache.clear()
+    _result_cache.clear()
+    _cross_cache.clear()
+
+    total = intent_size + sql_size + result_size + cross_size
+
+    return {
+        'cleared_entries': {
+            'intent': intent_size,
+            'sql': sql_size,
+            'result': result_size,
+            'cross_domain': cross_size,
+            'total': total
+        },
+        'message': f'成功清空 {total} 条缓存记录'
+    }
+
+
+def clear_cache_by_type(cache_type: str) -> Dict[str, Any]:
+    """
+    清空指定类型的缓存
+
+    Args:
+        cache_type: 缓存类型 ('intent', 'sql', 'result', 'cross_domain')
+
+    Returns:
+        {
+            'cache_type': str,
+            'cleared_entries': int,
+            'message': str
+        }
+    """
+    _init_caches()
+
+    cache_map = {
+        'intent': _intent_cache,
+        'sql': _sql_cache,
+        'result': _result_cache,
+        'cross_domain': _cross_cache
+    }
+
+    if cache_type not in cache_map:
+        raise ValueError(f"无效的缓存类型: {cache_type}，有效值: {list(cache_map.keys())}")
+
+    cache = cache_map[cache_type]
+    size = len(cache.cache)
+    cache.clear()
+
+    return {
+        'cache_type': cache_type,
+        'cleared_entries': size,
+        'message': f'成功清空 {cache_type} 缓存 {size} 条记录'
+    }
 
 
 # ============ SQL执行结果缓存 ============

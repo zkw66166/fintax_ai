@@ -45,12 +45,19 @@ SELECT <columns> FROM latest WHERE rn = 1
 - 净利润 = 利润总额 - 所得税费用
 - 综合收益总额 = 净利润 + 其他综合收益的税后净额
 
+【核心原则：始终返回明细行】
+- 禁止只返回单个聚合数字。任何查询都必须包含维度列（期间、时间范围等），让用户看到数据来源。
+- 即使用户问"总和"/"合计"，也必须先列出明细行，再用 UNION ALL 追加合计行。
+- 跨期比较时，展示各期原始值 + 变动额，不能只返回一个差值。
+
 【输出要求】
 - 只输出SQL，不要解释
 - 严格禁止 SELECT *（包括CTE/子查询中也不允许）
 - CTE中必须明确列出维度列 + 需要的指标列
 - 维度列：taxpayer_id, taxpayer_name, period_year, period_month, time_range, accounting_standard_name, revision_no
 - 从【允许的列】中选择需要的列，从【用户意图JSON】的select.metrics中确定具体指标
+- 汇总类问题：先列明细行，再 UNION ALL 合计行（禁止只返回合计数字）。注意：SQLite的UNION ALL不支持ORDER BY中使用CASE表达式，必须用子查询包裹并添加sort_key列排序
+- 比较类问题：展示各期原始值 + 变动额（禁止只返回差值）
 - 明细/列表默认 LIMIT {max_rows}
 - 趋势类按 period_year, period_month 排序
 

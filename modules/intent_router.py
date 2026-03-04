@@ -37,7 +37,8 @@ class IntentRouter:
         # 提前加载优惠关键词（Layer 0 需要用来做政策意图检查）
         incentive_kws = cfg.get("incentive_keywords", [])
         exclude_kws = cfg.get("exclude_from_incentive", [])
-        extra_incentive = ["加计扣除", "即征即退"]
+        extra_incentive = cfg.get("extra_incentive_keywords", [])
+        regulation_pass_kws = cfg.get("regulation_passthrough_keywords", [])
         has_exclude = any(k in question for k in exclude_kws)
 
         # Layer 0: 企业数据查询 — 纳税人名称匹配（含模糊前缀）或 时间+金额模式
@@ -56,10 +57,12 @@ class IntentRouter:
                 if matched:
                     break
             if matched:
-                # 检查是否同时含优惠/政策关键词 → 不拦截，让Layer 1处理
+                # 检查是否同时含优惠/政策/法规关键词 → 不拦截，让后续Layer处理
                 all_incentive_kws = incentive_kws + extra_incentive
-                if not has_exclude and any(k in question for k in all_incentive_kws):
-                    pass  # 不返回financial_data，继续到Layer 1
+                has_incentive = not has_exclude and any(k in question for k in all_incentive_kws)
+                has_regulation = any(k in question for k in regulation_pass_kws)
+                if has_incentive or has_regulation:
+                    pass  # 不返回financial_data，继续到Layer 1 / default
                 else:
                     return "financial_data"
         if re.search(r'\d{4}年.*多少', question):
@@ -105,3 +108,49 @@ class IntentRouter:
             except Exception:
                 self._taxpayer_names = []
         return self._taxpayer_names
+
+    def reload_config(self) -> dict:
+        """
+        强制重新加载配置文件
+
+        Returns:
+            {
+                'success': bool,
+                'config_path': str,
+                'config_version': str,
+                'loaded_at': str,
+                'message': str
+            }
+        """
+        import datetime
+
+        try:
+            # 强制重新加载配置
+            with open(self._config_path, "r", encoding="utf-8") as f:
+                self._config = json.load(f)
+
+            # 更新 mtime
+            self._config_mtime = os.path.getmtime(self._config_path)
+
+            # 清空纳税人名称缓存（如果配置影响纳税人数据）
+            self._taxpayer_names = None
+
+            # 生成配置版本标识（使用文件修改时间）
+            config_version = datetime.datetime.fromtimestamp(self._config_mtime).strftime('%Y%m%d_%H%M%S')
+
+            return {
+                'success': True,
+                'config_path': self._config_path,
+                'config_version': config_version,
+                'loaded_at': datetime.datetime.now().isoformat(),
+                'message': f'成功重载配置文件: {os.path.basename(self._config_path)}'
+            }
+
+        except Exception as e:
+            return {
+                'success': False,
+                'config_path': self._config_path,
+                'config_version': None,
+                'loaded_at': datetime.datetime.now().isoformat(),
+                'message': f'配置重载失败: {str(e)}'
+            }
