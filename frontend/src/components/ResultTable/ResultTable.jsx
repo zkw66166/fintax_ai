@@ -44,7 +44,14 @@ export default function ResultTable({ displayData, results, rowCount }) {
   }
 
   // Fallback: raw results (no display_data)
-  if (!results || results.length === 0) return null
+  if (!results || results.length === 0) {
+    return (
+      <div className={s.emptyTableState}>
+        <p>📊 查询成功，但未找到符合条件的数据</p>
+        <p className={s.hint}>提示：请检查查询期间公司数据是否正确导入</p>
+      </div>
+    )
+  }
   const headers = Object.keys(results[0])
   const isNum = (v) => typeof v === 'number'
 

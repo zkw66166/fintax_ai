@@ -1,11 +1,11 @@
 import s from './ProgressBar.module.css'
 
 const COLOR_MAP = {
-  blue: '#2563eb',
-  green: '#16a34a',
-  orange: '#d97706',
-  red: '#dc2626',
-  purple: '#9333ea',
+  blue: '#93c5fd',
+  green: '#86efac',
+  orange: '#fcd34d',
+  red: '#fca5a5',
+  purple: '#c4b5fd',
 }
 
 export default function ProgressBar({ label, percent, color = 'blue' }) {

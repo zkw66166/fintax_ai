@@ -1,0 +1,102 @@
+.structureContainer {
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 200px;
+}
+
+.shareholdersRow {
+  display: flex;
+  gap: 32px;
+  justify-content: center;
+  align-items: flex-start;
+  position: relative;
+}
+
+.shareholderNode {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.shareholderBox {
+  background: linear-gradient(135deg, #a5b4fc 0%, #c4b5fd 100%);
+  color: #4c1d95;
+  padding: 12px 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(165, 180, 252, 0.25);
+  min-width: 120px;
+  text-align: center;
+  position: relative;
+  z-index: 2;
+}
+
+.shareholderName {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.shareholderRatio {
+  font-size: 12px;
+  opacity: 0.9;
+}
+
+.verticalLine {
+  width: 2px;
+  height: 40px;
+  background: #cbd5e1;
+  position: relative;
+}
+
+.horizontalLine {
+  width: calc(100% - 60px);
+  height: 2px;
+  background: #cbd5e1;
+  margin: 0 30px;
+  position: relative;
+}
+
+.companyRow {
+  display: flex;
+  justify-content: center;
+  margin-top: 0;
+}
+
+.companyNode {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.companyBox {
+  background: linear-gradient(135deg, #93c5fd 0%, #7dd3fc 100%);
+  color: #1e3a8a;
+  padding: 16px 32px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(147, 197, 253, 0.25);
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+  min-width: 160px;
+  position: relative;
+  z-index: 2;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .shareholdersRow {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .horizontalLine {
+    display: none;
+  }
+
+  .verticalLine {
+    height: 20px;
+  }
+}

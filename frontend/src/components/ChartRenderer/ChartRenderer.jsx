@@ -5,23 +5,83 @@ import {
   BarElement,
   LineElement,
   PointElement,
+  ArcElement,
   Title,
   Tooltip,
   Legend,
 } from 'chart.js'
-import { Bar } from 'react-chartjs-2'
+import { Bar, Pie } from 'react-chartjs-2'
 import s from './ChartRenderer.module.css'
 
 ChartJS.register(
   CategoryScale, LinearScale, BarElement, LineElement,
-  PointElement, Title, Tooltip, Legend,
+  PointElement, ArcElement, Title, Tooltip, Legend,
 )
 
 export default function ChartRenderer({ chartData }) {
-  if (!chartData || !chartData.labels || !chartData.datasets) return null
+  if (!chartData) return null
 
-  const { chartType, title, labels, datasets, options: rawOpts, percentageY } = chartData
+  const { chartType, title, labels, datasets, options: rawOpts, percentageY, charts } = chartData
 
+  // Multi-pie chart path (multiple periods)
+  if (chartType === 'multi_pie' && charts && Array.isArray(charts)) {
+    return (
+      <div className={s.wrap}>
+        <div className={s.multiPieContainer}>
+          {charts.map((chart, idx) => {
+            const pieOpts = {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                title: { display: !!chart.title, text: chart.title, font: { size: 14 } },
+                legend: { position: 'right', labels: { boxWidth: 12, padding: 10, font: { size: 12 } } },
+                tooltip: {
+                  callbacks: {
+                    label: (ctx) => `${ctx.label}: ${ctx.parsed}%`,
+                  },
+                },
+              },
+            }
+            return (
+              <div key={idx} className={s.pieChartItem}>
+                <Pie data={{ labels: chart.labels, datasets: chart.datasets }} options={pieOpts} />
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    )
+  }
+
+  // Single pie chart path
+  if (chartType === 'pie') {
+    if (!labels || !datasets) return null
+    const pieOpts = {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        title: { display: !!title, text: title, font: { size: 14 } },
+        legend: { position: 'right', labels: { boxWidth: 12, padding: 10, font: { size: 12 } } },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => `${ctx.label}: ${ctx.parsed}%`,
+          },
+        },
+      },
+    }
+    return (
+      <div className={s.wrap}>
+        <div className={s.chartBox}>
+          <Pie data={{ labels, datasets }} options={pieOpts} />
+        </div>
+      </div>
+    )
+  }
+
+  // Bar / combo chart validation
+  if (!labels || !datasets) return null
+
+  // Bar / combo chart path
   const options = {
     responsive: true,
     maintainAspectRatio: false,

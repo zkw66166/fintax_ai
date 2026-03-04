@@ -13,7 +13,7 @@ ChartJS.register(
 
 const CHART_MAP = { pie: Pie, bar: Bar, line: Line }
 
-const PIE_COLORS = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4']
+const PIE_COLORS = ['#93c5fd', '#c4b5fd', '#86efac', '#fcd34d', '#fca5a5', '#a5f3fc']
 
 const BASE_OPTS = {
   responsive: true,

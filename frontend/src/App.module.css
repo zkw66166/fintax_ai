@@ -7,7 +7,9 @@
     / var(--sidebar-width) 1fr var(--history-width);
   height: 100vh;
 }
-.layout[data-page="profile"] {
+.layout[data-page="profile"],
+.layout[data-page="data-management"],
+.layout[data-page="settings"] {
   grid-template:
     "header  header  header"  var(--header-height)
     "sidebar main    main"    1fr

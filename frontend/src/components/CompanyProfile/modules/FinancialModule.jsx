@@ -78,7 +78,7 @@ function AssetCard({ asset, growth }) {
       <MiniChart type="bar" labels={['流动资产', '固定资产', '无形资产']}
         datasets={[{
           data: [asset.current_assets || 0, asset.fixed_assets || 0, asset.intangible_assets || 0],
-          backgroundColor: ['#1677ff', '#36cfc9', '#597ef7'],
+          backgroundColor: ['#93c5fd', '#a5f3fc', '#c4b5fd'],
         }]} height={140} />
     </div>
   )
@@ -93,7 +93,7 @@ function LiabilityCard({ asset }) {
       <MiniChart type="bar" labels={['负债', '所有者权益']}
         datasets={[{
           data: [asset.total_liabilities || 0, asset.total_equity || 0],
-          backgroundColor: ['#faad14', '#52c41a'],
+          backgroundColor: ['#fcd34d', '#86efac'],
         }]} height={140} />
     </div>
   )

@@ -16,12 +16,9 @@ export default function IdentityModule({ data }) {
       <div className={s.subCard}>
         <SectionTitle name="基本工商信息" color="green" />
         <CompactMetric label="统一社会信用代码" value={data.taxpayer_id} />
-        <CompactMetric label="企业类型" value={data.company_type || data.registration_type} />
+        <CompactMetric label="注册地址" value={truncate(data.registered_address, 24)} />
         <CompactMetric label="法定代表人" value={data.legal_representative} />
         <CompactMetric label="成立日期" value={data.established_date || data.establish_date} />
-        <CompactMetric label="经营状态" value={data.operating_status || data.status || '存续'}
-          evalData={{ level: '正常', type: 'positive' }} />
-        <CompactMetric label="注册地址" value={truncate(data.registered_address)} />
       </div>
 
       {/* 规模特征 */}
@@ -30,6 +27,9 @@ export default function IdentityModule({ data }) {
         <CompactMetric label="注册资本" value={data.registered_capital}
           evalData={{ level: '充足', type: 'positive' }} />
         <CompactMetric label="员工人数" value={data.insured_count != null ? `${data.insured_count}人` : '—'} />
+        <CompactMetric label="经营状态" value={data.operating_status || data.status || '存续'}
+          evalData={{ level: '正常', type: 'positive' }} />
+        <CompactMetric label="企业类型" value={data.company_type || data.registration_type} />
       </div>
 
       {/* 行业定位 */}
@@ -38,6 +38,7 @@ export default function IdentityModule({ data }) {
         <CompactMetric label="所属行业" value={data.industry_name || data.industry} />
         <CompactMetric label="产业链位置" value="核心环节"
           evalData={{ level: '核心环节', type: 'positive' }} />
+        <CompactMetric label="经营范围" value={truncate(data.business_scope, 30)} />
       </div>
 
       {/* 资质认证 */}
