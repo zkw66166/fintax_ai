@@ -1,0 +1,397 @@
+=== Column Mapping Tables ===
+
+account_balance_column_mapping (8 rows) - columns: ['source_column', 'target_field', 'description']
+  {'source_column': '本币期初余额', 'target_field': 'opening_balance', 'description': '期初余额（本币）'}
+  {'source_column': '本币借方发生', 'target_field': 'debit_amount', 'description': '本期借方发生额（本币）'}
+  {'source_column': '本币贷方发生', 'target_field': 'credit_amount', 'description': '本期贷方发生额（本币）'}
+  {'source_column': '本币期末余额', 'target_field': 'closing_balance', 'description': '期末余额（本币）'}
+  {'source_column': '期初余额', 'target_field': 'opening_balance', 'description': '期初余额'}
+  {'source_column': '借方发生额', 'target_field': 'debit_amount', 'description': '借方发生额'}
+  {'source_column': '贷方发生额', 'target_field': 'credit_amount', 'description': '贷方发生额'}
+  {'source_column': '期末余额', 'target_field': 'closing_balance', 'description': '期末余额'}
+
+eit_annual_main_column_mapping (45 rows) - columns: ['line_number', 'column_name', 'business_name']
+  {'line_number': 1, 'column_name': 'revenue', 'business_name': '营业收入'}
+  {'line_number': 2, 'column_name': 'cost', 'business_name': '营业成本'}
+  {'line_number': 3, 'column_name': 'taxes_surcharges', 'business_name': '税金及附加'}
+  {'line_number': 4, 'column_name': 'selling_expenses', 'business_name': '销售费用'}
+  {'line_number': 5, 'column_name': 'admin_expenses', 'business_name': '管理费用'}
+  {'line_number': 6, 'column_name': 'rd_expenses', 'business_name': '研发费用'}
+  {'line_number': 7, 'column_name': 'financial_expenses', 'business_name': '财务费用'}
+  {'line_number': 8, 'column_name': 'other_gains', 'business_name': '其他收益'}
+  {'line_number': 9, 'column_name': 'investment_income', 'business_name': '投资收益'}
+  {'line_number': 10, 'column_name': 'net_exposure_hedge_gains', 'business_name': '净敞口套期收益'}
+  {'line_number': 11, 'column_name': 'fair_value_change_gains', 'business_name': '公允价值变动收益'}
+  {'line_number': 12, 'column_name': 'credit_impairment_loss', 'business_name': '信用减值损失'}
+  {'line_number': 13, 'column_name': 'asset_impairment_loss', 'business_name': '资产减值损失'}
+  {'line_number': 14, 'column_name': 'asset_disposal_gains', 'business_name': '资产处置收益'}
+  {'line_number': 15, 'column_name': 'operating_profit', 'business_name': '营业利润'}
+  {'line_number': 16, 'column_name': 'non_operating_income', 'business_name': '营业外收入'}
+  {'line_number': 17, 'column_name': 'non_operating_expenses', 'business_name': '营业外支出'}
+  {'line_number': 18, 'column_name': 'total_profit', 'business_name': '利润总额'}
+  {'line_number': 19, 'column_name': 'less_foreign_income', 'business_name': '减：境外所得'}
+  {'line_number': 20, 'column_name': 'add_tax_adjust_increase', 'business_name': '加：纳税调整增加额'}
+  {'line_number': 21, 'column_name': 'less_tax_adjust_decrease', 'business_name': '减：纳税调整减少额'}
+  {'line_number': 22, 'column_name': 'exempt_income_deduction_total', 'business_name': '减：免税、减计收入及加计扣除'}
+  {'line_number': 23, 'column_name': 'add_foreign_tax_offset', 'business_name': '加：境外应税所得抵减境内亏损'}
+  {'line_number': 24, 'column_name': 'adjusted_taxable_income', 'business_name': '纳税调整后所得'}
+  {'line_number': 25, 'column_name': 'less_income_exemption', 'business_name': '减：所得减免'}
+  {'line_number': 26, 'column_name': 'less_losses_carried_forward', 'business_name': '减：弥补以前年度亏损'}
+  {'line_number': 27, 'column_name': 'less_taxable_income_deduction', 'business_name': '减：抵扣应纳税所得额'}
+  {'line_number': 28, 'column_name': 'taxable_income', 'business_name': '应纳税所得额'}
+  {'line_number': 29, 'column_name': 'tax_rate', 'business_name': '税率'}
+  {'line_number': 30, 'column_name': 'tax_payable', 'business_name': '应纳所得税额'}
+  {'line_number': 31, 'column_name': 'tax_credit_total', 'business_name': '减：减免所得税额'}
+  {'line_number': 32, 'column_name': 'less_foreign_tax_credit', 'business_name': '减：抵免所得税额'}
+  {'line_number': 33, 'column_name': 'tax_due', 'business_name': '应纳税额'}
+  {'line_number': 34, 'column_name': 'add_foreign_tax_due', 'business_name': '加：境外所得应纳所得税额'}
+  {'line_number': 35, 'column_name': 'less_foreign_tax_credit_amount', 'business_name': '减：境外所得抵免所得税额'}
+  {'line_number': 36, 'column_name': 'actual_tax_payable', 'business_name': '实际应纳所得税额'}
+  {'line_number': 37, 'column_name': 'less_prepaid_tax', 'business_name': '减：本年累计预缴所得税额'}
+  {'line_number': 38, 'column_name': 'tax_payable_or_refund', 'business_name': '本年应补（退）所得税额'}
+  {'line_number': 39, 'column_name': 'hq_share', 'business_name': '总机构分摊本年应补（退）所得税额'}
+  {'line_number': 40, 'column_name': 'fiscal_central_share', 'business_name': '财政集中分配本年应补（退）所得税额'}
+  {'line_number': 41, 'column_name': 'hq_dept_share', 'business_name': '总机构主体生产经营部门分摊本年应补（退）所得税额'}
+  {'line_number': 42, 'column_name': 'less_ethnic_autonomous_relief', 'business_name': '减：民族自治地区企业所得税地方分享部分'}
+  {'line_number': 43, 'column_name': 'less_audit_adjustment', 'business_name': '减：稽查查补（退）所得税额'}
+  {'line_number': 44, 'column_name': 'less_special_adjustment', 'business_name': '减：特别纳税调整补（退）所得税额'}
+  {'line_number': 45, 'column_name': 'final_tax_payable_or_refund', 'business_name': '本年实际应补（退）所得税额'}
+
+eit_quarter_main_column_mapping (24 rows) - columns: ['line_number', 'column_name', 'business_name']
+  {'line_number': 1, 'column_name': 'revenue', 'business_name': '营业收入'}
+  {'line_number': 2, 'column_name': 'cost', 'business_name': '营业成本'}
+  {'line_number': 3, 'column_name': 'total_profit', 'business_name': '利润总额'}
+  {'line_number': 4, 'column_name': 'add_specific_business_taxable_income', 'business_name': '加：特定业务计算的应纳税所得额'}
+  {'line_number': 5, 'column_name': 'less_non_taxable_income', 'business_name': '减：不征税收入'}
+  {'line_number': 6, 'column_name': 'less_accelerated_depreciation', 'business_name': '减：资产加速折旧、摊销（扣除）调减额'}
+  {'line_number': 7, 'column_name': 'tax_free_income_deduction_total', 'business_name': '减：免税收入、减计收入、加计扣除'}
+  {'line_number': 8, 'column_name': 'income_exemption_total', 'business_name': '减：所得减免'}
+  {'line_number': 9, 'column_name': 'less_losses_carried_forward', 'business_name': '减：弥补以前年度亏损'}
+  {'line_number': 10, 'column_name': 'actual_profit', 'business_name': '实际利润额'}
+  {'line_number': 11, 'column_name': 'tax_rate', 'business_name': '税率'}
+  {'line_number': 12, 'column_name': 'tax_payable', 'business_name': '应纳所得税额'}
+  {'line_number': 13, 'column_name': 'tax_credit_total', 'business_name': '减：减免所得税额'}
+  {'line_number': 14, 'column_name': 'less_prepaid_tax_current_year', 'business_name': '减：本年实际已缴纳所得税额'}
+  {'line_number': 15, 'column_name': 'less_specific_business_prepaid', 'business_name': '减：特定业务预缴（征）所得税额'}
+  {'line_number': 16, 'column_name': 'current_tax_payable_or_refund', 'business_name': '本期应补（退）所得税额'}
+  {'line_number': 17, 'column_name': 'hq_share_total', 'business_name': '总机构本期分摊应补（退）所得税额'}
+  {'line_number': 18, 'column_name': 'hq_share', 'business_name': '总机构分摊应补（退）所得税额'}
+  {'line_number': 19, 'column_name': 'fiscal_central_share', 'business_name': '财政集中分配应补（退）所得税额'}
+  {'line_number': 20, 'column_name': 'hq_business_dept_share', 'business_name': '总机构具有主体生产经营职能的部门分摊所得税额'}
+  {'line_number': 21, 'column_name': 'branch_share_ratio', 'business_name': '分支机构本期分摊比例'}
+  {'line_number': 22, 'column_name': 'branch_share_amount', 'business_name': '分支机构本期分摊应补（退）所得税额'}
+  {'line_number': 23, 'column_name': 'ethnic_autonomous_relief_amount', 'business_name': '民族自治地区企业所得税地方分享部分减免金额'}
+  {'line_number': 24, 'column_name': 'final_tax_payable_or_refund', 'business_name': '实际应补（退）所得税额'}
+
+hr_employee_column_mapping (0 rows) - columns: ['id', 'source_column', 'target_field', 'table_name', 'description']
+
+hr_salary_column_mapping (0 rows) - columns: ['id', 'source_column', 'target_field', 'table_name', 'description']
+
+inv_column_mapping (180 rows) - columns: ['id', 'source_column', 'target_field', 'table_name', 'description']
+  {'id': 1, 'source_column': '序号', 'target_field': 'seq_no', 'table_name': 'inv_spec_purchase', 'description': '行序号'}
+  {'id': 2, 'source_column': '发票代码', 'target_field': 'invoice_code', 'table_name': 'inv_spec_purchase', 'description': '发票代码'}
+  {'id': 3, 'source_column': '发票号码', 'target_field': 'invoice_number', 'table_name': 'inv_spec_purchase', 'description': '发票号码'}
+  {'id': 4, 'source_column': '数电票号码', 'target_field': 'digital_invoice_no', 'table_name': 'inv_spec_purchase', 'description': '数电票号码'}
+  {'id': 5, 'source_column': '销方识别号', 'target_field': 'seller_tax_id', 'table_name': 'inv_spec_purchase', 'description': '销方纳税人识别号'}
+  {'id': 6, 'source_column': '销方名称', 'target_field': 'seller_name', 'table_name': 'inv_spec_purchase', 'description': '销方名称'}
+  {'id': 7, 'source_column': '购方识别号', 'target_field': 'buyer_tax_id', 'table_name': 'inv_spec_purchase', 'description': '购方纳税人识别号'}
+  {'id': 8, 'source_column': '购买方名称', 'target_field': 'buyer_name', 'table_name': 'inv_spec_purchase', 'description': '购买方名称'}
+  {'id': 9, 'source_column': '开票日期', 'target_field': 'invoice_date', 'table_name': 'inv_spec_purchase', 'description': '开票日期'}
+  {'id': 10, 'source_column': '税收分类编码', 'target_field': 'tax_category_code', 'table_name': 'inv_spec_purchase', 'description': '税收分类编码'}
+  {'id': 11, 'source_column': '特定业务类型', 'target_field': 'special_business_type', 'table_name': 'inv_spec_purchase', 'description': '特定业务类型'}
+  {'id': 12, 'source_column': '货物或应税劳务名称', 'target_field': 'goods_name', 'table_name': 'inv_spec_purchase', 'description': '货物或应税劳务名称'}
+  {'id': 13, 'source_column': '规格型号', 'target_field': 'specification', 'table_name': 'inv_spec_purchase', 'description': '规格型号'}
+  {'id': 14, 'source_column': '单位', 'target_field': 'unit', 'table_name': 'inv_spec_purchase', 'description': '单位'}
+  {'id': 15, 'source_column': '数量', 'target_field': 'quantity', 'table_name': 'inv_spec_purchase', 'description': '数量'}
+  {'id': 16, 'source_column': '单价', 'target_field': 'unit_price', 'table_name': 'inv_spec_purchase', 'description': '单价'}
+  {'id': 17, 'source_column': '金额', 'target_field': 'amount', 'table_name': 'inv_spec_purchase', 'description': '不含税金额'}
+  {'id': 18, 'source_column': '税率', 'target_field': 'tax_rate', 'table_name': 'inv_spec_purchase', 'description': '税率'}
+  {'id': 19, 'source_column': '税额', 'target_field': 'tax_amount', 'table_name': 'inv_spec_purchase', 'description': '税额'}
+  {'id': 20, 'source_column': '价税合计', 'target_field': 'total_amount', 'table_name': 'inv_spec_purchase', 'description': '价税合计'}
+  {'id': 21, 'source_column': '发票来源', 'target_field': 'invoice_source', 'table_name': 'inv_spec_purchase', 'description': '发票来源'}
+  {'id': 22, 'source_column': '发票票种', 'target_field': 'invoice_type', 'table_name': 'inv_spec_purchase', 'description': '发票票种'}
+  {'id': 23, 'source_column': '发票状态', 'target_field': 'invoice_status', 'table_name': 'inv_spec_purchase', 'description': '发票状态'}
+  {'id': 24, 'source_column': '是否正数发票', 'target_field': 'is_positive', 'table_name': 'inv_spec_purchase', 'description': '是否正数发票'}
+  {'id': 25, 'source_column': '发票风险等级', 'target_field': 'risk_level', 'table_name': 'inv_spec_purchase', 'description': '发票风险等级'}
+  {'id': 26, 'source_column': '开票人', 'target_field': 'issuer', 'table_name': 'inv_spec_purchase', 'description': '开票人'}
+  {'id': 27, 'source_column': '备注', 'target_field': 'remark', 'table_name': 'inv_spec_purchase', 'description': '备注'}
+  {'id': 28, 'source_column': '发票代码', 'target_field': 'invoice_code', 'table_name': 'inv_spec_sales', 'description': '发票代码'}
+  {'id': 29, 'source_column': '发票号码', 'target_field': 'invoice_number', 'table_name': 'inv_spec_sales', 'description': '发票号码'}
+  {'id': 30, 'source_column': '数电票号码', 'target_field': 'digital_invoice_no', 'table_name': 'inv_spec_sales', 'description': '数电票号码'}
+  {'id': 31, 'source_column': '销方识别号', 'target_field': 'seller_tax_id', 'table_name': 'inv_spec_sales', 'description': '销方纳税人识别号'}
+  {'id': 32, 'source_column': '销方名称', 'target_field': 'seller_name', 'table_name': 'inv_spec_sales', 'description': '销方名称'}
+  {'id': 33, 'source_column': '购方识别号', 'target_field': 'buyer_tax_id', 'table_name': 'inv_spec_sales', 'description': '购方纳税人识别号'}
+  {'id': 34, 'source_column': '购买方名称', 'target_field': 'buyer_name', 'table_name': 'inv_spec_sales', 'description': '购买方名称'}
+  {'id': 35, 'source_column': '开票日期', 'target_field': 'invoice_date', 'table_name': 'inv_spec_sales', 'description': '开票日期'}
+  {'id': 36, 'source_column': '金额', 'target_field': 'amount', 'table_name': 'inv_spec_sales', 'description': '不含税金额'}
+  {'id': 37, 'source_column': '税额', 'target_field': 'tax_amount', 'table_name': 'inv_spec_sales', 'description': '税额'}
+  {'id': 38, 'source_column': '价税合计', 'target_field': 'total_amount', 'table_name': 'inv_spec_sales', 'description': '价税合计'}
+  {'id': 39, 'source_column': '发票来源', 'target_field': 'invoice_source', 'table_name': 'inv_spec_sales', 'description': '发票来源'}
+  {'id': 40, 'source_column': '发票票种', 'target_field': 'invoice_type', 'table_name': 'inv_spec_sales', 'description': '发票票种'}
+  {'id': 41, 'source_column': '发票状态', 'target_field': 'invoice_status', 'table_name': 'inv_spec_sales', 'description': '发票状态'}
+  {'id': 42, 'source_column': '是否正数发票', 'target_field': 'is_positive', 'table_name': 'inv_spec_sales', 'description': '是否正数发票'}
+  {'id': 43, 'source_column': '发票风险等级', 'target_field': 'risk_level', 'table_name': 'inv_spec_sales', 'description': '发票风险等级'}
+  {'id': 44, 'source_column': '开票人', 'target_field': 'issuer', 'table_name': 'inv_spec_sales', 'description': '开票人'}
+  {'id': 45, 'source_column': '备注', 'target_field': 'remark', 'table_name': 'inv_spec_sales', 'description': '备注'}
+  {'id': 46, 'source_column': '序号', 'target_field': 'seq_no', 'table_name': 'inv_spec_purchase', 'description': '行序号'}
+  {'id': 47, 'source_column': '发票代码', 'target_field': 'invoice_code', 'table_name': 'inv_spec_purchase', 'description': '发票代码'}
+  {'id': 48, 'source_column': '发票号码', 'target_field': 'invoice_number', 'table_name': 'inv_spec_purchase', 'description': '发票号码'}
+  {'id': 49, 'source_column': '数电票号码', 'target_field': 'digital_invoice_no', 'table_name': 'inv_spec_purchase', 'description': '数电票号码'}
+  {'id': 50, 'source_column': '销方识别号', 'target_field': 'seller_tax_id', 'table_name': 'inv_spec_purchase', 'description': '销方纳税人识别号'}
+  {'id': 51, 'source_column': '销方名称', 'target_field': 'seller_name', 'table_name': 'inv_spec_purchase', 'description': '销方名称'}
+  {'id': 52, 'source_column': '购方识别号', 'target_field': 'buyer_tax_id', 'table_name': 'inv_spec_purchase', 'description': '购方纳税人识别号'}
+  {'id': 53, 'source_column': '购买方名称', 'target_field': 'buyer_name', 'table_name': 'inv_spec_purchase', 'description': '购买方名称'}
+  {'id': 54, 'source_column': '开票日期', 'target_field': 'invoice_date', 'table_name': 'inv_spec_purchase', 'description': '开票日期'}
+  {'id': 55, 'source_column': '税收分类编码', 'target_field': 'tax_category_code', 'table_name': 'inv_spec_purchase', 'description': '税收分类编码'}
+  {'id': 56, 'source_column': '特定业务类型', 'target_field': 'special_business_type', 'table_name': 'inv_spec_purchase', 'description': '特定业务类型'}
+  {'id': 57, 'source_column': '货物或应税劳务名称', 'target_field': 'goods_name', 'table_name': 'inv_spec_purchase', 'description': '货物或应税劳务名称'}
+  {'id': 58, 'source_column': '规格型号', 'target_field': 'specification', 'table_name': 'inv_spec_purchase', 'description': '规格型号'}
+  {'id': 59, 'source_column': '单位', 'target_field': 'unit', 'table_name': 'inv_spec_purchase', 'description': '单位'}
+  {'id': 60, 'source_column': '数量', 'target_field': 'quantity', 'table_name': 'inv_spec_purchase', 'description': '数量'}
+  {'id': 61, 'source_column': '单价', 'target_field': 'unit_price', 'table_name': 'inv_spec_purchase', 'description': '单价'}
+  {'id': 62, 'source_column': '金额', 'target_field': 'amount', 'table_name': 'inv_spec_purchase', 'description': '不含税金额'}
+  {'id': 63, 'source_column': '税率', 'target_field': 'tax_rate', 'table_name': 'inv_spec_purchase', 'description': '税率'}
+  {'id': 64, 'source_column': '税额', 'target_field': 'tax_amount', 'table_name': 'inv_spec_purchase', 'description': '税额'}
+  {'id': 65, 'source_column': '价税合计', 'target_field': 'total_amount', 'table_name': 'inv_spec_purchase', 'description': '价税合计'}
+  {'id': 66, 'source_column': '发票来源', 'target_field': 'invoice_source', 'table_name': 'inv_spec_purchase', 'description': '发票来源'}
+  {'id': 67, 'source_column': '发票票种', 'target_field': 'invoice_type', 'table_name': 'inv_spec_purchase', 'description': '发票票种'}
+  {'id': 68, 'source_column': '发票状态', 'target_field': 'invoice_status', 'table_name': 'inv_spec_purchase', 'description': '发票状态'}
+  {'id': 69, 'source_column': '是否正数发票', 'target_field': 'is_positive', 'table_name': 'inv_spec_purchase', 'description': '是否正数发票'}
+  {'id': 70, 'source_column': '发票风险等级', 'target_field': 'risk_level', 'table_name': 'inv_spec_purchase', 'description': '发票风险等级'}
+  {'id': 71, 'source_column': '开票人', 'target_field': 'issuer', 'table_name': 'inv_spec_purchase', 'description': '开票人'}
+  {'id': 72, 'source_column': '备注', 'target_field': 'remark', 'table_name': 'inv_spec_purchase', 'description': '备注'}
+  {'id': 73, 'source_column': '发票代码', 'target_field': 'invoice_code', 'table_name': 'inv_spec_sales', 'description': '发票代码'}
+  {'id': 74, 'source_column': '发票号码', 'target_field': 'invoice_number', 'table_name': 'inv_spec_sales', 'description': '发票号码'}
+  {'id': 75, 'source_column': '数电票号码', 'target_field': 'digital_invoice_no', 'table_name': 'inv_spec_sales', 'description': '数电票号码'}
+  {'id': 76, 'source_column': '销方识别号', 'target_field': 'seller_tax_id', 'table_name': 'inv_spec_sales', 'description': '销方纳税人识别号'}
+  {'id': 77, 'source_column': '销方名称', 'target_field': 'seller_name', 'table_name': 'inv_spec_sales', 'description': '销方名称'}
+  {'id': 78, 'source_column': '购方识别号', 'target_field': 'buyer_tax_id', 'table_name': 'inv_spec_sales', 'description': '购方纳税人识别号'}
+  {'id': 79, 'source_column': '购买方名称', 'target_field': 'buyer_name', 'table_name': 'inv_spec_sales', 'description': '购买方名称'}
+  {'id': 80, 'source_column': '开票日期', 'target_field': 'invoice_date', 'table_name': 'inv_spec_sales', 'description': '开票日期'}
+  {'id': 81, 'source_column': '金额', 'target_field': 'amount', 'table_name': 'inv_spec_sales', 'description': '不含税金额'}
+  {'id': 82, 'source_column': '税额', 'target_field': 'tax_amount', 'table_name': 'inv_spec_sales', 'description': '税额'}
+  {'id': 83, 'source_column': '价税合计', 'target_field': 'total_amount', 'table_name': 'inv_spec_sales', 'description': '价税合计'}
+  {'id': 84, 'source_column': '发票来源', 'target_field': 'invoice_source', 'table_name': 'inv_spec_sales', 'description': '发票来源'}
+  {'id': 85, 'source_column': '发票票种', 'target_field': 'invoice_type', 'table_name': 'inv_spec_sales', 'description': '发票票种'}
+  {'id': 86, 'source_column': '发票状态', 'target_field': 'invoice_status', 'table_name': 'inv_spec_sales', 'description': '发票状态'}
+  {'id': 87, 'source_column': '是否正数发票', 'target_field': 'is_positive', 'table_name': 'inv_spec_sales', 'description': '是否正数发票'}
+  {'id': 88, 'source_column': '发票风险等级', 'target_field': 'risk_level', 'table_name': 'inv_spec_sales', 'description': '发票风险等级'}
+  {'id': 89, 'source_column': '开票人', 'target_field': 'issuer', 'table_name': 'inv_spec_sales', 'description': '开票人'}
+  {'id': 90, 'source_column': '备注', 'target_field': 'remark', 'table_name': 'inv_spec_sales', 'description': '备注'}
+  {'id': 91, 'source_column': '序号', 'target_field': 'seq_no', 'table_name': 'inv_spec_purchase', 'description': '行序号'}
+  {'id': 92, 'source_column': '发票代码', 'target_field': 'invoice_code', 'table_name': 'inv_spec_purchase', 'description': '发票代码'}
+  {'id': 93, 'source_column': '发票号码', 'target_field': 'invoice_number', 'table_name': 'inv_spec_purchase', 'description': '发票号码'}
+  {'id': 94, 'source_column': '数电票号码', 'target_field': 'digital_invoice_no', 'table_name': 'inv_spec_purchase', 'description': '数电票号码'}
+  {'id': 95, 'source_column': '销方识别号', 'target_field': 'seller_tax_id', 'table_name': 'inv_spec_purchase', 'description': '销方纳税人识别号'}
+  {'id': 96, 'source_column': '销方名称', 'target_field': 'seller_name', 'table_name': 'inv_spec_purchase', 'description': '销方名称'}
+  {'id': 97, 'source_column': '购方识别号', 'target_field': 'buyer_tax_id', 'table_name': 'inv_spec_purchase', 'description': '购方纳税人识别号'}
+  {'id': 98, 'source_column': '购买方名称', 'target_field': 'buyer_name', 'table_name': 'inv_spec_purchase', 'description': '购买方名称'}
+  {'id': 99, 'source_column': '开票日期', 'target_field': 'invoice_date', 'table_name': 'inv_spec_purchase', 'description': '开票日期'}
+  {'id': 100, 'source_column': '税收分类编码', 'target_field': 'tax_category_code', 'table_name': 'inv_spec_purchase', 'description': '税收分类编码'}
+  {'id': 101, 'source_column': '特定业务类型', 'target_field': 'special_business_type', 'table_name': 'inv_spec_purchase', 'description': '特定业务类型'}
+  {'id': 102, 'source_column': '货物或应税劳务名称', 'target_field': 'goods_name', 'table_name': 'inv_spec_purchase', 'description': '货物或应税劳务名称'}
+  {'id': 103, 'source_column': '规格型号', 'target_field': 'specification', 'table_name': 'inv_spec_purchase', 'description': '规格型号'}
+  {'id': 104, 'source_column': '单位', 'target_field': 'unit', 'table_name': 'inv_spec_purchase', 'description': '单位'}
+  {'id': 105, 'source_column': '数量', 'target_field': 'quantity', 'table_name': 'inv_spec_purchase', 'description': '数量'}
+  {'id': 106, 'source_column': '单价', 'target_field': 'unit_price', 'table_name': 'inv_spec_purchase', 'description': '单价'}
+  {'id': 107, 'source_column': '金额', 'target_field': 'amount', 'table_name': 'inv_spec_purchase', 'description': '不含税金额'}
+  {'id': 108, 'source_column': '税率', 'target_field': 'tax_rate', 'table_name': 'inv_spec_purchase', 'description': '税率'}
+  {'id': 109, 'source_column': '税额', 'target_field': 'tax_amount', 'table_name': 'inv_spec_purchase', 'description': '税额'}
+  {'id': 110, 'source_column': '价税合计', 'target_field': 'total_amount', 'table_name': 'inv_spec_purchase', 'description': '价税合计'}
+  {'id': 111, 'source_column': '发票来源', 'target_field': 'invoice_source', 'table_name': 'inv_spec_purchase', 'description': '发票来源'}
+  {'id': 112, 'source_column': '发票票种', 'target_field': 'invoice_type', 'table_name': 'inv_spec_purchase', 'description': '发票票种'}
+  {'id': 113, 'source_column': '发票状态', 'target_field': 'invoice_status', 'table_name': 'inv_spec_purchase', 'description': '发票状态'}
+  {'id': 114, 'source_column': '是否正数发票', 'target_field': 'is_positive', 'table_name': 'inv_spec_purchase', 'description': '是否正数发票'}
+  {'id': 115, 'source_column': '发票风险等级', 'target_field': 'risk_level', 'table_name': 'inv_spec_purchase', 'description': '发票风险等级'}
+  {'id': 116, 'source_column': '开票人', 'target_field': 'issuer', 'table_name': 'inv_spec_purchase', 'description': '开票人'}
+  {'id': 117, 'source_column': '备注', 'target_field': 'remark', 'table_name': 'inv_spec_purchase', 'description': '备注'}
+  {'id': 118, 'source_column': '发票代码', 'target_field': 'invoice_code', 'table_name': 'inv_spec_sales', 'description': '发票代码'}
+  {'id': 119, 'source_column': '发票号码', 'target_field': 'invoice_number', 'table_name': 'inv_spec_sales', 'description': '发票号码'}
+  {'id': 120, 'source_column': '数电票号码', 'target_field': 'digital_invoice_no', 'table_name': 'inv_spec_sales', 'description': '数电票号码'}
+  {'id': 121, 'source_column': '销方识别号', 'target_field': 'seller_tax_id', 'table_name': 'inv_spec_sales', 'description': '销方纳税人识别号'}
+  {'id': 122, 'source_column': '销方名称', 'target_field': 'seller_name', 'table_name': 'inv_spec_sales', 'description': '销方名称'}
+  {'id': 123, 'source_column': '购方识别号', 'target_field': 'buyer_tax_id', 'table_name': 'inv_spec_sales', 'description': '购方纳税人识别号'}
+  {'id': 124, 'source_column': '购买方名称', 'target_field': 'buyer_name', 'table_name': 'inv_spec_sales', 'description': '购买方名称'}
+  {'id': 125, 'source_column': '开票日期', 'target_field': 'invoice_date', 'table_name': 'inv_spec_sales', 'description': '开票日期'}
+  {'id': 126, 'source_column': '金额', 'target_field': 'amount', 'table_name': 'inv_spec_sales', 'description': '不含税金额'}
+  {'id': 127, 'source_column': '税额', 'target_field': 'tax_amount', 'table_name': 'inv_spec_sales', 'description': '税额'}
+  {'id': 128, 'source_column': '价税合计', 'target_field': 'total_amount', 'table_name': 'inv_spec_sales', 'description': '价税合计'}
+  {'id': 129, 'source_column': '发票来源', 'target_field': 'invoice_source', 'table_name': 'inv_spec_sales', 'description': '发票来源'}
+  {'id': 130, 'source_column': '发票票种', 'target_field': 'invoice_type', 'table_name': 'inv_spec_sales', 'description': '发票票种'}
+  {'id': 131, 'source_column': '发票状态', 'target_field': 'invoice_status', 'table_name': 'inv_spec_sales', 'description': '发票状态'}
+  {'id': 132, 'source_column': '是否正数发票', 'target_field': 'is_positive', 'table_name': 'inv_spec_sales', 'description': '是否正数发票'}
+  {'id': 133, 'source_column': '发票风险等级', 'target_field': 'risk_level', 'table_name': 'inv_spec_sales', 'description': '发票风险等级'}
+  {'id': 134, 'source_column': '开票人', 'target_field': 'issuer', 'table_name': 'inv_spec_sales', 'description': '开票人'}
+  {'id': 135, 'source_column': '备注', 'target_field': 'remark', 'table_name': 'inv_spec_sales', 'description': '备注'}
+  {'id': 136, 'source_column': '序号', 'target_field': 'seq_no', 'table_name': 'inv_spec_purchase', 'description': '行序号'}
+  {'id': 137, 'source_column': '发票代码', 'target_field': 'invoice_code', 'table_name': 'inv_spec_purchase', 'description': '发票代码'}
+  {'id': 138, 'source_column': '发票号码', 'target_field': 'invoice_number', 'table_name': 'inv_spec_purchase', 'description': '发票号码'}
+  {'id': 139, 'source_column': '数电票号码', 'target_field': 'digital_invoice_no', 'table_name': 'inv_spec_purchase', 'description': '数电票号码'}
+  {'id': 140, 'source_column': '销方识别号', 'target_field': 'seller_tax_id', 'table_name': 'inv_spec_purchase', 'description': '销方纳税人识别号'}
+  {'id': 141, 'source_column': '销方名称', 'target_field': 'seller_name', 'table_name': 'inv_spec_purchase', 'description': '销方名称'}
+  {'id': 142, 'source_column': '购方识别号', 'target_field': 'buyer_tax_id', 'table_name': 'inv_spec_purchase', 'description': '购方纳税人识别号'}
+  {'id': 143, 'source_column': '购买方名称', 'target_field': 'buyer_name', 'table_name': 'inv_spec_purchase', 'description': '购买方名称'}
+  {'id': 144, 'source_column': '开票日期', 'target_field': 'invoice_date', 'table_name': 'inv_spec_purchase', 'description': '开票日期'}
+  {'id': 145, 'source_column': '税收分类编码', 'target_field': 'tax_category_code', 'table_name': 'inv_spec_purchase', 'description': '税收分类编码'}
+  {'id': 146, 'source_column': '特定业务类型', 'target_field': 'special_business_type', 'table_name': 'inv_spec_purchase', 'description': '特定业务类型'}
+  {'id': 147, 'source_column': '货物或应税劳务名称', 'target_field': 'goods_name', 'table_name': 'inv_spec_purchase', 'description': '货物或应税劳务名称'}
+  {'id': 148, 'source_column': '规格型号', 'target_field': 'specification', 'table_name': 'inv_spec_purchase', 'description': '规格型号'}
+  {'id': 149, 'source_column': '单位', 'target_field': 'unit', 'table_name': 'inv_spec_purchase', 'description': '单位'}
+  {'id': 150, 'source_column': '数量', 'target_field': 'quantity', 'table_name': 'inv_spec_purchase', 'description': '数量'}
+  {'id': 151, 'source_column': '单价', 'target_field': 'unit_price', 'table_name': 'inv_spec_purchase', 'description': '单价'}
+  {'id': 152, 'source_column': '金额', 'target_field': 'amount', 'table_name': 'inv_spec_purchase', 'description': '不含税金额'}
+  {'id': 153, 'source_column': '税率', 'target_field': 'tax_rate', 'table_name': 'inv_spec_purchase', 'description': '税率'}
+  {'id': 154, 'source_column': '税额', 'target_field': 'tax_amount', 'table_name': 'inv_spec_purchase', 'description': '税额'}
+  {'id': 155, 'source_column': '价税合计', 'target_field': 'total_amount', 'table_name': 'inv_spec_purchase', 'description': '价税合计'}
+  {'id': 156, 'source_column': '发票来源', 'target_field': 'invoice_source', 'table_name': 'inv_spec_purchase', 'description': '发票来源'}
+  {'id': 157, 'source_column': '发票票种', 'target_field': 'invoice_type', 'table_name': 'inv_spec_purchase', 'description': '发票票种'}
+  {'id': 158, 'source_column': '发票状态', 'target_field': 'invoice_status', 'table_name': 'inv_spec_purchase', 'description': '发票状态'}
+  {'id': 159, 'source_column': '是否正数发票', 'target_field': 'is_positive', 'table_name': 'inv_spec_purchase', 'description': '是否正数发票'}
+  {'id': 160, 'source_column': '发票风险等级', 'target_field': 'risk_level', 'table_name': 'inv_spec_purchase', 'description': '发票风险等级'}
+  {'id': 161, 'source_column': '开票人', 'target_field': 'issuer', 'table_name': 'inv_spec_purchase', 'description': '开票人'}
+  {'id': 162, 'source_column': '备注', 'target_field': 'remark', 'table_name': 'inv_spec_purchase', 'description': '备注'}
+  {'id': 163, 'source_column': '发票代码', 'target_field': 'invoice_code', 'table_name': 'inv_spec_sales', 'description': '发票代码'}
+  {'id': 164, 'source_column': '发票号码', 'target_field': 'invoice_number', 'table_name': 'inv_spec_sales', 'description': '发票号码'}
+  {'id': 165, 'source_column': '数电票号码', 'target_field': 'digital_invoice_no', 'table_name': 'inv_spec_sales', 'description': '数电票号码'}
+  {'id': 166, 'source_column': '销方识别号', 'target_field': 'seller_tax_id', 'table_name': 'inv_spec_sales', 'description': '销方纳税人识别号'}
+  {'id': 167, 'source_column': '销方名称', 'target_field': 'seller_name', 'table_name': 'inv_spec_sales', 'description': '销方名称'}
+  {'id': 168, 'source_column': '购方识别号', 'target_field': 'buyer_tax_id', 'table_name': 'inv_spec_sales', 'description': '购方纳税人识别号'}
+  {'id': 169, 'source_column': '购买方名称', 'target_field': 'buyer_name', 'table_name': 'inv_spec_sales', 'description': '购买方名称'}
+  {'id': 170, 'source_column': '开票日期', 'target_field': 'invoice_date', 'table_name': 'inv_spec_sales', 'description': '开票日期'}
+  {'id': 171, 'source_column': '金额', 'target_field': 'amount', 'table_name': 'inv_spec_sales', 'description': '不含税金额'}
+  {'id': 172, 'source_column': '税额', 'target_field': 'tax_amount', 'table_name': 'inv_spec_sales', 'description': '税额'}
+  {'id': 173, 'source_column': '价税合计', 'target_field': 'total_amount', 'table_name': 'inv_spec_sales', 'description': '价税合计'}
+  {'id': 174, 'source_column': '发票来源', 'target_field': 'invoice_source', 'table_name': 'inv_spec_sales', 'description': '发票来源'}
+  {'id': 175, 'source_column': '发票票种', 'target_field': 'invoice_type', 'table_name': 'inv_spec_sales', 'description': '发票票种'}
+  {'id': 176, 'source_column': '发票状态', 'target_field': 'invoice_status', 'table_name': 'inv_spec_sales', 'description': '发票状态'}
+  {'id': 177, 'source_column': '是否正数发票', 'target_field': 'is_positive', 'table_name': 'inv_spec_sales', 'description': '是否正数发票'}
+  {'id': 178, 'source_column': '发票风险等级', 'target_field': 'risk_level', 'table_name': 'inv_spec_sales', 'description': '发票风险等级'}
+  {'id': 179, 'source_column': '开票人', 'target_field': 'issuer', 'table_name': 'inv_spec_sales', 'description': '开票人'}
+  {'id': 180, 'source_column': '备注', 'target_field': 'remark', 'table_name': 'inv_spec_sales', 'description': '备注'}
+
+vat_general_column_mapping (41 rows) - columns: ['line_number', 'column_name', 'business_name']
+  {'line_number': 1, 'column_name': 'sales_taxable_rate', 'business_name': '按适用税率计税销售额'}
+  {'line_number': 2, 'column_name': 'sales_goods', 'business_name': '应税货物销售额'}
+  {'line_number': 3, 'column_name': 'sales_services', 'business_name': '应税劳务销售额'}
+  {'line_number': 4, 'column_name': 'sales_adjustment_check', 'business_name': '纳税检查调整的销售额'}
+  {'line_number': 5, 'column_name': 'sales_simple_method', 'business_name': '按简易办法计税销售额'}
+  {'line_number': 6, 'column_name': 'sales_simple_adjust_check', 'business_name': '简易办法纳税检查调整'}
+  {'line_number': 7, 'column_name': 'sales_export_credit_refund', 'business_name': '免、抵、退办法出口销售额'}
+  {'line_number': 8, 'column_name': 'sales_tax_free', 'business_name': '免税销售额'}
+  {'line_number': 9, 'column_name': 'sales_tax_free_goods', 'business_name': '免税货物销售额'}
+  {'line_number': 10, 'column_name': 'sales_tax_free_services', 'business_name': '免税劳务销售额'}
+  {'line_number': 11, 'column_name': 'output_tax', 'business_name': '销项税额'}
+  {'line_number': 12, 'column_name': 'input_tax', 'business_name': '进项税额'}
+  {'line_number': 13, 'column_name': 'last_period_credit', 'business_name': '上期留抵税额'}
+  {'line_number': 14, 'column_name': 'transfer_out', 'business_name': '进项税额转出'}
+  {'line_number': 15, 'column_name': 'export_refund', 'business_name': '免、抵、退应退税额'}
+  {'line_number': 16, 'column_name': 'tax_check_supplement', 'business_name': '按适用税率计算的纳税检查应补缴税额'}
+  {'line_number': 17, 'column_name': 'deductible_total', 'business_name': '应抵扣税额合计'}
+  {'line_number': 18, 'column_name': 'actual_deduct', 'business_name': '实际抵扣税额'}
+  {'line_number': 19, 'column_name': 'tax_payable', 'business_name': '应纳税额'}
+  {'line_number': 20, 'column_name': 'end_credit', 'business_name': '期末留抵税额'}
+  {'line_number': 21, 'column_name': 'simple_tax', 'business_name': '简易计税办法计算的应纳税额'}
+  {'line_number': 22, 'column_name': 'simple_tax_check_supplement', 'business_name': '按简易计税办法计算的纳税检查应补缴税额'}
+  {'line_number': 23, 'column_name': 'tax_reduction', 'business_name': '应纳税额减征额'}
+  {'line_number': 24, 'column_name': 'total_tax_payable', 'business_name': '应纳税额合计'}
+  {'line_number': 25, 'column_name': 'unpaid_begin', 'business_name': '期初未缴税额'}
+  {'line_number': 26, 'column_name': 'export_receipt_tax', 'business_name': '实收出口开具专用缴款书退税额'}
+  {'line_number': 27, 'column_name': 'paid_current', 'business_name': '本期已缴税额'}
+  {'line_number': 28, 'column_name': 'prepaid_installment', 'business_name': '分次预缴税额'}
+  {'line_number': 29, 'column_name': 'prepaid_export_receipt', 'business_name': '出口开具专用缴款书预缴税额'}
+  {'line_number': 30, 'column_name': 'paid_last_period', 'business_name': '本期缴纳上期应纳税额'}
+  {'line_number': 31, 'column_name': 'paid_arrears', 'business_name': '本期缴纳欠缴税额'}
+  {'line_number': 32, 'column_name': 'unpaid_end', 'business_name': '期末未缴税额'}
+  {'line_number': 33, 'column_name': 'arrears', 'business_name': '欠缴税额'}
+  {'line_number': 34, 'column_name': 'supplement_refund', 'business_name': '本期应补退税额'}
+  {'line_number': 35, 'column_name': 'immediate_refund', 'business_name': '即征即退实际退税额'}
+  {'line_number': 36, 'column_name': 'unpaid_check_begin', 'business_name': '期初未缴查补税额'}
+  {'line_number': 37, 'column_name': 'paid_check_current', 'business_name': '本期入库查补税额'}
+  {'line_number': 38, 'column_name': 'unpaid_check_end', 'business_name': '期末未缴查补税额'}
+  {'line_number': 39, 'column_name': 'city_maintenance_tax', 'business_name': '城市维护建设税本期应补（退）税额'}
+  {'line_number': 40, 'column_name': 'education_surcharge', 'business_name': '教育费附加本期应补（退）费额'}
+  {'line_number': 41, 'column_name': 'local_education_surcharge', 'business_name': '地方教育附加本期应补（退）费额'}
+
+vat_small_column_mapping (25 rows) - columns: ['line_number', 'column_name', 'business_name']
+  {'line_number': 1, 'column_name': 'sales_3percent', 'business_name': '应征增值税不含税销售额（3%征收率）'}
+  {'line_number': 2, 'column_name': 'sales_3percent_invoice_spec', 'business_name': '增值税专用发票不含税销售额'}
+  {'line_number': 3, 'column_name': 'sales_3percent_invoice_other', 'business_name': '其他增值税发票不含税销售额'}
+  {'line_number': 4, 'column_name': 'sales_5percent', 'business_name': '应征增值税不含税销售额（5%征收率）'}
+  {'line_number': 5, 'column_name': 'sales_5percent_invoice_spec', 'business_name': '增值税专用发票不含税销售额（5%征收率）'}
+  {'line_number': 6, 'column_name': 'sales_5percent_invoice_other', 'business_name': '其他增值税发票不含税销售额（5%征收率）'}
+  {'line_number': 7, 'column_name': 'sales_used_assets', 'business_name': '销售使用过的固定资产不含税销售额'}
+  {'line_number': 8, 'column_name': 'sales_used_assets_invoice_other', 'business_name': '其中其他增值税发票不含税销售额'}
+  {'line_number': 9, 'column_name': 'sales_tax_free', 'business_name': '免税销售额'}
+  {'line_number': 10, 'column_name': 'sales_tax_free_micro', 'business_name': '小微企业免税销售额'}
+  {'line_number': 11, 'column_name': 'sales_tax_free_threshold', 'business_name': '未达起征点销售额'}
+  {'line_number': 12, 'column_name': 'sales_tax_free_other', 'business_name': '其他免税销售额'}
+  {'line_number': 13, 'column_name': 'sales_export_tax_free', 'business_name': '出口免税销售额'}
+  {'line_number': 14, 'column_name': 'sales_export_tax_free_invoice_other', 'business_name': '其中其他增值税发票不含税销售额'}
+  {'line_number': 15, 'column_name': 'tax_due_current', 'business_name': '本期应纳税额'}
+  {'line_number': 16, 'column_name': 'tax_due_reduction', 'business_name': '本期应纳税额减征额'}
+  {'line_number': 17, 'column_name': 'tax_free_amount', 'business_name': '本期免税额'}
+  {'line_number': 18, 'column_name': 'tax_free_micro', 'business_name': '其中小微企业免税额'}
+  {'line_number': 19, 'column_name': 'tax_free_threshold', 'business_name': '未达起征点免税额'}
+  {'line_number': 20, 'column_name': 'tax_due_total', 'business_name': '应纳税额合计'}
+  {'line_number': 21, 'column_name': 'tax_prepaid', 'business_name': '本期预缴税额'}
+  {'line_number': 22, 'column_name': 'tax_supplement_refund', 'business_name': '本期应补（退）税额'}
+  {'line_number': 23, 'column_name': 'city_maintenance_tax', 'business_name': '城市维护建设税本期应补（退）税额'}
+  {'line_number': 24, 'column_name': 'education_surcharge', 'business_name': '教育费附加本期应补（退）费额'}
+  {'line_number': 25, 'column_name': 'local_education_surcharge', 'business_name': '地方教育附加本期应补（退）费额'}
+
+
+=== View Columns ===
+
+vw_profit_eas: ['taxpayer_id', 'taxpayer_name', 'period_year', 'period_month', 'time_range', 'accounting_standard_name', 'revision_no', 'submitted_at', 'etl_batch_id', 'source_doc_id', 'source_unit', 'etl_confidence', 'operating_revenue', 'operating_cost', 'taxes_and_surcharges', 'selling_expense', 'administrative_expense', 'rd_expense', 'financial_expense', 'interest_expense', 'interest_income', 'other_gains', 'investment_income', 'investment_income_associates', 'amortized_cost_termination_income', 'net_exposure_hedge_income', 'fair_value_change_income', 'credit_impairment_loss', 'asset_impairment_loss', 'asset_disposal_gains', 'operating_profit', 'non_operating_income', 'non_operating_expense', 'total_profit', 'income_tax_expense', 'net_profit', 'continued_ops_net_profit', 'discontinued_ops_net_profit', 'other_comprehensive_income_net', 'oci_not_reclassifiable', 'oci_reclassifiable', 'comprehensive_income_total', 'eps_basic', 'eps_diluted', 'oci_remeasurement_pension', 'oci_equity_method_nonreclassifiable', 'oci_equity_investment_fv_change', 'oci_credit_risk_change', 'oci_equity_method_reclassifiable', 'oci_debt_investment_fv_change', 'oci_reclassify_to_pnl', 'oci_debt_impairment', 'oci_cash_flow_hedge', 'oci_foreign_currency_translation']
+
+vw_profit_sas: ['taxpayer_id', 'taxpayer_name', 'period_year', 'period_month', 'time_range', 'accounting_standard_name', 'revision_no', 'submitted_at', 'etl_batch_id', 'source_doc_id', 'source_unit', 'etl_confidence', 'operating_revenue', 'operating_cost', 'taxes_and_surcharges', 'consumption_tax', 'business_tax', 'city_maintenance_tax', 'resource_tax', 'land_appreciation_tax', 'property_related_taxes', 'education_surcharge', 'selling_expense', 'goods_repair_expense', 'advertising_expense', 'administrative_expense', 'organization_expense', 'business_entertainment_expense', 'research_expense', 'financial_expense', 'interest_expense_net', 'investment_income', 'operating_profit', 'non_operating_income', 'government_grant', 'non_operating_expense', 'bad_debt_loss', 'long_term_bond_loss', 'long_term_equity_loss', 'force_majeure_loss', 'tax_late_payment', 'total_profit', 'income_tax_expense', 'net_profit']
+
+vw_balance_sheet_eas: ['taxpayer_id', 'taxpayer_name', 'accounting_standard', 'period_year', 'period_month', 'revision_no', 'submitted_at', 'etl_batch_id', 'source_doc_id', 'source_unit', 'etl_confidence', 'cash_begin', 'cash_end', 'trading_financial_assets_begin', 'trading_financial_assets_end', 'derivative_financial_assets_begin', 'derivative_financial_assets_end', 'notes_receivable_begin', 'notes_receivable_end', 'accounts_receivable_begin', 'accounts_receivable_end', 'accounts_receivable_financing_begin', 'accounts_receivable_financing_end', 'prepayments_begin', 'prepayments_end', 'other_receivables_begin', 'other_receivables_end', 'inventory_begin', 'inventory_end', 'contract_assets_begin', 'contract_assets_end', 'held_for_sale_assets_begin', 'held_for_sale_assets_end', 'current_portion_non_current_assets_begin', 'current_portion_non_current_assets_end', 'other_current_assets_begin', 'other_current_assets_end', 'current_assets_begin', 'current_assets_end', 'debt_investments_begin', 'debt_investments_end', 'other_debt_investments_begin', 'other_debt_investments_end', 'long_term_receivables_begin', 'long_term_receivables_end', 'long_term_equity_investments_begin', 'long_term_equity_investments_end', 'other_equity_instruments_invest_begin', 'other_equity_instruments_invest_end', 'other_non_current_financial_assets_begin', 'other_non_current_financial_assets_end', 'investment_property_begin', 'investment_property_end', 'fixed_assets_begin', 'fixed_assets_end', 'construction_in_progress_begin', 'construction_in_progress_end', 'productive_biological_assets_begin', 'productive_biological_assets_end', 'oil_and_gas_assets_begin', 'oil_and_gas_assets_end', 'right_of_use_assets_begin', 'right_of_use_assets_end', 'intangible_assets_begin', 'intangible_assets_end', 'development_expenditure_begin', 'development_expenditure_end', 'goodwill_begin', 'goodwill_end', 'long_term_deferred_expenses_begin', 'long_term_deferred_expenses_end', 'deferred_tax_assets_begin', 'deferred_tax_assets_end', 'other_non_current_assets_begin', 'other_non_current_assets_end', 'non_current_assets_begin', 'non_current_assets_end', 'assets_begin', 'assets_end', 'short_term_loans_begin', 'short_term_loans_end', 'trading_financial_liabilities_begin', 'trading_financial_liabilities_end', 'derivative_financial_liabilities_begin', 'derivative_financial_liabilities_end', 'notes_payable_begin', 'notes_payable_end', 'accounts_payable_begin', 'accounts_payable_end', 'advances_from_customers_begin', 'advances_from_customers_end', 'contract_liabilities_begin', 'contract_liabilities_end', 'employee_benefits_payable_begin', 'employee_benefits_payable_end', 'taxes_payable_begin', 'taxes_payable_end', 'other_payables_begin', 'other_payables_end', 'held_for_sale_liabilities_begin', 'held_for_sale_liabilities_end', 'current_portion_non_current_liabilities_begin', 'current_portion_non_current_liabilities_end', 'other_current_liabilities_begin', 'other_current_liabilities_end', 'current_liabilities_begin', 'current_liabilities_end', 'long_term_loans_begin', 'long_term_loans_end', 'bonds_payable_begin', 'bonds_payable_end', 'lease_liabilities_begin', 'lease_liabilities_end', 'long_term_payables_begin', 'long_term_payables_end', 'provisions_begin', 'provisions_end', 'deferred_income_begin', 'deferred_income_end', 'deferred_tax_liabilities_begin', 'deferred_tax_liabilities_end', 'other_non_current_liabilities_begin', 'other_non_current_liabilities_end', 'non_current_liabilities_begin', 'non_current_liabilities_end', 'liabilities_begin', 'liabilities_end', 'share_capital_begin', 'share_capital_end', 'capital_reserve_begin', 'capital_reserve_end', 'treasury_stock_begin', 'treasury_stock_end', 'other_comprehensive_income_begin', 'other_comprehensive_income_end', 'special_reserve_begin', 'special_reserve_end', 'surplus_reserve_begin', 'surplus_reserve_end', 'retained_earnings_begin', 'retained_earnings_end', 'equity_begin', 'equity_end', 'liabilities_and_equity_begin', 'liabilities_and_equity_end']
+
+vw_balance_sheet_sas: ['taxpayer_id', 'taxpayer_name', 'accounting_standard', 'period_year', 'period_month', 'revision_no', 'submitted_at', 'etl_batch_id', 'source_doc_id', 'source_unit', 'etl_confidence', 'cash_begin', 'cash_end', 'short_term_investments_begin', 'short_term_investments_end', 'notes_receivable_begin', 'notes_receivable_end', 'accounts_receivable_begin', 'accounts_receivable_end', 'prepayments_begin', 'prepayments_end', 'dividends_receivable_begin', 'dividends_receivable_end', 'interest_receivable_begin', 'interest_receivable_end', 'other_receivables_begin', 'other_receivables_end', 'inventory_begin', 'inventory_end', 'raw_materials_begin', 'raw_materials_end', 'work_in_process_begin', 'work_in_process_end', 'finished_goods_begin', 'finished_goods_end', 'turnover_materials_begin', 'turnover_materials_end', 'other_current_assets_begin', 'other_current_assets_end', 'current_assets_begin', 'current_assets_end', 'long_term_bond_investments_begin', 'long_term_bond_investments_end', 'long_term_equity_investments_begin', 'long_term_equity_investments_end', 'fixed_assets_original_begin', 'fixed_assets_original_end', 'accumulated_depreciation_begin', 'accumulated_depreciation_end', 'fixed_assets_net_begin', 'fixed_assets_net_end', 'construction_in_progress_begin', 'construction_in_progress_end', 'engineering_materials_begin', 'engineering_materials_end', 'fixed_assets_liquidation_begin', 'fixed_assets_liquidation_end', 'productive_biological_assets_begin', 'productive_biological_assets_end', 'intangible_assets_begin', 'intangible_assets_end', 'development_expenditure_begin', 'development_expenditure_end', 'long_term_deferred_expenses_begin', 'long_term_deferred_expenses_end', 'other_non_current_assets_begin', 'other_non_current_assets_end', 'non_current_assets_begin', 'non_current_assets_end', 'assets_begin', 'assets_end', 'short_term_loans_begin', 'short_term_loans_end', 'notes_payable_begin', 'notes_payable_end', 'accounts_payable_begin', 'accounts_payable_end', 'advances_from_customers_begin', 'advances_from_customers_end', 'employee_benefits_payable_begin', 'employee_benefits_payable_end', 'taxes_payable_begin', 'taxes_payable_end', 'interest_payable_begin', 'interest_payable_end', 'profit_payable_begin', 'profit_payable_end', 'other_payables_begin', 'other_payables_end', 'other_current_liabilities_begin', 'other_current_liabilities_end', 'current_liabilities_begin', 'current_liabilities_end', 'long_term_loans_begin', 'long_term_loans_end', 'long_term_payables_begin', 'long_term_payables_end', 'deferred_income_begin', 'deferred_income_end', 'other_non_current_liabilities_begin', 'other_non_current_liabilities_end', 'non_current_liabilities_begin', 'non_current_liabilities_end', 'liabilities_begin', 'liabilities_end', 'share_capital_begin', 'share_capital_end', 'capital_reserve_begin', 'capital_reserve_end', 'surplus_reserve_begin', 'surplus_reserve_end', 'retained_earnings_begin', 'retained_earnings_end', 'equity_begin', 'equity_end', 'liabilities_and_equity_begin', 'liabilities_and_equity_end']
+
+vw_cash_flow_eas: ['taxpayer_id', 'taxpayer_name', 'period_year', 'period_month', 'time_range', 'taxpayer_type', 'accounting_standard', 'revision_no', 'submitted_at', 'etl_batch_id', 'source_doc_id', 'source_unit', 'etl_confidence', 'operating_inflow_sales', 'operating_inflow_tax_refund', 'operating_inflow_other', 'operating_inflow_subtotal', 'operating_outflow_purchase', 'operating_outflow_labor', 'operating_outflow_tax', 'operating_outflow_other', 'operating_outflow_subtotal', 'operating_net_cash', 'investing_inflow_sale_investment', 'investing_inflow_returns', 'investing_inflow_disposal_assets', 'investing_inflow_disposal_subsidiary', 'investing_inflow_other', 'investing_inflow_subtotal', 'investing_outflow_purchase_assets', 'investing_outflow_purchase_investment', 'investing_outflow_acquire_subsidiary', 'investing_outflow_other', 'investing_outflow_subtotal', 'investing_net_cash', 'financing_inflow_capital', 'financing_inflow_borrowing', 'financing_inflow_other', 'financing_inflow_subtotal', 'financing_outflow_debt_repayment', 'financing_outflow_dividend_interest', 'financing_outflow_other', 'financing_outflow_subtotal', 'financing_net_cash', 'fx_impact', 'net_increase_cash', 'beginning_cash', 'ending_cash']
+
+vw_cash_flow_sas: ['taxpayer_id', 'taxpayer_name', 'period_year', 'period_month', 'time_range', 'taxpayer_type', 'accounting_standard', 'revision_no', 'submitted_at', 'etl_batch_id', 'source_doc_id', 'source_unit', 'etl_confidence', 'operating_receipts_sales', 'operating_receipts_other', 'operating_payments_purchase', 'operating_payments_staff', 'operating_payments_tax', 'operating_payments_other', 'operating_net_cash', 'investing_receipts_disposal_investment', 'investing_receipts_returns', 'investing_receipts_disposal_assets', 'investing_payments_purchase_investment', 'investing_payments_purchase_assets', 'investing_net_cash', 'financing_receipts_borrowing', 'financing_receipts_capital', 'financing_payments_debt_principal', 'financing_payments_debt_interest', 'financing_payments_dividend', 'financing_net_cash', 'net_increase_cash', 'beginning_cash', 'ending_cash']
+
+vw_vat_return_general: ['taxpayer_id', 'taxpayer_name', 'period_year', 'period_month', 'item_type', 'time_range', 'taxpayer_type', 'revision_no', 'submitted_at', 'etl_batch_id', 'source_doc_id', 'source_unit', 'etl_confidence', 'sales_taxable_rate', 'sales_goods', 'sales_services', 'sales_adjustment_check', 'sales_simple_method', 'sales_simple_adjust_check', 'sales_export_credit_refund', 'sales_tax_free', 'sales_tax_free_goods', 'sales_tax_free_services', 'output_tax', 'input_tax', 'last_period_credit', 'transfer_out', 'export_refund', 'tax_check_supplement', 'deductible_total', 'actual_deduct', 'tax_payable', 'end_credit', 'simple_tax', 'simple_tax_check_supplement', 'tax_reduction', 'total_tax_payable', 'unpaid_begin', 'export_receipt_tax', 'paid_current', 'prepaid_installment', 'prepaid_export_receipt', 'paid_last_period', 'paid_arrears', 'unpaid_end', 'arrears', 'supplement_refund', 'immediate_refund', 'unpaid_check_begin', 'paid_check_current', 'unpaid_check_end', 'city_maintenance_tax', 'education_surcharge', 'local_education_surcharge']
+
+vw_vat_return_small: ['taxpayer_id', 'taxpayer_name', 'period_year', 'period_month', 'item_type', 'time_range', 'taxpayer_type', 'revision_no', 'submitted_at', 'etl_batch_id', 'source_doc_id', 'source_unit', 'etl_confidence', 'sales_3percent', 'sales_3percent_invoice_spec', 'sales_3percent_invoice_other', 'sales_5percent', 'sales_5percent_invoice_spec', 'sales_5percent_invoice_other', 'sales_used_assets', 'sales_used_assets_invoice_other', 'sales_tax_free', 'sales_tax_free_micro', 'sales_tax_free_threshold', 'sales_tax_free_other', 'sales_export_tax_free', 'sales_export_tax_free_invoice_other', 'tax_due_current', 'tax_due_reduction', 'tax_free_amount', 'tax_free_micro', 'tax_free_threshold', 'tax_due_total', 'tax_prepaid', 'tax_supplement_refund', 'city_maintenance_tax', 'education_surcharge', 'local_education_surcharge']
+
+vw_eit_annual_main: ['filing_id', 'taxpayer_id', 'taxpayer_name', 'taxpayer_type', 'period_year', 'revision_no', 'submitted_at', 'etl_batch_id', 'source_doc_id', 'etl_confidence', 'revenue', 'cost', 'taxes_surcharges', 'selling_expenses', 'admin_expenses', 'rd_expenses', 'financial_expenses', 'other_gains', 'investment_income', 'net_exposure_hedge_gains', 'fair_value_change_gains', 'credit_impairment_loss', 'asset_impairment_loss', 'asset_disposal_gains', 'operating_profit', 'non_operating_income', 'non_operating_expenses', 'total_profit', 'less_foreign_income', 'add_tax_adjust_increase', 'less_tax_adjust_decrease', 'exempt_income_deduction_total', 'add_foreign_tax_offset', 'adjusted_taxable_income', 'less_income_exemption', 'less_losses_carried_forward', 'less_taxable_income_deduction', 'taxable_income', 'tax_rate', 'tax_payable', 'tax_credit_total', 'less_foreign_tax_credit', 'tax_due', 'add_foreign_tax_due', 'less_foreign_tax_credit_amount', 'actual_tax_payable', 'less_prepaid_tax', 'tax_payable_or_refund', 'hq_share', 'fiscal_central_share', 'hq_dept_share', 'less_ethnic_autonomous_relief', 'less_audit_adjustment', 'less_special_adjustment', 'final_tax_payable_or_refund']
+
+vw_eit_quarter_main: ['filing_id', 'taxpayer_id', 'taxpayer_name', 'taxpayer_type', 'period_year', 'period_quarter', 'revision_no', 'submitted_at', 'etl_batch_id', 'source_doc_id', 'etl_confidence', 'employee_quarter_avg', 'asset_quarter_avg', 'restricted_or_prohibited_industry', 'small_micro_enterprise', 'revenue', 'cost', 'total_profit', 'add_specific_business_taxable_income', 'less_non_taxable_income', 'less_accelerated_depreciation', 'tax_free_income_deduction_total', 'income_exemption_total', 'less_losses_carried_forward', 'actual_profit', 'tax_rate', 'tax_payable', 'tax_credit_total', 'less_prepaid_tax_current_year', 'less_specific_business_prepaid', 'current_tax_payable_or_refund', 'hq_share_total', 'hq_share', 'fiscal_central_share', 'hq_business_dept_share', 'branch_share_ratio', 'branch_share_amount', 'ethnic_autonomous_relief_amount', 'final_tax_payable_or_refund']
+
+vw_account_balance: ['taxpayer_id', 'taxpayer_name', 'accounting_standard', 'period_year', 'period_month', 'account_code', 'account_name', 'level', 'category', 'balance_direction', 'is_gaap', 'is_small', 'revision_no', 'opening_balance', 'debit_amount', 'credit_amount', 'closing_balance', 'source_unit']
+
+vw_inv_spec_purchase: ['taxpayer_id', 'period_year', 'period_month', 'invoice_format', 'invoice_pk', 'line_no', 'invoice_code', 'invoice_number', 'digital_invoice_no', 'seller_tax_id', 'seller_name', 'buyer_tax_id', 'buyer_name', 'invoice_date', 'tax_category_code', 'special_business_type', 'goods_name', 'specification', 'unit', 'quantity', 'unit_price', 'amount', 'tax_rate', 'tax_amount', 'total_amount', 'invoice_source', 'invoice_type', 'invoice_status', 'is_positive', 'risk_level', 'issuer', 'remark', 'submitted_at', 'etl_batch_id', 'taxpayer_name', 'taxpayer_type']
+
+vw_financial_metrics: ['taxpayer_id', 'taxpayer_name', 'taxpayer_type', 'accounting_standard', 'period_year', 'period_month', 'period_type', 'metric_category', 'metric_code', 'metric_name', 'metric_value', 'metric_unit', 'evaluation_level', 'calculated_at']
+
+nl2sql_semantic_mapping: no such table: nl2sql_semantic_mapping
+
+
+=== Other potentially useful tables ===
+  account_balance_column_mapping (8 rows) - columns: ['source_column', 'target_field', 'description']
+  account_synonyms (251 rows) - columns: ['id', 'phrase', 'account_code', 'account_name', 'priority', 'applicable_standards']
+  eit_annual_main_column_mapping (45 rows) - columns: ['line_number', 'column_name', 'business_name']
+  eit_quarter_main_column_mapping (24 rows) - columns: ['line_number', 'column_name', 'business_name']
+  eit_synonyms (249 rows) - columns: ['id', 'phrase', 'column_name', 'priority', 'scope_view', 'taxpayer_type']
+  financial_metrics_item_dict (25 rows) - columns: ['metric_code', 'metric_name', 'metric_category', 'metric_unit', 'formula_desc', 'source_domains', 'period_types', 'eval_rules', 'eval_ascending', 'display_order', 'is_active']
+  financial_metrics_synonyms (65 rows) - columns: ['id', 'phrase', 'column_name', 'priority']
+  fs_balance_sheet_item_dict (120 rows) - columns: ['id', 'gaap_type', 'item_code', 'item_name', 'line_number', 'section', 'display_order', 'is_total']
+  fs_balance_sheet_synonyms (110 rows) - columns: ['id', 'phrase', 'column_name', 'gaap_type', 'priority']
+  fs_cash_flow_item_dict (57 rows) - columns: ['id', 'gaap_type', 'item_code', 'item_name', 'line_number', 'category', 'display_order', 'is_total']
+  fs_cash_flow_synonyms (122 rows) - columns: ['id', 'phrase', 'column_name', 'gaap_type', 'priority']
+  fs_income_statement_item_dict (74 rows) - columns: ['id', 'gaap_type', 'item_code', 'item_name', 'line_number', 'category', 'display_order', 'is_total']
+  fs_income_statement_synonyms (537 rows) - columns: ['id', 'phrase', 'column_name', 'gaap_type', 'priority']
+  hr_employee_column_mapping (0 rows) - columns: ['id', 'source_column', 'target_field', 'table_name', 'description']
+  hr_employee_synonyms (0 rows) - columns: ['id', 'phrase', 'column_name', 'priority', 'scope_view']
+  hr_salary_column_mapping (0 rows) - columns: ['id', 'source_column', 'target_field', 'table_name', 'description']
+  hr_salary_synonyms (0 rows) - columns: ['id', 'phrase', 'column_name', 'priority', 'scope_view']
+  inv_column_mapping (180 rows) - columns: ['id', 'source_column', 'target_field', 'table_name', 'description']
+  inv_synonyms (177 rows) - columns: ['id', 'phrase', 'column_name', 'priority', 'scope_view']
+  metric_synonyms (36 rows) - columns: ['id', 'phrase', 'metric_key', 'priority']
+  vat_general_column_mapping (41 rows) - columns: ['line_number', 'column_name', 'business_name']
+  vat_small_column_mapping (25 rows) - columns: ['line_number', 'column_name', 'business_name']
+  vat_synonyms (272 rows) - columns: ['id', 'phrase', 'column_name', 'priority', 'taxpayer_type', 'scope_view']

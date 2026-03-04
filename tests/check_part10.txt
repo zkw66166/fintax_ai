@@ -1,0 +1,37 @@
+vw_eit_annual_main: ['filing_id', 'taxpayer_id', 'taxpayer_name', 'taxpayer_type', 'period_year', 'revision_no', 'submitted_at', 'etl_batch_id', 'source_doc_id', 'etl_confidence', 'revenue', 'cost', 'taxes_surcharges', 'selling_expenses', 'admin_expenses', 'rd_expenses', 'financial_expenses', 'other_gains', 'investment_income', 'net_exposure_hedge_gains', 'fair_value_change_gains', 'credit_impairment_loss', 'asset_impairment_loss', 'asset_disposal_gains', 'operating_profit', 'non_operating_income', 'non_operating_expenses', 'total_profit', 'less_foreign_income', 'add_tax_adjust_increase', 'less_tax_adjust_decrease', 'exempt_income_deduction_total', 'add_foreign_tax_offset', 'adjusted_taxable_income', 'less_income_exemption', 'less_losses_carried_forward', 'less_taxable_income_deduction', 'taxable_income', 'tax_rate', 'tax_payable', 'tax_credit_total', 'less_foreign_tax_credit', 'tax_due', 'add_foreign_tax_due', 'less_foreign_tax_credit_amount', 'actual_tax_payable', 'less_prepaid_tax', 'tax_payable_or_refund', 'hq_share', 'fiscal_central_share', 'hq_dept_share', 'less_ethnic_autonomous_relief', 'less_audit_adjustment', 'less_special_adjustment', 'final_tax_payable_or_refund']
+
+vw_eit_quarter_main: ['filing_id', 'taxpayer_id', 'taxpayer_name', 'taxpayer_type', 'period_year', 'period_quarter', 'revision_no', 'submitted_at', 'etl_batch_id', 'source_doc_id', 'etl_confidence', 'employee_quarter_avg', 'asset_quarter_avg', 'restricted_or_prohibited_industry', 'small_micro_enterprise', 'revenue', 'cost', 'total_profit', 'add_specific_business_taxable_income', 'less_non_taxable_income', 'less_accelerated_depreciation', 'tax_free_income_deduction_total', 'income_exemption_total', 'less_losses_carried_forward', 'actual_profit', 'tax_rate', 'tax_payable', 'tax_credit_total', 'less_prepaid_tax_current_year', 'less_specific_business_prepaid', 'current_tax_payable_or_refund', 'hq_share_total', 'hq_share', 'fiscal_central_share', 'hq_business_dept_share', 'branch_share_ratio', 'branch_share_amount', 'ethnic_autonomous_relief_amount', 'final_tax_payable_or_refund']
+
+vw_account_balance: ['taxpayer_id', 'taxpayer_name', 'accounting_standard', 'period_year', 'period_month', 'account_code', 'account_name', 'level', 'category', 'balance_direction', 'is_gaap', 'is_small', 'revision_no', 'opening_balance', 'debit_amount', 'credit_amount', 'closing_balance', 'source_unit']
+
+vw_inv_spec_purchase: ['taxpayer_id', 'period_year', 'period_month', 'invoice_format', 'invoice_pk', 'line_no', 'invoice_code', 'invoice_number', 'digital_invoice_no', 'seller_tax_id', 'seller_name', 'buyer_tax_id', 'buyer_name', 'invoice_date', 'tax_category_code', 'special_business_type', 'goods_name', 'specification', 'unit', 'quantity', 'unit_price', 'amount', 'tax_rate', 'tax_amount', 'total_amount', 'invoice_source', 'invoice_type', 'invoice_status', 'is_positive', 'risk_level', 'issuer', 'remark', 'submitted_at', 'etl_batch_id', 'taxpayer_name', 'taxpayer_type']
+
+vw_financial_metrics: ['taxpayer_id', 'taxpayer_name', 'taxpayer_type', 'accounting_standard', 'period_year', 'period_month', 'period_type', 'metric_category', 'metric_code', 'metric_name', 'metric_value', 'metric_unit', 'evaluation_level', 'calculated_at']
+
+nl2sql_semantic_mapping: no such table: nl2sql_semantic_mapping
+
+
+=== Other potentially useful tables ===
+  account_balance_column_mapping (8 rows) - columns: ['source_column', 'target_field', 'description']
+  account_synonyms (251 rows) - columns: ['id', 'phrase', 'account_code', 'account_name', 'priority', 'applicable_standards']
+  eit_annual_main_column_mapping (45 rows) - columns: ['line_number', 'column_name', 'business_name']
+  eit_quarter_main_column_mapping (24 rows) - columns: ['line_number', 'column_name', 'business_name']
+  eit_synonyms (249 rows) - columns: ['id', 'phrase', 'column_name', 'priority', 'scope_view', 'taxpayer_type']
+  financial_metrics_item_dict (25 rows) - columns: ['metric_code', 'metric_name', 'metric_category', 'metric_unit', 'formula_desc', 'source_domains', 'period_types', 'eval_rules', 'eval_ascending', 'display_order', 'is_active']
+  financial_metrics_synonyms (65 rows) - columns: ['id', 'phrase', 'column_name', 'priority']
+  fs_balance_sheet_item_dict (120 rows) - columns: ['id', 'gaap_type', 'item_code', 'item_name', 'line_number', 'section', 'display_order', 'is_total']
+  fs_balance_sheet_synonyms (110 rows) - columns: ['id', 'phrase', 'column_name', 'gaap_type', 'priority']
+  fs_cash_flow_item_dict (57 rows) - columns: ['id', 'gaap_type', 'item_code', 'item_name', 'line_number', 'category', 'display_order', 'is_total']
+  fs_cash_flow_synonyms (122 rows) - columns: ['id', 'phrase', 'column_name', 'gaap_type', 'priority']
+  fs_income_statement_item_dict (74 rows) - columns: ['id', 'gaap_type', 'item_code', 'item_name', 'line_number', 'category', 'display_order', 'is_total']
+  fs_income_statement_synonyms (537 rows) - columns: ['id', 'phrase', 'column_name', 'gaap_type', 'priority']
+  hr_employee_column_mapping (0 rows) - columns: ['id', 'source_column', 'target_field', 'table_name', 'description']
+  hr_employee_synonyms (0 rows) - columns: ['id', 'phrase', 'column_name', 'priority', 'scope_view']
+  hr_salary_column_mapping (0 rows) - columns: ['id', 'source_column', 'target_field', 'table_name', 'description']
+  hr_salary_synonyms (0 rows) - columns: ['id', 'phrase', 'column_name', 'priority', 'scope_view']
+  inv_column_mapping (180 rows) - columns: ['id', 'source_column', 'target_field', 'table_name', 'description']
+  inv_synonyms (177 rows) - columns: ['id', 'phrase', 'column_name', 'priority', 'scope_view']
+  metric_synonyms (36 rows) - columns: ['id', 'phrase', 'metric_key', 'priority']
+  vat_general_column_mapping (41 rows) - columns: ['line_number', 'column_name', 'business_name']
+  vat_small_column_mapping (25 rows) - columns: ['line_number', 'column_name', 'business_name']
+  vat_synonyms (272 rows) - columns: ['id', 'phrase', 'column_name', 'priority', 'taxpayer_type', 'scope_view']

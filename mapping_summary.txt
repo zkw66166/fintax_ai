@@ -1,0 +1,37 @@
+﻿python : Traceback (m
+ost recent call last)
+:
+所在位置 行:1 字符: 1
++ python check_mappin
+gs.py 2>&1 | Out-File
+ -FilePath "d:\fintax
+_ai\mapp ...
++ ~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~
+    + CategoryInfo   
+           : NotSpe  
+  cified: (Traceba   
+ ck (most recent     
+call last)::Stri    n
+g) [], RemoteEx    ce
+ption
+    + FullyQualified 
+   ErrorId : Native  
+  CommandError
+ 
+  File "D:\fintax_ai\
+check_mappings.py", l
+ine 16, in <module>
+    rows = conn.execu
+te(f"SELECT column_na
+me, business_name FRO
+M {t} ORDER BY line_n
+umber").fetchall()
+           ~~~~~~~~~~
+~~^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^
+sqlite3.OperationalEr
+ror: no such column: 
+column_name

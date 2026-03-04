@@ -1,0 +1,2165 @@
+
+ ▐▛███▜▌   Claude Code v2.1.53
+▝▜█████▛▘  Opus 4.6 · API Usage Billing
+  ▘▘ ▝▝    D:\fintax_ai\frontend
+
+> # 请根据以下需求，**完整实现用户权限管理模块的修改与开发**，包含角色定义  
+  、用户创建、数据权限、菜单权限、按钮权限、前端展示控制：                  
+                                                                            
+  ## 1. 用户角色定义                                                        
+  系统共 5 种角色：                                                         
+  - 超级管理员（sys）                                                       
+  - 系统管理员（admin）                                                     
+  - 事务所用户                                                              
+  - 集团企业用户                                                            
+  - 普通企业用户                                                            
+                                                                            
+  ## 2. 功能基础要求                                                        
+  - 新增用户 / 编辑用户时，支持选择并保存上述角色。                         
+  - 所有权限控制需同时在**后端接口校验**与**前端界面展示/禁用**实现。       
+                                                                            
+  ## 3. 预置用户创建                                                        
+  请在系统中创建以下测试用户：                                              
+  - `user1`（已有，需修改为事务所用户）：事务所用户                         
+  - `user2`：集团企业用户                                                   
+  - `user3`：集团企业用户                                                   
+  - `user4`：普通企业用户                                                   
+  - `sys`：密码 `sys123`，角色为**超级管理员**                              
+                                                                            
+  ## 4. sys 用户特殊展示规则                                                
+  - 前端「用户管理」界面中：                                                
+    - 仅当登录用户为 `sys` 时，才显示 `sys` 用户信息                        
+    - 其他任何角色登录，均**不显示 sys 用户这条数据**                       
+                                                                            
+  ## 5. 数据权限规则（企业数据范围）                                        
+  数据管理模块包含：单户企业数据、多户企业数据、数据浏览。                  
+                                                                            
+  ### 各用户可管理企业范围：                                                
+  - **sys、admin**：可管理**全部企业**                                      
+  - **user1**：                                                             
+    华兴科技有限公司、鑫源贸易商行                                          
+  - **user2**：                                                             
+    创智软件股份有限公司、大华智能制造厂、TSE科技有限公司、环球机械有限公司 
+  - **user3**：                                                             
+    创智软件股份有限公司、大华智能制造厂、TSE科技有限公司                   
+  - **user4**：                                                             
+    华兴科技有限公司                                                        
+                                                                            
+  ## 6. 菜单与操作权限                                                      
+  ### 6.1 系统设置 - 基础设置                                               
+  - sys、admin：可**查看 + 修改**                                           
+  - 其他角色：仅可**查看，禁止修改**                                        
+                                                                            
+  ### 6.2 系统设置 - 服务设置                                               
+  - sys、admin：可**查看 + 修改**                                           
+  - 其他角色：仅可**查看，禁止修改**                                        
+                                                                            
+  ### 6.3 系统设置 - 用户管理（核心权限）                                   
+  统一规则（所有非 sys/admin 角色）：                                       
+  - 可浏览**除 sys 用户外**的所有用户信息                                   
+  - 禁止编辑/修改他人信息                                                   
+  - 仅可修改**自己的密码**，不可修改用户名                                  
+                                                                            
+  #### 细分创建权限：                                                       
+  - **sys、admin**：用户管理模块**全部权限**（增删改查）                    
+  - **user1（事务所用户）**：                                               
+    可创建：事务所用户、普通企业用户                                        
+    不可创建：集团企业用户                                                  
+  - **user2、user3（集团企业用户）**：                                      
+    可创建：集团企业用户、普通企业用户                                      
+    不可创建：事务所用户                                                    
+  - **user4（普通企业用户）**：                                             
+    可创建：普通企业用户                                                    
+    不可创建：集团企业用户、事务所用户                                      
+                                                                            
+
+● Let me explore the existing codebase to understand the current auth, user
+  management, and permission systems before planning.
+
+● 3 Explore agents finished (ctrl+o to expand)
+   ├─ Explore auth & user backend · 15 tool uses · 76.9k tokens
+   │  ⎿  Done
+   ├─ Explore frontend auth & settings · 17 tool uses · 61.1k tokens
+   │  ⎿  Done
+   └─ Explore data management permissions · 20 tool uses · 80.9k tokens
+      ⎿  Done
+
+● Plan(Plan permission management system)
+  ⎿  Done (37 tool uses · 103.8k tokens · 3m 27s)
+  (ctrl+o to expand)
+
+● Read 9 files (ctrl+o to expand)
+
+● Now let me read the remaining critical files to finalize the plan.
+
+● Read 3 files (ctrl+o to expand)
+
+● Now I have a thorough understanding of the codebase. Let me write the final
+  plan.
+
+● Updated plan
+  ⎿  Error: PreToolUse:Write hook error: [node -e "const fs=require('fs');let 
+     d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{try{const
+      i=JSON.parse(d);const p=i.tool_input?.file_path||'';if(/\.(md|txt)$/.test(
+     p)&&!/(README|CLAUDE|AGENTS|CONTRIBUTING)\.md$/.test(p)&&!/\.claude\/plans\
+     //.test(p)){console.error('[Hook] BLOCKED: Unnecessary documentation file 
+     creation');console.error('[Hook] File: '+p);console.error('[Hook] Use 
+     README.md for documentation 
+     instead');process.exit(2)}}catch{}console.log(d)})"]: [Hook] BLOCKED: 
+     Unnecessary documentation file creation
+     [Hook] File: C:\Users\ciciy\.claude\plans\lexical-hatching-patterson.md
+     [Hook] Use README.md for documentation instead
+
+
+● The hook is blocking the plan file write due to a regex issue with the
+  backslash path. Let me try with forward slashes.
+
+● Read 1 file (ctrl+o to expand)
+
+● Plan file written. Let me verify it was created correctly.
+
+● Read 1 file (ctrl+o to expand)
+
+● Plan is ready. The implementation covers 19 files across 4 phases:
+
+  - Phase 1: 数据库 — 新建 user_company_access 表 + 迁移脚本创建 5
+  个预置用户及企业权限关联
+  - Phase 2: 后端基础 — api/auth.py 增加 5
+  角色常量、企业权限查询函数、require_admin 支持 sys
+  - Phase 3: 后端路由 — 所有数据端点加鉴权 + 企业过滤，用户管理 CRUD
+  按角色细分权限
+  - Phase 4: 前端 — UserManagement
+  核心重写（所有用户可浏览、按角色控制操作按钮）、Header
+  角色标签、BasicSettings/ServiceSettings 编辑控制
+
+  关键设计决策：
+  - sys/admin 不写 user_company_access
+  行，靠角色判断获取全部企业（保持关联表精简）
+  - CREATABLE_ROLES 映射表前后端各维护一份，后端为权威校验
+  - 企业过滤在后端 /api/companies 端点完成，前端 Header 下拉自动生效无需改动
+
+● User approved Claude's plan
+  ⎿  Plan saved to: 
+     C:\Users\ciciy\.claude\plans\lexical-hatching-patterson.md · /plan to 
+     edit
+     用户权限管理模块实现计划
+
+     Context
+
+     当前系统仅有 admin/user 两种角色，用户管理仅限 admin
+     操作，所有数据端点无鉴权、无企业数据隔离。需要扩展为 5
+     种角色体系，实现企业数据权限、菜单/按钮级权限控制，前后端同步校验。
+
+     角色定义
+
+     ┌────────────┬──────────────┬─────────────────────────────────────────┐
+     │   角色值   │    中文名    │                  说明                   │
+     ├────────────┼──────────────┼─────────────────────────────────────────┤
+     │ sys        │ 超级管理员   │ 全部权限，仅 sys 登录可见               │
+     ├────────────┼──────────────┼─────────────────────────────────────────┤
+     │ admin      │ 系统管理员   │ 全部权限（不含 sys 专属）               │
+     ├────────────┼──────────────┼─────────────────────────────────────────┤
+     │ firm       │ 事务所用户   │ 可管理指定企业，可创建 firm/enterprise  │
+     ├────────────┼──────────────┼─────────────────────────────────────────┤
+     │ group      │ 集团企业用户 │ 可管理指定企业，可创建 group/enterprise │
+     ├────────────┼──────────────┼─────────────────────────────────────────┤
+     │ enterprise │ 普通企业用户 │ 可管理指定企业，仅可创建 enterprise     │
+     └────────────┴──────────────┴─────────────────────────────────────────┘
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+     ---
+     Phase 1: 数据库变更
+
+     1.1 database/init_db.py — 新增 user_company_access 表 DDL (line ~657)
+
+     1.2 新建 database/migrate_permissions.py
+
+     - 创建 user_company_access 表
+     - 更新 user1 角色 user->firm, admin display_name->系统管理员
+     - 插入 sys/user2/user3/user4
+     - 插入 user_company_access 关联行
+
+     ---
+     Phase 2: 后端权限基础设施
+
+     2.1 api/auth.py — 角色常量 + 权限工具
+
+     - ROLES, ADMIN_ROLES, ROLE_LABELS, CREATABLE_ROLES 常量
+     - 修改 require_admin() 支持 sys+admin
+     - 新增 get_user_company_ids(user_id, role)
+     - 新增 require_company_access(user, company_id)
+
+     2.2 api/schemas.py
+
+     - UserCreate.role default -> enterprise, 新增 company_ids
+     - 新增 UserCompanyUpdate
+
+     ---
+     Phase 3: 后端路由权限改造
+
+     3.1 api/routes/users.py — CRUD 重写
+
+     - GET: 所有登录用户可访问，非sys过滤sys行
+     - POST: 角色创建校验 CREATABLE_ROLES，company_ids 写入
+     - PUT: 非admin仅改自己密码，admin/sys改全部
+     - DELETE: 保持require_admin，不可删sys
+     - 新增 GET/PUT /users/{id}/companies
+
+     3.2 api/routes/auth.py — login/me 返回 company_ids
+
+     3.3 api/routes/company.py — 企业列表按权限过滤
+
+     3.4-3.6 data_browser/data_management/chat/profile/history 加鉴权
+
+     ---
+     Phase 4: 前端权限改造
+
+     4.1 hooks/useAuth.js — 扩展角色工具 (isSys, canEditSettings, 
+     creatableRoles)
+
+     4.2 Header.jsx — roleLabel 映射 5 种角色
+
+     4.3 authApi.js — 新增 fetchUserCompanies/updateUserCompanies
+
+     4.4 UserManagement.jsx — 核心重写
+
+     - 移除 admin-only 门禁，所有用户可浏览
+     - 非admin: 仅自己行显示"修改密码"，无删除
+     - admin/sys: 完整 CRUD + 企业权限分配 UI
+     - UserModal: 角色下拉按 CREATABLE_ROLES 过滤
+     - 新增 mode=password (非admin自改密码)
+
+     4.5-4.7 SystemSettingsPage/BasicSettings/ServiceSettings
+
+     - 传 currentUser，admin/sys 可编辑，其他只读
+
+     ---
+     文件修改清单（执行顺序）
+
+     1. database/init_db.py — 新增 user_company_access DDL
+     2. database/migrate_permissions.py — 新建迁移脚本
+     3. api/auth.py — 角色常量 + 权限函数
+     4. api/schemas.py — 模型更新
+     5. api/routes/auth.py — login/me 增加 company_ids
+     6. api/routes/users.py — 重写 CRUD + company 端点
+     7. api/routes/company.py — 加鉴权+过滤
+     8. api/routes/data_browser.py — 加鉴权
+     9. api/routes/data_management.py — 加鉴权
+     10. api/routes/chat.py — 加鉴权
+     11. api/routes/profile.py — 加鉴权
+     12. api/routes/history.py — 加鉴权
+     13. frontend/src/hooks/useAuth.js — 扩展
+     14. frontend/src/services/authApi.js — 新增 API
+     15. frontend/src/components/Header/Header.jsx — roleLabel
+     16. frontend/src/components/SystemSettings/SystemSettingsPage.jsx — 传
+     currentUser
+     17. frontend/src/components/SystemSettings/UserManagement.jsx —
+     核心重写
+     18. frontend/src/components/SystemSettings/BasicSettings.jsx — 编辑控制
+     19. frontend/src/components/SystemSettings/ServiceSettings.jsx —
+     编辑控制
+
+     验证
+
+     1. python database/migrate_permissions.py
+     2. uvicorn api.main:app --reload
+     3. 分别用 sys/admin/user1-4 登录验证企业下拉、用户管理、设置编辑权限
+
+
+
+● Good, plan approved. Let me start implementing. I'll work through the phases
+  in order, starting with database changes and backend, then frontend.
+
+  Phase 1: Database Changes
+
+● Read 1 file (ctrl+o to expand)
+
+● Update(D:\fintax_ai\database\init_db.py)
+  ⎿  Added 15 lines
+      657          "CREATE UNIQUE INDEX IF NOT EXISTS idx_users_username 
+            ON users(username)",                                         
+      658                                                                
+      659          #                                                     
+           ============================================================  
+      660 +        # 7c. 用户-企业权限关联表                             
+      661 +        #                                                     
+          +============================================================  
+      662 +        """CREATE TABLE IF NOT EXISTS user_company_access (   
+      663 +            id          INTEGER PRIMARY KEY AUTOINCREMENT,    
+      664 +            user_id     INTEGER NOT NULL,                     
+      665 +            taxpayer_id TEXT NOT NULL,                        
+      666 +            created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  
+      667 +            created_by  INTEGER,                              
+      668 +            FOREIGN KEY (user_id) REFERENCES users(id) ON     
+          +DELETE CASCADE,                                               
+      669 +            FOREIGN KEY (taxpayer_id) REFERENCES              
+          +taxpayer_info(taxpayer_id),                                   
+      670 +            UNIQUE(user_id, taxpayer_id)                      
+      671 +        )""",                                                 
+      672 +        "CREATE INDEX IF NOT EXISTS idx_uca_user ON           
+          +user_company_access(user_id)",                                
+      673 +                                                              
+      674 +        #                                                     
+          +============================================================  
+      675          # 8. VAT 查询视图                                     
+      676          #                                                     
+           ============================================================  
+      677          """CREATE VIEW IF NOT EXISTS vw_vat_return_general AS 
+
+● Now create the migration script.
+
+● Write(D:\fintax_ai\database\migrate_permissions.py)
+  ⎿  Wrote 47 lines to ..\database\migrate_permissions.py
+     """迁移脚本：扩展角色体系 + 创建 user_company_access 表 + 预置用户"""
+     import sqlite3
+     import sys
+     from pathlib import Path
+
+     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+     from config.settings import DB_PATH
+
+     try:
+         import bcrypt
+     … +37 lines (ctrl+o to expand)
+
+● Update(D:\fintax_ai\database\migrate_permissions.py)
+  ⎿  Added 57 lines, removed 1 line
+       44      cur.execute("UPDATE users SET display_name = '系统管理员' 
+            WHERE username = 'admin'")                                   
+       45      print("[migrate_permissions] 更新 user1 -> firm, admin    
+           display_name -> 系统管理员")                                  
+       46                                                                
+       47 -    # PLACEHOLDER_SEED_USERS                                  
+       47 +    # 3. 插入新用户 (INSERT OR IGNORE 防止重复)               
+       48 +    new_users = [                                             
+       49 +        ("sys",   _hash_pw("sys123"), "sys",                  
+          +"超级管理员", 1),                                             
+       50 +        ("user2", _hash_pw("123456"), "group",                
+          +"集团用户2",  1),                                             
+       51 +        ("user3", _hash_pw("123456"), "group",                
+          +"集团用户3",  1),                                             
+       52 +        ("user4", _hash_pw("123456"), "enterprise",           
+          +"企业用户4",  1),                                             
+       53 +    ]                                                         
+       54 +    for username, pw_hash, role, display_name, is_active in   
+          +new_users:                                                    
+       55 +        cur.execute(                                          
+       56 +            "INSERT OR IGNORE INTO users (username,           
+          +password_hash, role, display_name, is_active) "               
+       57 +            "VALUES (?, ?, ?, ?, ?)",                         
+       58 +            (username, pw_hash, role, display_name,           
+          +is_active),                                                   
+       59 +        )                                                     
+       60 +    print(f"[migrate_permissions] 预置用户已就绪")            
+       61 +                                                              
+       62 +    # 4. 插入 user_company_access 关联                        
+       63 +    # sys/admin 不需要行，靠角色判断获取全部企业              
+       64 +    access_map = {                                            
+       65 +        "user1": [                                            
+       66 +            "91310000MA1FL8XQ30",  # 华兴科技有限公司         
+       67 +            "92440300MA5EQXL17P",  # 鑫源贸易商行             
+       68 +        ],                                                    
+       69 +        "user2": [                                            
+       70 +            "91330200MA2KXXXXXX",  # 创智软件股份有限公司     
+       71 +            "91330200MA2KYYYYYY",  # 大华智能制造厂           
+       72 +            "91310115MA2KZZZZZZ",  # TSE科技有限公司          
+       73 +            "91330100MA2KWWWWWW",  # 环球机械有限公司         
+       74 +        ],                                                    
+       75 +        "user3": [                                            
+       76 +            "91330200MA2KXXXXXX",  # 创智软件股份有限公司     
+       77 +            "91330200MA2KYYYYYY",  # 大华智能制造厂           
+       78 +            "91310115MA2KZZZZZZ",  # TSE科技有限公司          
+       79 +        ],                                                    
+       80 +        "user4": [                                            
+       81 +            "91310000MA1FL8XQ30",  # 华兴科技有限公司         
+       82 +        ],                                                    
+       83 +    }                                                         
+       84 +    for username, taxpayer_ids in access_map.items():         
+       85 +        row = cur.execute("SELECT id FROM users WHERE         
+          +username = ?", (username,)).fetchone()                        
+       86 +        if not row:                                           
+       87 +            print(f"[migrate_permissions] 警告: 用户          
+          +{username} 不存在，跳过权限分配")                             
+       88 +            continue                                          
+       89 +        user_id = row[0]                                      
+       90 +        for tid in taxpayer_ids:                              
+       91 +            cur.execute(                                      
+       92 +                "INSERT OR IGNORE INTO user_company_access    
+          +(user_id, taxpayer_id) VALUES (?, ?)",                        
+       93 +                (user_id, tid),                               
+       94 +            )                                                 
+       95 +    print("[migrate_permissions] 企业权限关联已就绪")         
+       96 +                                                              
+       97 +    conn.commit()                                             
+       98 +    conn.close()                                              
+       99 +    print("[migrate_permissions] 迁移完成")                   
+      100 +                                                              
+      101 +                                                              
+      102 +if __name__ == "__main__":                                    
+      103 +    migrate()                                                 
+
+● Now run the migration.
+
+● Bash(cd D:/fintax_ai && python database/migrate_permissions.py)
+  ⎿  [migrate_permissions] user_company_access 表已就绪
+     [migrate_permissions] 更新 user1 -> firm, admin display_name -> 系统管
+     理员
+     … +3 lines (ctrl+o to expand)
+
+● Phase 1 done. Now Phase 2: Backend permission infrastructure.
+
+  Phase 2: Backend
+
+● Update(D:\fintax_ai\api\auth.py)
+  ⎿  Added 18 lines
+      12                                                                 
+      13  security = HTTPBearer(auto_error=False)                        
+      14                                                                 
+      15 +# ── 角色常量 ──────────────────────────────────────────────   
+      16 +ROLES = ['sys', 'admin', 'firm', 'group', 'enterprise']        
+      17 +ADMIN_ROLES = {'sys', 'admin'}                                 
+      18 +ROLE_LABELS = {                                                
+      19 +    'sys': '超级管理员',                                       
+      20 +    'admin': '系统管理员',                                     
+      21 +    'firm': '事务所用户',                                      
+      22 +    'group': '集团企业用户',                                   
+      23 +    'enterprise': '普通企业用户',                              
+      24 +}                                                              
+      25 +CREATABLE_ROLES = {                                            
+      26 +    'sys':        {'admin', 'firm', 'group', 'enterprise'},    
+      27 +    'admin':      {'admin', 'firm', 'group', 'enterprise'},    
+      28 +    'firm':       {'firm', 'enterprise'},                      
+      29 +    'group':      {'group', 'enterprise'},                     
+      30 +    'enterprise': {'enterprise'},                              
+      31 +}                                                              
+      32                                                                 
+      33 +                                                               
+      34  def hash_password(password: str) -> str:                       
+      35      return bcrypt.hashpw(password.encode("utf-8"),             
+          bcrypt.gensalt()).decode("utf-8")                              
+      36                                                                 
+
+● Update(D:\fintax_ai\api\auth.py)
+  ⎿  Added 26 lines, removed 1 line
+       75                                                                
+       76                                                                
+       77  async def require_admin(user: dict =                          
+           Depends(get_current_user)) -> dict:                           
+       78 -    if user["role"] != "admin":                               
+       78 +    if user["role"] not in ADMIN_ROLES:                       
+       79          raise HTTPException(status_code=403,                  
+           detail="需要管理员权限")                                      
+       80      return user                                               
+       81 +                                                              
+       82 +                                                              
+       83 +# ── 企业数据权限 ──────────────────────────────────────────  
+       84 +                                                              
+       85 +def get_user_company_ids(user_id: int, role: str) ->          
+          +list[str]:                                                    
+       86 +    """返回用户可访问的 taxpayer_id 列表。sys/admin           
+          +返回全部。"""                                                 
+       87 +    conn = sqlite3.connect(str(DB_PATH))                      
+       88 +    if role in ADMIN_ROLES:                                   
+       89 +        rows = conn.execute("SELECT taxpayer_id FROM          
+          +taxpayer_info").fetchall()                                    
+       90 +    else:                                                     
+       91 +        rows = conn.execute(                                  
+       92 +            "SELECT taxpayer_id FROM user_company_access      
+          +WHERE user_id = ?",                                           
+       93 +            (user_id,),                                       
+       94 +        ).fetchall()                                          
+       95 +    conn.close()                                              
+       96 +    return [r[0] for r in rows]                               
+       97 +                                                              
+       98 +                                                              
+       99 +def require_company_access(user: dict, company_id: str):      
+      100 +    """校验用户是否有权访问指定企业，无权则抛 403。"""        
+      101 +    if not company_id:                                        
+      102 +        return                                                
+      103 +    allowed = get_user_company_ids(user["id"], user["role"])  
+      104 +    if company_id not in allowed:                             
+      105 +        raise HTTPException(status_code=403,                  
+          +detail="无权访问该企业数据")                                  
+
+● Now update schemas.
+
+● Update(D:\fintax_ai\api\schemas.py)
+  ⎿  Added 3 lines, removed 1 line
+      28  class UserCreate(BaseModel):                                   
+      29      username: str = Field(..., min_length=2, max_length=50)    
+      30      password: str = Field(..., min_length=6, max_length=100)   
+      31 -    role: str = Field(default="user")                          
+      31 +    role: str = Field(default="enterprise")                    
+      32      display_name: str = Field(default="")                      
+      33      is_active: int = Field(default=1)                          
+      34 +    company_ids: list[str] = Field(default_factory=list)       
+      35                                                                 
+      36                                                                 
+      37  class UserUpdate(BaseModel):                                   
+     ...
+      38      role: Optional[str] = None                                 
+      39      display_name: Optional[str] = None                         
+      40      is_active: Optional[int] = None                            
+      41 +    company_ids: Optional[list[str]] = None                    
+
+● Phase 3: Backend route changes
+
+  Now update auth routes (login/me to return company_ids).
+
+● Update(D:\fintax_ai\api\routes\auth.py)
+  ⎿  Added 1 line, removed 1 line
+       4                                                                 
+       5  from fastapi import APIRouter, Depends, HTTPException          
+       6                                                                 
+       7 -from api.auth import verify_password, create_access_token,     
+         -get_current_user                                               
+       7 +from api.auth import verify_password, create_access_token,     
+         +get_current_user, get_user_company_ids                         
+       8  from api.schemas import LoginRequest                           
+       9  from config.settings import DB_PATH                            
+      10                                                                 
+
+● Update(D:\fintax_ai\api\routes\auth.py)
+  ⎿  Added 1 line
+      40              "username": user["username"],                      
+      41              "role": user["role"],                              
+      42              "display_name": user["display_name"],              
+      43 +            "company_ids": get_user_company_ids(user["id"],    
+         +user["role"]),                                                 
+      44          },                                                     
+      45      }                                                          
+      46                                                                 
+
+● Update(D:\fintax_ai\api\routes\auth.py)
+  ⎿  Added 1 line
+      60          "is_active": user["is_active"],                        
+      61          "created_at": user["created_at"],                      
+      62          "last_login": user["last_login"],                      
+      63 +        "company_ids": get_user_company_ids(user["id"],        
+         +user["role"]),                                                 
+      64      }                                                          
+
+● Now rewrite users.py.
+
+● Write(D:\fintax_ai\api\routes\users.py)
+  ⎿  Added 20 lines, removed 71 lines
+       1 -"""用户管理路由：CRUD"""                                       
+       1 +"""用户管理路由：CRUD + 企业权限"""                            
+       2  import sqlite3                                                 
+       3                                                                 
+       4  from fastapi import APIRouter, Depends, HTTPException          
+       5                                                                 
+       6 -from api.auth import get_current_user, require_admin,          
+         -hash_password                                                  
+       6 +from api.auth import (                                         
+       7 +    get_current_user, require_admin, hash_password,            
+       8 +    ADMIN_ROLES, CREATABLE_ROLES, get_user_company_ids,        
+       9 +)                                                              
+      10  from api.schemas import UserCreate, UserUpdate                 
+      11  from config.settings import DB_PATH                            
+      12                                                                 
+     ...
+      15  def _conn():                                                   
+      16      conn = sqlite3.connect(str(DB_PATH))                       
+      17      conn.row_factory = sqlite3.Row                             
+      18 +    conn.execute("PRAGMA foreign_keys = ON")                   
+      19      return conn                                                
+      20                                                                 
+      21                                                                 
+      22  @router.get("")                                                
+      23 -async def list_users(user: dict = Depends(require_admin)):     
+      23 +async def list_users(user: dict = Depends(get_current_user)):  
+      24 +    """所有登录用户可浏览用户列表。非 sys 用户看不到 sys       
+         +行。"""                                                        
+      25      conn = _conn()                                             
+      26 -    rows = conn.execute(f"SELECT {USER_FIELDS} FROM users      
+         -ORDER BY id").fetchall()                                       
+      26 +    if user["role"] == "sys":                                  
+      27 +        rows = conn.execute(f"SELECT {USER_FIELDS} FROM users  
+         +ORDER BY id").fetchall()                                       
+      28 +    else:                                                      
+      29 +        rows = conn.execute(                                   
+      30 +            f"SELECT {USER_FIELDS} FROM users WHERE role !=    
+         +'sys' ORDER BY id"                                             
+      31 +        ).fetchall()                                           
+      32      conn.close()                                               
+      33      return [dict(r) for r in rows]                             
+      34                                                                 
+      35                                                                 
+      36  @router.post("")                                               
+      37 -async def create_user(body: UserCreate, user: dict = Depends(  
+         -require_admin)):                                               
+      38 -    conn = _conn()                                             
+      39 -    existing = conn.execute(                                   
+      40 -        "SELECT id FROM users WHERE username = ?",             
+         -(body.username,)                                               
+      41 -    ).fetchone()                                               
+      42 -    if existing:                                               
+      43 -        conn.close()                                           
+      44 -        raise HTTPException(status_code=409,                   
+         -detail="用户名已存在")                                         
+      45 -    pw_hash = hash_password(body.password)                     
+      46 -    conn.execute(                                              
+      47 -        "INSERT INTO users (username, password_hash, role,     
+         -display_name, is_active, created_by) "                         
+      48 -        "VALUES (?, ?, ?, ?, ?, ?)",                           
+      49 -        (body.username, pw_hash, body.role, body.display_name  
+         -or body.username, body.is_active, user["id"]),                 
+      50 -    )                                                          
+      51 -    conn.commit()                                              
+      52 -    new_id = conn.execute("SELECT                              
+         -last_insert_rowid()").fetchone()[0]                            
+      53 -    row = conn.execute(f"SELECT {USER_FIELDS} FROM users WHERE 
+         - id = ?", (new_id,)).fetchone()                                
+      54 -    conn.close()                                               
+      55 -    return dict(row)                                           
+      37 +async def create_user(body: UserCreate, user: dict = Depends(  
+         +get_current_user)):                                            
+      38 +    """按角色校验创建权限。"""                                 
+      39 +    allowed = CREATABLE_ROLES.get(user["role"], set())         
+      40 +    if body.role not in allowed:                               
+      41 +        raise HTTPException(status_code=403,                   
+         +detail=f"您的角色无权创建「{body.role}」用户")                 
+      42                                                                 
+      43 -                                                               
+      44 -@router.put("/{user_id}")                                      
+      45 -async def update_user(user_id: int, body: UserUpdate, user:    
+         -dict = Depends(get_current_user)):                             
+      46 -    is_self = user["id"] == user_id                            
+      47 -    is_admin = user["role"] == "admin"                         
+      48 -    if not is_self and not is_admin:                           
+      49 -        raise HTTPException(status_code=403,                   
+         -detail="无权修改此用户")                                       
+      50 -    conn = _conn()                                             
+      51 -    target = conn.execute("SELECT id FROM users WHERE id = ?", 
+         - (user_id,)).fetchone()                                        
+      52 -    if not target:                                             
+      53 -        conn.close()                                           
+      54 -        raise HTTPException(status_code=404,                   
+         -detail="用户不存在")                                           
+      55 -    updates, params = [], []                                   
+      56 -    if body.password is not None:                              
+      57 -        updates.append("password_hash = ?")                    
+      58 -        params.append(hash_password(body.password))            
+      59 -    if body.display_name is not None:                          
+      60 -        updates.append("display_name = ?")                     
+      61 -        params.append(body.display_name)                       
+      62 -    if is_admin:                                               
+      63 -        if body.role is not None:                              
+      64 -            updates.append("role = ?")                         
+      65 -            params.append(body.role)                           
+      66 -        if body.is_active is not None:                         
+      67 -            updates.append("is_active = ?")                    
+      68 -            params.append(body.is_active)                      
+      69 -    if updates:                                                
+      70 -        params.append(user_id)                                 
+      71 -        conn.execute(f"UPDATE users SET {', '.join(updates)}   
+         -WHERE id = ?", params)                                         
+      72 -        conn.commit()                                          
+      73 -    row = conn.execute(f"SELECT {USER_FIELDS} FROM users WHERE 
+         - id = ?", (user_id,)).fetchone()                               
+      74 -    conn.close()                                               
+      75 -    return dict(row)                                           
+      76 -                                                               
+      77 -                                                               
+      78 -@router.delete("/{user_id}")                                   
+      79 -async def delete_user(user_id: int, user: dict =               
+         -Depends(require_admin)):                                       
+      80 -    if user["id"] == user_id:                                  
+      81 -        raise HTTPException(status_code=400,                   
+         -detail="不能删除自己")                                         
+      82 -    conn = _conn()                                             
+      83 -    target = conn.execute("SELECT id FROM users WHERE id = ?", 
+         - (user_id,)).fetchone()                                        
+      84 -    if not target:                                             
+      85 -        conn.close()                                           
+      86 -        raise HTTPException(status_code=404,                   
+         -detail="用户不存在")                                           
+      87 -    conn.execute("DELETE FROM users WHERE id = ?", (user_id,)) 
+      88 -    conn.commit()                                              
+      89 -    conn.close()                                               
+      90 -    return {"ok": True}                                        
+      43 +    # PLACEHOLDER_CREATE_BODY                                  
+
+● Update(D:\fintax_ai\api\routes\users.py)
+  ⎿  Added 152 lines, removed 1 line
+       43      if body.role not in allowed:                              
+       44          raise HTTPException(status_code=403,                  
+           detail=f"您的角色无权创建「{body.role}」用户")                
+       45                                                                
+       46 -    # PLACEHOLDER_CREATE_BODY                                 
+       46 +    conn = _conn()                                            
+       47 +    existing = conn.execute("SELECT id FROM users WHERE       
+          +username = ?", (body.username,)).fetchone()                   
+       48 +    if existing:                                              
+       49 +        conn.close()                                          
+       50 +        raise HTTPException(status_code=409,                  
+          +detail="用户名已存在")                                        
+       51 +                                                              
+       52 +    pw_hash = hash_password(body.password)                    
+       53 +    conn.execute(                                             
+       54 +        "INSERT INTO users (username, password_hash, role,    
+          +display_name, is_active, created_by) "                        
+       55 +        "VALUES (?, ?, ?, ?, ?, ?)",                          
+       56 +        (body.username, pw_hash, body.role, body.display_name 
+          + or body.username, body.is_active, user["id"]),               
+       57 +    )                                                         
+       58 +    conn.commit()                                             
+       59 +    new_id = conn.execute("SELECT                             
+          +last_insert_rowid()").fetchone()[0]                           
+       60 +                                                              
+       61 +    # 写入企业权限                                            
+       62 +    if body.company_ids:                                      
+       63 +        # 非 admin 只能分配自己有权限的企业子集               
+       64 +        if user["role"] not in ADMIN_ROLES:                   
+       65 +            my_ids = set(get_user_company_ids(user["id"],     
+          +user["role"]))                                                
+       66 +            invalid = set(body.company_ids) - my_ids          
+       67 +            if invalid:                                       
+       68 +                conn.close()                                  
+       69 +                raise HTTPException(status_code=403,          
+          +detail=f"无权分配企业: {', '.join(invalid)}")                 
+       70 +        for tid in body.company_ids:                          
+       71 +            conn.execute(                                     
+       72 +                "INSERT OR IGNORE INTO user_company_access    
+          +(user_id, taxpayer_id, created_by) VALUES (?, ?, ?)",         
+       73 +                (new_id, tid, user["id"]),                    
+       74 +            )                                                 
+       75 +        conn.commit()                                         
+       76 +                                                              
+       77 +    row = conn.execute(f"SELECT {USER_FIELDS} FROM users      
+          +WHERE id = ?", (new_id,)).fetchone()                          
+       78 +    conn.close()                                              
+       79 +    result = dict(row)                                        
+       80 +    result["company_ids"] = get_user_company_ids(new_id,      
+          +body.role)                                                    
+       81 +    return result                                             
+       82 +                                                              
+       83 +                                                              
+       84 +@router.put("/{user_id}")                                     
+       85 +async def update_user(user_id: int, body: UserUpdate, user:   
+          +dict = Depends(get_current_user)):                            
+       86 +    """非 admin 仅可改自己密码；admin/sys 可改全部字段。"""   
+       87 +    is_self = user["id"] == user_id                           
+       88 +    is_admin = user["role"] in ADMIN_ROLES                    
+       89 +                                                              
+       90 +    if not is_self and not is_admin:                          
+       91 +        raise HTTPException(status_code=403,                  
+          +detail="无权修改此用户")                                      
+       92 +                                                              
+       93 +    conn = _conn()                                            
+       94 +    target = conn.execute("SELECT id, role FROM users WHERE   
+          +id = ?", (user_id,)).fetchone()                               
+       95 +    if not target:                                            
+       96 +        conn.close()                                          
+       97 +        raise HTTPException(status_code=404,                  
+          +detail="用户不存在")                                          
+       98 +                                                              
+       99 +    # 保护 sys 用户角色不被非 sys 修改                        
+      100 +    if target["role"] == "sys" and user["role"] != "sys":     
+      101 +        conn.close()                                          
+      102 +        raise HTTPException(status_code=403,                  
+          +detail="无权修改超级管理员")                                  
+      103 +                                                              
+      104 +    updates, params = [], []                                  
+      105 +                                                              
+      106 +    if is_admin:                                              
+      107 +        # admin/sys 可改所有字段                              
+      108 +        if body.password is not None:                         
+      109 +            updates.append("password_hash = ?")               
+      110 +            params.append(hash_password(body.password))       
+      111 +        if body.display_name is not None:                     
+      112 +            updates.append("display_name = ?")                
+      113 +            params.append(body.display_name)                  
+      114 +        if body.role is not None:                             
+      115 +            updates.append("role = ?")                        
+      116 +            params.append(body.role)                          
+      117 +        if body.is_active is not None:                        
+      118 +            updates.append("is_active = ?")                   
+      119 +            params.append(body.is_active)                     
+      120 +    else:                                                     
+      121 +        # 非 admin 仅可改自己密码                             
+      122 +        if body.password is not None:                         
+      123 +            updates.append("password_hash = ?")               
+      124 +            params.append(hash_password(body.password))       
+      125 +                                                              
+      126 +    if updates:                                               
+      127 +        params.append(user_id)                                
+      128 +        conn.execute(f"UPDATE users SET {', '.join(updates)}  
+          +WHERE id = ?", params)                                        
+      129 +        conn.commit()                                         
+      130 +                                                              
+      131 +    # 企业权限更新 (仅 admin/sys)                             
+      132 +    if is_admin and body.company_ids is not None:             
+      133 +        conn.execute("DELETE FROM user_company_access WHERE   
+          +user_id = ?", (user_id,))                                     
+      134 +        for tid in body.company_ids:                          
+      135 +            conn.execute(                                     
+      136 +                "INSERT OR IGNORE INTO user_company_access    
+          +(user_id, taxpayer_id, created_by) VALUES (?, ?, ?)",         
+      137 +                (user_id, tid, user["id"]),                   
+      138 +            )                                                 
+      139 +        conn.commit()                                         
+      140 +                                                              
+      141 +    row = conn.execute(f"SELECT {USER_FIELDS} FROM users      
+          +WHERE id = ?", (user_id,)).fetchone()                         
+      142 +    conn.close()                                              
+      143 +    result = dict(row)                                        
+      144 +    result["company_ids"] = get_user_company_ids(user_id,     
+          +result["role"])                                               
+      145 +    return result                                             
+      146 +                                                              
+      147 +                                                              
+      148 +@router.delete("/{user_id}")                                  
+      149 +async def delete_user(user_id: int, user: dict =              
+          +Depends(require_admin)):                                      
+      150 +    if user["id"] == user_id:                                 
+      151 +        raise HTTPException(status_code=400,                  
+          +detail="不能删除自己")                                        
+      152 +    conn = _conn()                                            
+      153 +    target = conn.execute("SELECT id, role FROM users WHERE   
+          +id = ?", (user_id,)).fetchone()                               
+      154 +    if not target:                                            
+      155 +        conn.close()                                          
+      156 +        raise HTTPException(status_code=404,                  
+          +detail="用户不存在")                                          
+      157 +    if target["role"] == "sys":                               
+      158 +        conn.close()                                          
+      159 +        raise HTTPException(status_code=403,                  
+          +detail="不可删除超级管理员")                                  
+      160 +    conn.execute("DELETE FROM users WHERE id = ?",            
+          +(user_id,))                                                   
+      161 +    conn.commit()                                             
+      162 +    conn.close()                                              
+      163 +    return {"ok": True}                                       
+      164 +                                                              
+      165 +                                                              
+      166 +@router.get("/{user_id}/companies")                           
+      167 +async def get_user_companies(user_id: int, user: dict =       
+          +Depends(get_current_user)):                                   
+      168 +    """获取用户的企业权限列表。非 admin 仅可查自己。"""       
+      169 +    if user["role"] not in ADMIN_ROLES and user["id"] !=      
+          +user_id:                                                      
+      170 +        raise HTTPException(status_code=403,                  
+          +detail="无权查看他人企业权限")                                
+      171 +    conn = _conn()                                            
+      172 +    target = conn.execute("SELECT id, role FROM users WHERE   
+          +id = ?", (user_id,)).fetchone()                               
+      173 +    if not target:                                            
+      174 +        conn.close()                                          
+      175 +        raise HTTPException(status_code=404,                  
+          +detail="用户不存在")                                          
+      176 +    conn.close()                                              
+      177 +    return {"company_ids": get_user_company_ids(user_id,      
+          +target["role"])}                                              
+      178 +                                                              
+      179 +                                                              
+      180 +@router.put("/{user_id}/companies")                           
+      181 +async def set_user_companies(user_id: int, body: dict, user:  
+          +dict = Depends(require_admin)):                               
+      182 +    """替换用户的企业权限（仅 admin/sys）。"""                
+      183 +    company_ids = body.get("company_ids", [])                 
+      184 +    conn = _conn()                                            
+      185 +    target = conn.execute("SELECT id FROM users WHERE id =    
+          +?", (user_id,)).fetchone()                                    
+      186 +    if not target:                                            
+      187 +        conn.close()                                          
+      188 +        raise HTTPException(status_code=404,                  
+          +detail="用户不存在")                                          
+      189 +    conn.execute("DELETE FROM user_company_access WHERE       
+          +user_id = ?", (user_id,))                                     
+      190 +    for tid in company_ids:                                   
+      191 +        conn.execute(                                         
+      192 +            "INSERT OR IGNORE INTO user_company_access        
+          +(user_id, taxpayer_id, created_by) VALUES (?, ?, ?)",         
+      193 +            (user_id, tid, user["id"]),                       
+      194 +        )                                                     
+      195 +    conn.commit()                                             
+      196 +    conn.close()                                              
+      197 +    return {"ok": True, "company_ids": company_ids}           
+
+● Now update company.py with auth + filtering.
+
+● Write(D:\fintax_ai\api\routes\company.py)
+  ⎿  Added 10 lines, removed 3 lines
+       1  """Company list endpoint."""                                   
+       2  import sqlite3                                                 
+       3 -from fastapi import APIRouter                                  
+       3 +from fastapi import APIRouter, Depends                         
+       4 +from api.auth import get_current_user, get_user_company_ids    
+       5  from config.settings import DB_PATH                            
+       6                                                                 
+       7  router = APIRouter()                                           
+       8                                                                 
+       9                                                                 
+      10  @router.get("/companies")                                      
+      11 -async def list_companies():                                    
+      11 +async def list_companies(user: dict =                          
+         +Depends(get_current_user)):                                    
+      12 +    allowed_ids = get_user_company_ids(user["id"],             
+         +user["role"])                                                  
+      13 +    if not allowed_ids:                                        
+      14 +        return []                                              
+      15      conn = sqlite3.connect(str(DB_PATH))                       
+      16      conn.row_factory = sqlite3.Row                             
+      17 +    placeholders = ",".join("?" * len(allowed_ids))            
+      18      rows = conn.execute(                                       
+      19 -        "SELECT taxpayer_id, taxpayer_name, taxpayer_type FROM 
+         -taxpayer_info ORDER BY taxpayer_name"                          
+      19 +        f                                                      
+         +"SELECT taxpayer_id, taxpayer_name, taxpayer_type FROM         
+         +taxpayer_info "                                                
+      20 +        f"WHERE taxpayer_id IN ({placeholders}) ORDER BY       
+         +taxpayer_name",                                                
+      21 +        allowed_ids,                                           
+      22      ).fetchall()                                               
+      23      conn.close()                                               
+      24      return [dict(r) for r in rows]                             
+
+● Now add auth to data_browser, data_management, chat, profile, and history
+  routes. Let me read them first.
+
+● Searched for 2 patterns, read 3 files (ctrl+o to expand)
+
+● Now let me add auth to all these routes. I'll do the imports and function
+  signature changes.
+
+● Update(D:\fintax_ai\api\routes\data_management.py)
+  ⎿  Added 2 lines, removed 1 line
+      1  """Data management stats, companies overview, and quality check 
+          endpoints."""                                                  
+      2  import sqlite3                                                  
+      3 -from fastapi import APIRouter, Query                            
+      3 +from fastapi import APIRouter, Depends, Query                   
+      4 +from api.auth import get_current_user, get_user_company_ids,    
+        +require_company_access                                          
+      5  from config.settings import DB_PATH                             
+      6                                                                  
+      7  router = APIRouter(prefix="/data-management",                   
+         tags=["data-management"])                                       
+
+● Update(D:\fintax_ai\api\routes\data_management.py)
+  ⎿  Added 3 lines, removed 1 line
+      45                                                                 
+      46                                                                 
+      47  @router.get("/stats")                                          
+      48 -async def get_stats(company_id: str = Query("")):              
+      48 +async def get_stats(company_id: str = Query("")                
+         +, user: dict = Depends(get_current_user)):                     
+      49 +    if company_id:                                             
+      50 +        require_company_access(user, company_id)               
+      51      conn = _get_conn()                                         
+      52      try:                                                       
+      53          # metric count                                         
+
+● Update(D:\fintax_ai\api\routes\data_management.py)
+  ⎿  Added 10 lines, removed 2 lines
+      122                                                                
+      123                                                                
+      124  @router.get("/companies-overview")                            
+      125 -async def companies_overview():                               
+      125 +async def companies_overview(                                 
+          +user: dict = Depends(get_current_user)):                      
+      126 +    allowed_ids = get_user_company_ids(user["id"],            
+          +user["role"])                                                 
+      127      conn = _get_conn()                                        
+      128      try:                                                      
+      129          companies = []                                        
+      130 -        rows = conn.execute("SELECT taxpayer_id,              
+          -taxpayer_name, taxpayer_type FROM taxpayer_info ORDER BY      
+          -taxpayer_name").fetchall()                                    
+      130 +        if not allowed_ids:                                   
+      131 +            return companies                                  
+      132 +        placeholders = ",".join("?" * len(allowed_ids))       
+      133 +        rows = conn.execute(                                  
+      134 +            f"SELECT taxpayer_id, taxpayer_name,              
+          +taxpayer_type FROM taxpayer_info "                            
+      135 +            f"WHERE taxpayer_id IN ({placeholders}) ORDER BY  
+          +taxpayer_name",                                               
+      136 +            allowed_ids,                                      
+      137 +        ).fetchall()                                          
+      138          for r in rows:                                        
+      139              tid = r["taxpayer_id"]                            
+      140              # find latest period across domains               
+
+● Update(D:\fintax_ai\api\routes\data_management.py)
+  ⎿  Added 6 lines, removed 7 lines
+      169                                                                
+      170                                                                
+      171  @router.post("/quality-check")                                
+      172 -async def quality_check(company_id: str = Query("")):         
+      172 +async def quality_check(company_id: str = Query("")           
+          +, user: dict = Depends(get_current_user)):                    
+      173      from api.services.data_quality import DataQualityChecker  
+      174      if not company_id:                                        
+      175 -        conn = _get_conn()                                    
+      176 -        try:                                                  
+      177 -            row = conn.execute("SELECT taxpayer_id FROM       
+          -taxpayer_info LIMIT 1").fetchone()                            
+      178 -            company_id = row["taxpayer_id"] if row else ""    
+      179 -        finally:                                              
+      180 -            conn.close()                                      
+      175 +        # 默认取用户有权限的第一家企业                        
+      176 +        allowed_ids = get_user_company_ids(user["id"],        
+          +user["role"])                                                 
+      177 +        company_id = allowed_ids[0] if allowed_ids else ""    
+      178 +    else:                                                     
+      179 +        require_company_access(user, company_id)              
+      180      checker = DataQualityChecker()                            
+      181      return checker.check_all(company_id)                      
+
+● Now data_browser.py.
+
+● Read 1 file (ctrl+o to expand)
+
+● Update(D:\fintax_ai\api\routes\data_browser.py)
+  ⎿  Added 2 lines, removed 1 line
+      1  """Data browser API: tables, periods, data (general + raw       
+         format)."""                                                     
+      2  import sqlite3                                                  
+      3 -from fastapi import APIRouter, Query                            
+      3 +from fastapi import APIRouter, Depends, Query                   
+      4 +from api.auth import get_current_user, require_company_access   
+      5  from config.settings import DB_PATH                             
+      6                                                                  
+      7  router = APIRouter(prefix="/data-browser",                      
+         tags=["data-browser"])                                          
+
+● Update(D:\fintax_ai\api\routes\data_browser.py)
+  ⎿  Added 2 lines, removed 1 line
+      513                                                                
+      514                                                                
+      515  @router.get("/tables")                                        
+      516 -async def list_tables(company_id: str = Query("")):           
+      516 +async def list_tables(company_id: str = Query("")             
+          +, user: dict = Depends(get_current_user)):                    
+      517 +    require_company_access(user, company_id)                  
+      518      conn = _get_conn()                                        
+      519      try:                                                      
+      520          # Get company info                                    
+
+● Update(D:\fintax_ai\api\routes\data_browser.py)
+  ⎿  Added 2 lines, removed 1 line
+      547                                                                
+      548                                                                
+      549  @router.get("/periods")                                       
+      550 -async def list_periods(company_id: str = Query(""), domain:   
+          -str = Query("")):                                             
+      550 +async def list_periods(company_id: str = Query(""), domain:   
+          +str = Query(""), user: dict = Depends(get_current_user)):     
+      551 +    require_company_access(user, company_id)                  
+      552      conn = _get_conn()                                        
+      553      try:                                                      
+      554          domain_cfg = next((d for d in BROWSE_DOMAINS if       
+           d["key"] == domain), None)                                    
+
+● Update(D:\fintax_ai\api\routes\data_browser.py)
+  ⎿  Added 2 lines
+      606      domain: str = Query(""),                                  
+      607      period: str = Query("all"),                               
+      608      format: str = Query("general"),                           
+      609 +    user: dict = Depends(get_current_user),                   
+      610  ):                                                            
+      611 +    require_company_access(user, company_id)                  
+      612      conn = _get_conn()                                        
+      613      try:                                                      
+      614          domain_cfg = next((d for d in BROWSE_DOMAINS if       
+           d["key"] == domain), None)                                    
+
+● Now chat.py.
+
+● Update(D:\fintax_ai\api\routes\chat.py)
+  ⎿  Added 2 lines, removed 1 line
+      1  """SSE streaming chat endpoint."""                              
+      2  import json                                                     
+      3  import sqlite3                                                  
+      4 -from fastapi import APIRouter                                   
+      4 +from fastapi import APIRouter, Depends                          
+      5  from fastapi.responses import StreamingResponse                 
+      6 +from api.auth import get_current_user, require_company_access   
+      7  from api.schemas import ChatRequest                             
+      8  from mvp_pipeline import run_pipeline_stream                    
+      9  from modules.display_formatter import build_display_data        
+
+● Update(D:\fintax_ai\api\routes\chat.py)
+  ⎿  Added 3 lines, removed 1 line
+      52                                                                 
+      53                                                                 
+      54  @router.post("/chat")                                          
+      55 -async def chat(req: ChatRequest):                              
+      55 +async def chat(req: ChatRequest                                
+         +, user: dict = Depends(get_current_user)):                     
+      56 +    if req.company_id:                                         
+      57 +        require_company_access(user, req.company_id)           
+      58      query = req.query                                          
+      59      if req.company_id:                                         
+      60          name = _resolve_company_name(req.company_id)           
+
+● Now profile.py and history.py.
+
+● Read 2 files (ctrl+o to expand)
+
+● Write(D:\fintax_ai\api\routes\profile.py)
+  ⎿  Added 4 lines, removed 2 lines
+       1  """企业画像 API 路由"""                                        
+       2 -from fastapi import APIRouter, Query                           
+       2 +from fastapi import APIRouter, Depends, Query                  
+       3 +from api.auth import get_current_user, require_company_access  
+       4                                                                 
+       5  router = APIRouter()                                           
+       6                                                                 
+       7                                                                 
+       8  @router.get("/profile/{taxpayer_id}")                          
+       9 -async def get_profile(taxpayer_id: str, year: int =            
+         -Query(default=2025)):                                          
+       9 +async def get_profile(taxpayer_id: str, year: int =            
+         +Query(default=2025), user: dict = Depends(get_current_user)):  
+      10      """获取企业画像完整数据"""                                 
+      11 +    require_company_access(user, taxpayer_id)                  
+      12      from modules.profile_service import get_company_profile    
+      13      return get_company_profile(taxpayer_id, year)              
+
+● Update(D:\fintax_ai\api\routes\history.py)
+  ⎿  Added 2 lines, removed 1 line
+      2  import json                                                     
+      3  import threading                                                
+      4  from pathlib import Path                                        
+      5 -from fastapi import APIRouter                                   
+      5 +from fastapi import APIRouter, Depends                          
+      6 +from api.auth import get_current_user                           
+      7                                                                  
+      8  router = APIRouter()                                            
+      9                                                                  
+
+● Update(D:\fintax_ai\api\routes\history.py)
+  ⎿  Added 1 line, removed 1 line
+      35                                                                 
+      36                                                                 
+      37  @router.get("/chat/history")                                   
+      38 -async def get_history(limit: int = 100):                       
+      38 +async def get_history(limit: int = 100                         
+         +, user: dict = Depends(get_current_user)):                     
+      39      history = _load()                                          
+      40      return history[:limit]                                     
+      41                                                                 
+
+● Update(D:\fintax_ai\api\routes\history.py)
+  ⎿  Added 1 line, removed 1 line
+      41                                                                 
+      42                                                                 
+      43  @router.post("/chat/history")                                  
+      44 -async def save_history_entry(entry: dict):                     
+      44 +async def save_history_entry(entry: dict                       
+         +, user: dict = Depends(get_current_user)):                     
+      45      history = _load()                                          
+      46      history = [entry] + history                                
+      47      _save(history[:HISTORY_MAX])                               
+
+● Update(D:\fintax_ai\api\routes\history.py)
+  ⎿  Added 1 line, removed 1 line
+      49                                                                 
+      50                                                                 
+      51  @router.delete("/chat/history")                                
+      52 -async def delete_history(body: dict):                          
+      52 +async def delete_history(body: dict                            
+         +, user: dict = Depends(get_current_user)):                     
+      53      ids = body.get("ids", [])                                  
+      54      if not ids:                                                
+      55          _save([])                                              
+
+● Backend is done. Let me verify it loads correctly.
+
+● Bash(cd D:/fintax_ai && python -c "from api.main import app; print('FastAPI
+      app loaded OK'); print([r.path for r in app.routes if hasattr(r,
+      'path')])")
+  ⎿  FastAPI app loaded OK
+     ['/openapi.json', '/docs', '/docs/oauth2-redirect', '/redoc', '/api/au
+     th/login', '/api/auth/logout', '/api/auth/me', '/api/users', '/api/use
+     … +7 lines (ctrl+o to expand)
+
+● Backend loads cleanly with all routes including the new
+  /users/{user_id}/companies endpoints. Now Phase 4: Frontend.
+
+  Phase 4: Frontend
+
+● Write(src\hooks\useAuth.js)
+  ⎿  Added 25 lines, removed 1 line
+       1  import { useState, useCallback, useEffect } from 'react'       
+       2  import { fetchCurrentUser } from '../services/authApi'         
+       3                                                                 
+       4 +const ADMIN_ROLES = ['sys', 'admin']                           
+       5 +const ROLE_LABELS = {                                          
+       6 +  sys: '超级管理员',                                           
+       7 +  admin: '系统管理员',                                         
+       8 +  firm: '事务所用户',                                          
+       9 +  group: '集团企业用户',                                       
+      10 +  enterprise: '普通企业用户',                                  
+      11 +}                                                              
+      12 +const CREATABLE_ROLES = {                                      
+      13 +  sys: ['admin', 'firm', 'group', 'enterprise'],               
+      14 +  admin: ['admin', 'firm', 'group', 'enterprise'],             
+      15 +  firm: ['firm', 'enterprise'],                                
+      16 +  group: ['group', 'enterprise'],                              
+      17 +  enterprise: ['enterprise'],                                  
+      18 +}                                                              
+      19 +                                                               
+      20 +export { ADMIN_ROLES, ROLE_LABELS, CREATABLE_ROLES }           
+      21 +                                                               
+      22  export default function useAuth() {                            
+      23    const [user, setUser] = useState(null)                       
+      24    const [loading, setLoading] = useState(true)                 
+     ...
+      32      setUser(null)                                              
+      33    }, [])                                                       
+      34                                                                 
+      35 +  const role = user?.role || ''                                
+      36 +                                                               
+      37    return {                                                     
+      38      user,                                                      
+      39      loading,                                                   
+      40      handleLogin,                                               
+      41      handleLogout,                                              
+      42 -    isAdmin: user?.role === 'admin',                           
+      42 +    isAdmin: ADMIN_ROLES.includes(role),                       
+      43 +    isSys: role === 'sys',                                     
+      44 +    canEditSettings: ADMIN_ROLES.includes(role),               
+      45 +    roleLabel: ROLE_LABELS[role] || '用户',                    
+      46 +    creatableRoles: CREATABLE_ROLES[role] || [],               
+      47    }                                                            
+      48  }                                                              
+
+● Now update authApi.js with new functions.
+
+● Update(src\services\authApi.js)
+  ⎿  Added 26 lines
+       77    }                                                           
+       78    return res.json()                                           
+       79  }                                                             
+       80 +                                                              
+       81 +export async function fetchUserCompanies(userId) {            
+       82 +  const res = await                                           
+          +fetch(`${BASE}/users/${userId}/companies`, {                  
+       83 +    headers: authHeaders(),                                   
+       84 +  })                                                          
+       85 +  if (!res.ok) throw new Error('获取用户企业权限失败')        
+       86 +  return res.json()                                           
+       87 +}                                                             
+       88 +                                                              
+       89 +export async function updateUserCompanies(userId, companyIds) 
+          + {                                                            
+       90 +  const res = await                                           
+          +fetch(`${BASE}/users/${userId}/companies`, {                  
+       91 +    method: 'PUT',                                            
+       92 +    headers: authHeaders({ 'Content-Type': 'application/json' 
+          + }),                                                          
+       93 +    body: JSON.stringify({ company_ids: companyIds }),        
+       94 +  })                                                          
+       95 +  if (!res.ok) throw new Error('更新用户企业权限失败')        
+       96 +  return res.json()                                           
+       97 +}                                                             
+       98 +                                                              
+       99 +export async function fetchAllCompanies() {                   
+      100 +  const res = await fetch(`${BASE}/companies`, {              
+      101 +    headers: authHeaders(),                                   
+      102 +  })                                                          
+      103 +  if (!res.ok) throw new Error('获取企业列表失败')            
+      104 +  return res.json()                                           
+      105 +}                                                             
+
+● Now update Header.jsx roleLabel.
+
+● Update(src\components\Header\Header.jsx)
+  ⎿  Added 5 lines, removed 1 line
+      30      return `${d.getFullYear()}/${pad(d.getMonth() +            
+          1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinute 
+          s())}:${pad(d.getSeconds())}`                                  
+      31    }                                                            
+      32                                                                 
+      33 +  const ROLE_LABELS = {                                        
+      34 +    sys: '超级管理员', admin: '系统管理员', firm:              
+         +'事务所用户',                                                  
+      35 +    group: '集团企业用户', enterprise: '普通企业用户',         
+      36 +  }                                                            
+      37    const displayName = user?.display_name || user?.username ||  
+          '用户'                                                         
+      38 -  const roleLabel = user?.role === 'admin' ? '管理员' : '普通  
+         -用户'                                                          
+      38 +  const roleLabel = ROLE_LABELS[user?.role] || '用户'          
+      39                                                                 
+      40    return (                                                     
+      41      <header className={s.header}>                              
+
+● Now update SystemSettingsPage to pass currentUser to BasicSettings and
+  ServiceSettings.
+
+● Update(src\components\SystemSettings\SystemSettingsPage.jsx)
+  ⎿  Added 2 lines, removed 2 lines
+      30          {activeTab === 'user-management' && (                  
+      31            <UserManagement currentUser={currentUser} />         
+      32          )}                                                     
+      33 -        {activeTab === 'basic' && <BasicSettings />}           
+      34 -        {activeTab === 'service' && <ServiceSettings />}       
+      33 +        {activeTab === 'basic' && <BasicSettings               
+         +currentUser={currentUser} />}                                  
+      34 +        {activeTab === 'service' && <ServiceSettings           
+         +currentUser={currentUser} />}                                  
+      35        </div>                                                   
+      36      </div>                                                     
+      37    )                                                            
+
+● Now the big one — UserManagement.jsx rewrite. Let me read the CSS module to
+  understand available styles.
+
+● Read 1 file (ctrl+o to expand)
+
+● I need to add a few CSS classes for the company assignment section. Let me add
+   them, then rewrite UserManagement.jsx.
+
+● Update(src\components\SystemSettings\UserManagement.module.css)
+  ⎿  Added 12 lines
+      111    box-shadow: var(--shadow-xl);                               
+      112  }                                                             
+      113  .confirmActions { display: flex; gap: 10px; justify-content:  
+           center; margin-top: 20px; }                                   
+      114 +.companySection { margin-top: 4px; }                          
+      115 +.companyLabel { font-size: 13px; margin-bottom: 6px; color:   
+          +var(--color-text-secondary); }                                
+      116 +.companyList {                                                
+      117 +  max-height: 160px; overflow-y: auto; border: 1px solid      
+          +var(--color-border);                                          
+      118 +  border-radius: var(--radius-sm); padding: 8px 10px;         
+      119 +}                                                             
+      120 +.companyItem { display: flex; align-items: center; gap: 8px;  
+          +font-size: 13px; padding: 3px 0; }                            
+      121 +.companyItem input[type="checkbox"] { accent-color:           
+          +var(--color-primary); }                                       
+      122 +.badgeSys { background: #fef3c7; color: #92400e; }            
+      123 +.badgeFirm { background: #dbeafe; color: #1e40af; }           
+      124 +.badgeGroup { background: #d1fae5; color: #065f46; }          
+      125 +.badgeEnterprise { background: #f3e8ff; color: #6b21a8; }     
+
+● Now rewrite UserManagement.jsx. This is the most complex file — I'll write it
+  in chunks.
+
+● Write(src\components\SystemSettings\UserManagement.jsx)
+  ⎿  Added 16 lines, removed 210 lines
+       4    createUser,                                                  
+       5    updateUser,                                                  
+       6    deleteUser,                                                  
+       7 +  fetchUserCompanies,                                          
+       8 +  updateUserCompanies,                                         
+       9 +  fetchAllCompanies,                                           
+      10  } from '../../services/authApi'                                
+      11 +import { ADMIN_ROLES, ROLE_LABELS, CREATABLE_ROLES } from      
+         +'../../hooks/useAuth'                                          
+      12  import s from './UserManagement.module.css'                    
+      13                                                                 
+      14 -const ROLE_LABELS = { admin: '管理员', user: '普通用户' }      
+      14 +const ROLE_BADGE_CLASS = {                                     
+      15 +  sys: s.badgeSys,                                             
+      16 +  admin: s.badgeAdmin,                                         
+      17 +  firm: s.badgeFirm,                                           
+      18 +  group: s.badgeGroup,                                         
+      19 +  enterprise: s.badgeEnterprise,                               
+      20 +}                                                              
+      21                                                                 
+      22  export default function UserManagement({ currentUser }) {      
+      23    const [users, setUsers] = useState([])                       
+      24    const [search, setSearch] = useState('')                     
+      25    const [filterRole, setFilterRole] = useState('')             
+      26    const [filterStatus, setFilterStatus] = useState('')         
+      27 -  const [modal, setModal] = useState(null) // null |           
+         -{mode:'add'} | {mode:'edit', user}                             
+      27 +  const [modal, setModal] = useState(null) // null |           
+         +{mode:'add'} | {mode:'edit',user} | {mode:'password',user}     
+      28    const [confirmDelete, setConfirmDelete] = useState(null)     
+      29    const [error, setError] = useState('')                       
+      30                                                                 
+      31 -  const isAdmin = currentUser?.role === 'admin'                
+      31 +  const isAdmin = ADMIN_ROLES.includes(currentUser?.role)      
+      32 +  const isSys = currentUser?.role === 'sys'                    
+      33                                                                 
+      34    const load = useCallback(async () => {                       
+      35      try {                                                      
+     ...
+       29      }                                                         
+       30    }, [])                                                      
+       31                                                                
+       32 -  useEffect(() => { if (isAdmin) load() }, [isAdmin, load])   
+       32 +  useEffect(() => { load() }, [load])                         
+       33                                                                
+       34 -  if (!isAdmin) {                                             
+       35 -    return (                                                  
+       36 -      <div className={s.noAccess}>                            
+       37 -        <span className={s.lockIcon}>&#128274;</span>         
+       38 -        <p>需要管理员权限才能访问用户管理</p>                 
+       39 -      </div>                                                  
+       40 -    )                                                         
+       41 -  }                                                           
+       42 -                                                              
+       43 -  const filtered = users.filter((u) => {                      
+       44 -    if (search && !u.username.includes(search) &&             
+          -!(u.display_name || '').includes(search)) return false        
+       45 -    if (filterRole && u.role !== filterRole) return false     
+       46 -    if (filterStatus !== '' && String(u.is_active) !==        
+          -filterStatus) return false                                    
+       47 -    return true                                               
+       48 -  })                                                          
+       49 -                                                              
+       50 -  const stats = {                                             
+       51 -    total: users.length,                                      
+       52 -    active: users.filter((u) => u.is_active).length,          
+       53 -    admins: users.filter((u) => u.role === 'admin').length,   
+       54 -  }                                                           
+       55 -                                                              
+       56 -  const handleSave = async (formData) => {                    
+       57 -    try {                                                     
+       58 -      if (modal.mode === 'add') {                             
+       59 -        await createUser(formData)                            
+       60 -      } else {                                                
+       61 -        await updateUser(modal.user.id, formData)             
+       62 -      }                                                       
+       63 -      setModal(null)                                          
+       64 -      load()                                                  
+       65 -    } catch (err) {                                           
+       66 -      setError(err.message)                                   
+       67 -    }                                                         
+       68 -  }                                                           
+       69 -                                                              
+       70 -  const handleDelete = async () => {                          
+       71 -    try {                                                     
+       72 -      await deleteUser(confirmDelete.id)                      
+       73 -      setConfirmDelete(null)                                  
+       74 -      load()                                                  
+       75 -    } catch (err) {                                           
+       76 -      setError(err.message)                                   
+       77 -    }                                                         
+       78 -  }                                                           
+       79 -                                                              
+       80 -  return (                                                    
+       81 -    <div className={s.wrap}>                                  
+       82 -      {error && (                                             
+       83 -        <div className={s.errorBar}>                          
+       84 -          {error}                                             
+       85 -          <span className={s.errorClose} onClick={() =>       
+          -setError('')}>x</span>                                        
+       86 -        </div>                                                
+       87 -      )}                                                      
+       88 -                                                              
+       89 -      <div className={s.statsRow}>                            
+       90 -        <div className={s.statCard}>                          
+       91 -          <div className={s.statNum}>{stats.total}</div>      
+       92 -          <div className={s.statLabel}>总用户数</div>         
+       93 -        </div>                                                
+       94 -        <div className={s.statCard}>                          
+       95 -          <div className={s.statNum}>{stats.active}</div>     
+       96 -          <div className={s.statLabel}>活跃用户</div>         
+       97 -        </div>                                                
+       98 -        <div className={s.statCard}>                          
+       99 -          <div className={s.statNum}>{stats.admins}</div>     
+      100 -          <div className={s.statLabel}>管理员</div>           
+      101 -        </div>                                                
+      102 -      </div>                                                  
+      103 -                                                              
+      104 -      <div className={s.toolbar}>                             
+      105 -        <input                                                
+      106 -          className={s.searchInput}                           
+      107 -          placeholder="搜索用户名/显示名"                     
+      108 -          value={search}                                      
+      109 -          onChange={(e) => setSearch(e.target.value)}         
+      110 -        />                                                    
+      111 -        <select className={s.filterSelect} value={filterRole} 
+          - onChange={(e) => setFilterRole(e.target.value)}>             
+      112 -          <option value="">全部角色</option>                  
+      113 -          <option value="admin">管理员</option>               
+      114 -          <option value="user">普通用户</option>              
+      115 -        </select>                                             
+      116 -        <select className={s.filterSelect}                    
+          -value={filterStatus} onChange={(e) =>                         
+          -setFilterStatus(e.target.value)}>                             
+      117 -          <option value="">全部状态</option>                  
+      118 -          <option value="1">启用</option>                     
+      119 -          <option value="0">禁用</option>                     
+      120 -        </select>                                             
+      121 -        <button className={s.addBtn} onClick={() =>           
+          -setModal({ mode: 'add' })}>                                   
+      122 -          + 新增用户                                          
+      123 -        </button>                                             
+      124 -      </div>                                                  
+      125 -                                                              
+      126 -      <table className={s.table}>                             
+      127 -        <thead>                                               
+      128 -          <tr>                                                
+      129 -            <th>用户名</th><th>显示名</th><th>角色</th>       
+      130 -                                                              
+          -<th>状态</th><th>创建时间</th><th>最后登录</th><th>操作</th>  
+      131 -          </tr>                                               
+      132 -        </thead>                                              
+      133 -        <tbody>                                               
+      134 -          {filtered.map((u) => (                              
+      135 -            <tr key={u.id}>                                   
+      136 -              <td>{u.username}</td>                           
+      137 -              <td>{u.display_name || '-'}</td>                
+      138 -              <td><span className={`${s.badge} ${u.role ===   
+          -'admin' ? s.badgeAdmin :                                      
+          -''}`}>{ROLE_LABELS[u.role]}</span></td>                       
+      139 -              <td><span className={u.is_active ? s.statusOn : 
+          - s.statusOff}>{u.is_active ? '启用' : '禁用'}</span></td>     
+      140 -              <td>{u.created_at ? u.created_at.slice(0,       
+          -16).replace('T', ' ') : '-'}</td>                             
+      141 -              <td>{u.last_login ? u.last_login.slice(0,       
+          -16).replace('T', ' ') : '-'}</td>                             
+      142 -              <td className={s.actions}>                      
+      143 -                <button className={s.actionBtn} onClick={()   
+          -=> setModal({ mode: 'edit', user: u })}>编辑</button>         
+      144 -                <button                                       
+      145 -                  className={`${s.actionBtn} ${s.deleteBtn}`} 
+      146 -                  onClick={() => setConfirmDelete(u)}         
+      147 -                  disabled={u.id === currentUser.id}          
+      148 -                >                                             
+      149 -                  删除                                        
+      150 -                </button>                                     
+      151 -              </td>                                           
+      152 -            </tr>                                             
+      153 -          ))}                                                 
+      154 -          {filtered.length === 0 && (                         
+      155 -            <tr><td colSpan={7}                               
+          -className={s.empty}>暂无数据</td></tr>                        
+      156 -          )}                                                  
+      157 -        </tbody>                                              
+      158 -      </table>                                                
+      159 -                                                              
+      160 -      {modal && (                                             
+      161 -        <UserModal                                            
+      162 -          mode={modal.mode}                                   
+      163 -          user={modal.user}                                   
+      164 -          onSave={handleSave}                                 
+      165 -          onClose={() => setModal(null)}                      
+      166 -        />                                                    
+      167 -      )}                                                      
+      168 -                                                              
+      169 -      {confirmDelete && (                                     
+      170 -        <div className={s.overlay}>                           
+      171 -          <div className={s.confirmBox}>                      
+      172 -            <p>确定删除用户                                   
+          -<strong>{confirmDelete.username}</strong> 吗？</p>            
+      173 -            <div className={s.confirmActions}>                
+      174 -              <button className={s.cancelBtn} onClick={() =>  
+          -setConfirmDelete(null)}>取消</button>                         
+      175 -              <button className={`${s.addBtn}                 
+          -${s.deleteBtn}`} onClick={handleDelete}>确认删除</button>     
+      176 -            </div>                                            
+      177 -          </div>                                              
+      178 -        </div>                                                
+      179 -      )}                                                      
+      180 -    </div>                                                    
+      181 -  )                                                           
+      182 -}                                                             
+      183 -                                                              
+      184 -function UserModal({ mode, user, onSave, onClose }) {         
+      185 -  const [form, setForm] = useState({                          
+      186 -    username: user?.username || '',                           
+      187 -    password: '',                                             
+      188 -    role: user?.role || 'user',                               
+      189 -    display_name: user?.display_name || '',                   
+      190 -    is_active: user?.is_active ?? 1,                          
+      191 -  })                                                          
+      192 -                                                              
+      193 -  const handleSubmit = (e) => {                               
+      194 -    e.preventDefault()                                        
+      195 -    const data = { ...form }                                  
+      196 -    if (mode === 'edit' && !data.password) delete             
+          -data.password                                                 
+      197 -    if (mode === 'edit') delete data.username                 
+      198 -    onSave(data)                                              
+      199 -  }                                                           
+      200 -                                                              
+      201 -  return (                                                    
+      202 -    <div className={s.overlay}>                               
+      203 -      <div className={s.modalCard}>                           
+      204 -        <h3 className={s.modalTitle}>{mode === 'add' ?        
+          -'新增用户' : '编辑用户'}</h3>                                 
+      205 -        <form onSubmit={handleSubmit}                         
+          -className={s.modalForm}>                                      
+      206 -          {mode === 'add' && (                                
+      207 -            <label className={s.field}>                       
+      208 -              <span>用户名</span>                             
+      209 -              <input required minLength={2}                   
+          -value={form.username} onChange={(e) => setForm({ ...form,     
+          -username: e.target.value })} />                               
+      210 -            </label>                                          
+      211 -          )}                                                  
+      212 -          <label className={s.field}>                         
+      213 -            <span>{mode === 'add' ? '密码' :                  
+          -'新密码（留空不修改）'}</span>                                
+      214 -            <input type="password" minLength={mode === 'add'  
+          -? 6 : 0} required={mode === 'add'} value={form.password}      
+          -onChange={(e) => setForm({ ...form, password: e.target.value  
+          -})} />                                                        
+      215 -          </label>                                            
+      216 -          <label className={s.field}>                         
+      217 -            <span>显示名</span>                               
+      218 -            <input value={form.display_name} onChange={(e) => 
+          - setForm({ ...form, display_name: e.target.value })} />       
+      219 -          </label>                                            
+      220 -          <label className={s.field}>                         
+      221 -            <span>角色</span>                                 
+      222 -            <select value={form.role} onChange={(e) =>        
+          -setForm({ ...form, role: e.target.value })}>                  
+      223 -              <option value="user">普通用户</option>          
+      224 -              <option value="admin">管理员</option>           
+      225 -            </select>                                         
+      226 -          </label>                                            
+      227 -          <label className={s.checkField}>                    
+      228 -            <input type="checkbox" checked={!!form.is_active} 
+          - onChange={(e) => setForm({ ...form, is_active:               
+          -e.target.checked ? 1 : 0 })} />                               
+      229 -            <span>启用账号</span>                             
+      230 -          </label>                                            
+      231 -          <div className={s.modalActions}>                    
+      232 -            <button type="button" className={s.cancelBtn}     
+          -onClick={onClose}>取消</button>                               
+      233 -            <button type="submit"                             
+          -className={s.addBtn}>保存</button>                            
+      234 -          </div>                                              
+      235 -        </form>                                               
+      236 -      </div>                                                  
+      237 -    </div>                                                    
+      238 -  )                                                           
+      239 -}                                                             
+       34 +  // PLACEHOLDER_HANDLERS                                     
+
+● Update(src\components\SystemSettings\UserManagement.jsx)
+  ⎿  Added 108 lines, removed 1 line
+       42                                                                
+       43    useEffect(() => { load() }, [load])                         
+       44                                                                
+       45 -  // PLACEHOLDER_HANDLERS                                     
+       45 +  const filtered = users.filter((u) => {                      
+       46 +    if (search && !u.username.includes(search) &&             
+          +!(u.display_name || '').includes(search)) return false        
+       47 +    if (filterRole && u.role !== filterRole) return false     
+       48 +    if (filterStatus !== '' && String(u.is_active) !==        
+          +filterStatus) return false                                    
+       49 +    return true                                               
+       50 +  })                                                          
+       51 +                                                              
+       52 +  const stats = {                                             
+       53 +    total: users.length,                                      
+       54 +    active: users.filter((u) => u.is_active).length,          
+       55 +    admins: users.filter((u) =>                               
+          +ADMIN_ROLES.includes(u.role)).length,                         
+       56 +  }                                                           
+       57 +                                                              
+       58 +  const handleSave = async (formData) => {                    
+       59 +    try {                                                     
+       60 +      if (modal.mode === 'add') {                             
+       61 +        await createUser(formData)                            
+       62 +      } else if (modal.mode === 'password') {                 
+       63 +        await updateUser(modal.user.id, { password:           
+          +formData.password })                                          
+       64 +      } else {                                                
+       65 +        const payload = { ...formData }                       
+       66 +        if (!payload.password) delete payload.password        
+       67 +        delete payload.username                               
+       68 +        // 企业权限单独更新                                   
+       69 +        const companyIds = payload.company_ids                
+       70 +        delete payload.company_ids                            
+       71 +        await updateUser(modal.user.id, payload)              
+       72 +        if (isAdmin && companyIds !== undefined) {            
+       73 +          await updateUserCompanies(modal.user.id,            
+          +companyIds)                                                   
+       74 +        }                                                     
+       75 +      }                                                       
+       76 +      setModal(null)                                          
+       77 +      load()                                                  
+       78 +    } catch (err) {                                           
+       79 +      setError(err.message)                                   
+       80 +    }                                                         
+       81 +  }                                                           
+       82 +                                                              
+       83 +  const handleDelete = async () => {                          
+       84 +    try {                                                     
+       85 +      await deleteUser(confirmDelete.id)                      
+       86 +      setConfirmDelete(null)                                  
+       87 +      load()                                                  
+       88 +    } catch (err) {                                           
+       89 +      setError(err.message)                                   
+       90 +    }                                                         
+       91 +  }                                                           
+       92 +                                                              
+       93 +  // 可创建的角色列表                                         
+       94 +  const creatableRoles = CREATABLE_ROLES[currentUser?.role]   
+          +|| []                                                         
+       95 +  // 角色筛选选项（非 sys 不显示 sys）                        
+       96 +  const filterRoleOptions = isSys                             
+       97 +    ? Object.entries(ROLE_LABELS)                             
+       98 +    : Object.entries(ROLE_LABELS).filter(([k]) => k !==       
+          +'sys')                                                        
+       99 +                                                              
+      100 +  return (                                                    
+      101 +    <div className={s.wrap}>                                  
+      102 +      {error && (                                             
+      103 +        <div className={s.errorBar}>                          
+      104 +          {error}                                             
+      105 +          <span className={s.errorClose} onClick={() =>       
+          +setError('')}>x</span>                                        
+      106 +        </div>                                                
+      107 +      )}                                                      
+      108 +                                                              
+      109 +      <div className={s.statsRow}>                            
+      110 +        <div className={s.statCard}>                          
+      111 +          <div className={s.statNum}>{stats.total}</div>      
+      112 +          <div className={s.statLabel}>总用户数</div>         
+      113 +        </div>                                                
+      114 +        <div className={s.statCard}>                          
+      115 +          <div className={s.statNum}>{stats.active}</div>     
+      116 +          <div className={s.statLabel}>活跃用户</div>         
+      117 +        </div>                                                
+      118 +        <div className={s.statCard}>                          
+      119 +          <div className={s.statNum}>{stats.admins}</div>     
+      120 +          <div className={s.statLabel}>管理员</div>           
+      121 +        </div>                                                
+      122 +      </div>                                                  
+      123 +                                                              
+      124 +      <div className={s.toolbar}>                             
+      125 +        <input                                                
+      126 +          className={s.searchInput}                           
+      127 +          placeholder="搜索用户名/显示名"                     
+      128 +          value={search}                                      
+      129 +          onChange={(e) => setSearch(e.target.value)}         
+      130 +        />                                                    
+      131 +        <select className={s.filterSelect} value={filterRole} 
+          + onChange={(e) => setFilterRole(e.target.value)}>             
+      132 +          <option value="">全部角色</option>                  
+      133 +          {filterRoleOptions.map(([k, v]) => (                
+      134 +            <option key={k} value={k}>{v}</option>            
+      135 +          ))}                                                 
+      136 +        </select>                                             
+      137 +        <select className={s.filterSelect}                    
+          +value={filterStatus} onChange={(e) =>                         
+          +setFilterStatus(e.target.value)}>                             
+      138 +          <option value="">全部状态</option>                  
+      139 +          <option value="1">启用</option>                     
+      140 +          <option value="0">禁用</option>                     
+      141 +        </select>                                             
+      142 +        {creatableRoles.length > 0 && (                       
+      143 +          <button className={s.addBtn} onClick={() =>         
+          +setModal({ mode: 'add' })}>                                   
+      144 +            + 新增用户                                        
+      145 +          </button>                                           
+      146 +        )}                                                    
+      147 +      </div>                                                  
+      148 +                                                              
+      149 +      {/* PLACEHOLDER_TABLE */}                               
+      150 +    </div>                                                    
+      151 +  )                                                           
+      152 +}                                                             
+
+● Update(src\components\SystemSettings\UserManagement.jsx)
+  ⎿  Added 68 lines, removed 1 line
+      146          )}                                                    
+      147        </div>                                                  
+      148                                                                
+      149 -      {/* PLACEHOLDER_TABLE */}                               
+      149 +      <table className={s.table}>                             
+      150 +        <thead>                                               
+      151 +          <tr>                                                
+      152 +            <th>用户名</th><th>显示名</th><th>角色</th>       
+      153 +                                                              
+          +<th>状态</th><th>创建时间</th><th>最后登录</th><th>操作</th>  
+      154 +          </tr>                                               
+      155 +        </thead>                                              
+      156 +        <tbody>                                               
+      157 +          {filtered.map((u) => (                              
+      158 +            <tr key={u.id}>                                   
+      159 +              <td>{u.username}</td>                           
+      160 +              <td>{u.display_name || '-'}</td>                
+      161 +              <td>                                            
+      162 +                <span className={`${s.badge}                  
+          +${ROLE_BADGE_CLASS[u.role] || ''}`}>                          
+      163 +                  {ROLE_LABELS[u.role] || u.role}             
+      164 +                </span>                                       
+      165 +              </td>                                           
+      166 +              <td><span className={u.is_active ? s.statusOn : 
+          + s.statusOff}>{u.is_active ? '启用' : '禁用'}</span></td>     
+      167 +              <td>{u.created_at ? u.created_at.slice(0,       
+          +16).replace('T', ' ') : '-'}</td>                             
+      168 +              <td>{u.last_login ? u.last_login.slice(0,       
+          +16).replace('T', ' ') : '-'}</td>                             
+      169 +              <td className={s.actions}>                      
+      170 +                {isAdmin ? (                                  
+      171 +                  <>                                          
+      172 +                    <button className={s.actionBtn}           
+          +onClick={() => setModal({ mode: 'edit', user: u               
+          +})}>编辑</button>                                             
+      173 +                    <button                                   
+      174 +                      className={`${s.actionBtn}              
+          +${s.deleteBtn}`}                                              
+      175 +                      onClick={() => setConfirmDelete(u)}     
+      176 +                      disabled={u.id === currentUser.id ||    
+          +u.role === 'sys'}                                             
+      177 +                    >                                         
+      178 +                      删除                                    
+      179 +                    </button>                                 
+      180 +                  </>                                         
+      181 +                ) : u.id === currentUser.id ? (               
+      182 +                  <button className={s.actionBtn} onClick={() 
+          + => setModal({ mode: 'password', user: u                      
+          +})}>修改密码</button>                                         
+      183 +                ) : null}                                     
+      184 +              </td>                                           
+      185 +            </tr>                                             
+      186 +          ))}                                                 
+      187 +          {filtered.length === 0 && (                         
+      188 +            <tr><td colSpan={7}                               
+          +className={s.empty}>暂无数据</td></tr>                        
+      189 +          )}                                                  
+      190 +        </tbody>                                              
+      191 +      </table>                                                
+      192 +                                                              
+      193 +      {modal && (                                             
+      194 +        <UserModal                                            
+      195 +          mode={modal.mode}                                   
+      196 +          user={modal.user}                                   
+      197 +          currentUser={currentUser}                           
+      198 +          isAdmin={isAdmin}                                   
+      199 +          onSave={handleSave}                                 
+      200 +          onClose={() => setModal(null)}                      
+      201 +        />                                                    
+      202 +      )}                                                      
+      203 +                                                              
+      204 +      {confirmDelete && (                                     
+      205 +        <div className={s.overlay}>                           
+      206 +          <div className={s.confirmBox}>                      
+      207 +            <p>确定删除用户                                   
+          +<strong>{confirmDelete.username}</strong> 吗？</p>            
+      208 +            <div className={s.confirmActions}>                
+      209 +              <button className={s.cancelBtn} onClick={() =>  
+          +setConfirmDelete(null)}>取消</button>                         
+      210 +              <button className={`${s.addBtn}                 
+          +${s.deleteBtn}`} onClick={handleDelete}>确认删除</button>     
+      211 +            </div>                                            
+      212 +          </div>                                              
+      213 +        </div>                                                
+      214 +      )}                                                      
+      215      </div>                                                    
+      216    )                                                           
+      217  }                                                             
+      218 +                                                              
+      219 +// PLACEHOLDER_MODAL                                          
+
+● Now write the UserModal component.
+
+● Update(src\components\SystemSettings\UserManagement.jsx)
+  ⎿  Added 82 lines, removed 1 line
+      216    )                                                           
+      217  }                                                             
+      218                                                                
+      219 -// PLACEHOLDER_MODAL                                          
+      219 +function UserModal({ mode, user, currentUser, isAdmin,        
+          +onSave, onClose }) {                                          
+      220 +  const creatableRoles = CREATABLE_ROLES[currentUser?.role]   
+          +|| []                                                         
+      221 +  const [form, setForm] = useState({                          
+      222 +    username: user?.username || '',                           
+      223 +    password: '',                                             
+      224 +    role: user?.role || creatableRoles[0] || 'enterprise',    
+      225 +    display_name: user?.display_name || '',                   
+      226 +    is_active: user?.is_active ?? 1,                          
+      227 +    company_ids: [],                                          
+      228 +  })                                                          
+      229 +  const [allCompanies, setAllCompanies] = useState([])        
+      230 +                                                              
+      231 +  useEffect(() => {                                           
+      232 +    if (mode === 'edit' && isAdmin && user) {                 
+      233 +      // 加载所有企业列表和用户已分配企业                     
+      234 +      fetchAllCompanies().then(setAllCompanies).catch(() =>   
+          +{})                                                           
+      235 +      fetchUserCompanies(user.id)                             
+      236 +        .then((res) => setForm((f) => ({ ...f, company_ids:   
+          +res.company_ids || [] })))                                    
+      237 +        .catch(() => {})                                      
+      238 +    }                                                         
+      239 +    if (mode === 'add' && isAdmin) {                          
+      240 +      fetchAllCompanies().then(setAllCompanies).catch(() =>   
+          +{})                                                           
+      241 +    }                                                         
+      242 +  }, [mode, isAdmin, user])                                   
+      243 +                                                              
+      244 +  const toggleCompany = (tid) => {                            
+      245 +    setForm((f) => ({                                         
+      246 +      ...f,                                                   
+      247 +      company_ids: f.company_ids.includes(tid)                
+      248 +        ? f.company_ids.filter((id) => id !== tid)            
+      249 +        : [...f.company_ids, tid],                            
+      250 +    }))                                                       
+      251 +  }                                                           
+      252 +                                                              
+      253 +  const handleSubmit = (e) => {                               
+      254 +    e.preventDefault()                                        
+      255 +    if (mode === 'password') {                                
+      256 +      onSave({ password: form.password })                     
+      257 +      return                                                  
+      258 +    }                                                         
+      259 +    const data = { ...form }                                  
+      260 +    if (mode === 'edit' && !data.password) delete             
+          +data.password                                                 
+      261 +    if (mode === 'edit') delete data.username                 
+      262 +    onSave(data)                                              
+      263 +  }                                                           
+      264 +                                                              
+      265 +  const title = mode === 'add' ? '新增用户' : mode ===        
+          +'password' ? '修改密码' : '编辑用户'                          
+      266 +                                                              
+      267 +  return (                                                    
+      268 +    <div className={s.overlay}>                               
+      269 +      <div className={s.modalCard}>                           
+      270 +        <h3 className={s.modalTitle}>{title}</h3>             
+      271 +        <form onSubmit={handleSubmit}                         
+          +className={s.modalForm}>                                      
+      272 +          {mode === 'password' ? (                            
+      273 +            <label className={s.field}>                       
+      274 +              <span>新密码</span>                             
+      275 +              <input type="password" required minLength={6}   
+          +value={form.password} onChange={(e) => setForm({ ...form,     
+          +password: e.target.value })} />                               
+      276 +            </label>                                          
+      277 +          ) : (                                               
+      278 +            <>                                                
+      279 +              {mode === 'add' && (                            
+      280 +                <label className={s.field}>                   
+      281 +                  <span>用户名</span>                         
+      282 +                  <input required minLength={2}               
+          +value={form.username} onChange={(e) => setForm({ ...form,     
+          +username: e.target.value })} />                               
+      283 +                </label>                                      
+      284 +              )}                                              
+      285 +              <label className={s.field}>                     
+      286 +                <span>{mode === 'add' ? '密码' :              
+          +'新密码（留空不修改）'}</span>                                
+      287 +                <input type="password" minLength={mode ===    
+          +'add' ? 6 : 0} required={mode === 'add'}                      
+          +value={form.password} onChange={(e) => setForm({ ...form,     
+          +password: e.target.value })} />                               
+      288 +              </label>                                        
+      289 +              {/* PLACEHOLDER_MODAL_FIELDS */}                
+      290 +            </>                                               
+      291 +          )}                                                  
+      292 +          <div className={s.modalActions}>                    
+      293 +            <button type="button" className={s.cancelBtn}     
+          +onClick={onClose}>取消</button>                               
+      294 +            <button type="submit"                             
+          +className={s.addBtn}>保存</button>                            
+      295 +          </div>                                              
+      296 +        </form>                                               
+      297 +      </div>                                                  
+      298 +    </div>                                                    
+      299 +  )                                                           
+      300 +}                                                             
+
+● Update(src\components\SystemSettings\UserManagement.jsx)
+  ⎿  Added 35 lines, removed 1 line
+      286                  <span>{mode === 'add' ? '密码' :              
+           '新密码（留空不修改）'}</span>                                
+      287                  <input type="password" minLength={mode ===    
+           'add' ? 6 : 0} required={mode === 'add'}                      
+           value={form.password} onChange={(e) => setForm({ ...form,     
+           password: e.target.value })} />                               
+      288                </label>                                        
+      289 -              {/* PLACEHOLDER_MODAL_FIELDS */}                
+      289 +              <label className={s.field}>                     
+      290 +                <span>显示名</span>                           
+      291 +                <input value={form.display_name}              
+          +onChange={(e) => setForm({ ...form, display_name:             
+          +e.target.value })} />                                         
+      292 +              </label>                                        
+      293 +              <label className={s.field}>                     
+      294 +                <span>角色</span>                             
+      295 +                <select value={form.role} onChange={(e) =>    
+          +setForm({ ...form, role: e.target.value })}>                  
+      296 +                  {creatableRoles.map((r) => (                
+      297 +                    <option key={r}                           
+          +value={r}>{ROLE_LABELS[r]}</option>                           
+      298 +                  ))}                                         
+      299 +                </select>                                     
+      300 +              </label>                                        
+      301 +              {isAdmin && (                                   
+      302 +                <label className={s.checkField}>              
+      303 +                  <input type="checkbox"                      
+          +checked={!!form.is_active} onChange={(e) => setForm({         
+          +...form, is_active: e.target.checked ? 1 : 0 })} />           
+      304 +                  <span>启用账号</span>                       
+      305 +                </label>                                      
+      306 +              )}                                              
+      307 +              {isAdmin && allCompanies.length > 0 && (        
+      308 +                <div className={s.companySection}>            
+      309 +                  <div                                        
+          +className={s.companyLabel}>企业数据权限</div>                 
+      310 +                  <div className={s.companyList}>             
+      311 +                    {allCompanies.map((c) => (                
+      312 +                      <label key={c.taxpayer_id}              
+          +className={s.companyItem}>                                    
+      313 +                        <input                                
+      314 +                          type="checkbox"                     
+      315 +                                                              
+          +checked={form.company_ids.includes(c.taxpayer_id)}            
+      316 +                          onChange={() =>                     
+          +toggleCompany(c.taxpayer_id)}                                 
+      317 +                        />                                    
+      318 +                        <span>{c.taxpayer_name}</span>        
+      319 +                      </label>                                
+      320 +                    ))}                                       
+      321 +                  </div>                                      
+      322 +                </div>                                        
+      323 +              )}                                              
+      324              </>                                               
+      325            )}                                                  
+      326            <div className={s.modalActions}>                    
+
+● Now update BasicSettings and ServiceSettings to accept currentUser and show
+  edit controls for admin/sys.
+
+● Read 1 file (ctrl+o to expand)
+
+● Update(src\components\SystemSettings\BasicSettings.jsx)
+  ⎿  Added 11 lines, removed 2 lines
+       1  import s from './BasicSettings.module.css'                     
+       2                                                                 
+       3 -export default function BasicSettings() {                      
+       3 +const ADMIN_ROLES = ['sys', 'admin']                           
+       4 +                                                               
+       5 +export default function BasicSettings({ currentUser }) {       
+       6 +  const canEdit = ADMIN_ROLES.includes(currentUser?.role)      
+       7 +                                                               
+       8    return (                                                     
+       9      <div className={s.wrap}>                                   
+      10 +      {!canEdit && (                                           
+      11 +        <div style={{ padding: '8px 14px', marginBottom: 16,   
+         +background: '#fffbe6', border: '1px solid #ffe58f',            
+         +borderRadius: 6, fontSize: 13, color: '#ad8b00' }}>            
+      12 +          当前角色仅可查看，无法修改设置                       
+      13 +        </div>                                                 
+      14 +      )}                                                       
+      15        <Section title="系统偏好">                               
+      16 -        <Row label="深色模式" value={<Toggle />} />            
+      16 +        <Row label="深色模式" value={<Toggle                   
+         +disabled={!canEdit} />} />                                     
+      17          <Row label="界面语言" value="简体中文" />              
+      18        </Section>                                               
+      19        <Section title="安全设置">                               
+
+● Update(src\components\SystemSettings\BasicSettings.jsx)
+  ⎿  Added 2 lines, removed 2 lines
+      54    )                                                            
+      55  }                                                              
+      56                                                                 
+      57 -function Toggle() {                                            
+      58 -  return <span className={s.toggleOff}>关闭</span>             
+      57 +function Toggle({ disabled }) {                                
+      58 +  return <span className={s.toggleOff} style={disabled ? {     
+         +opacity: 0.5, cursor: 'not-allowed' } : {}}>{disabled ?        
+         +'关闭（只读）' : '关闭'}</span>                                
+      59  }                                                              
+
+● Now ServiceSettings.
+
+● Read 1 file (ctrl+o to expand)
+
+● Update(src\components\SystemSettings\ServiceSettings.jsx)
+  ⎿  Added 10 lines, removed 1 line
+       1  import s from './ServiceSettings.module.css'                   
+       2                                                                 
+       3 -export default function ServiceSettings() {                    
+       3 +const ADMIN_ROLES = ['sys', 'admin']                           
+       4 +                                                               
+       5 +export default function ServiceSettings({ currentUser }) {     
+       6 +  const canEdit = ADMIN_ROLES.includes(currentUser?.role)      
+       7 +                                                               
+       8    return (                                                     
+       9      <div className={s.wrap}>                                   
+      10 +      {!canEdit && (                                           
+      11 +        <div style={{ padding: '8px 14px', marginBottom: 16,   
+         +background: '#fffbe6', border: '1px solid #ffe58f',            
+         +borderRadius: 6, fontSize: 13, color: '#ad8b00' }}>            
+      12 +          当前角色仅可查看，无法修改设置                       
+      13 +        </div>                                                 
+      14 +      )}                                                       
+      15        <div className={s.statsRow}>                             
+      16          <MetricCard label="CPU 使用率" value="23%"             
+          color="var(--color-success)" />                                
+      17          <MetricCard label="内存使用" value="4.2 GB / 16 GB"    
+          color="var(--color-primary)" />                                
+
+● Now let me verify the frontend builds.
+
+● Bash(cd D:/fintax_ai/frontend && npx vite build 2>&1 | tail -20)
+  ⎿  vite v7.3.1 building client environment for production...
+     transforming...
+     ✓ 285 modules transformed.
+     … +12 lines (ctrl+o to expand)
+  ⎿  (timeout 1m)
+
+● Frontend builds cleanly. Let me also verify the backend loads with all the
+  changes.
+
+● Bash(cd D:/fintax_ai && python -c "
+      from api.auth import ROLES, ADMIN_ROLES, CREATABLE_ROLES,
+      get_user_company_ids…)
+  ⎿  Roles: ['sys', 'admin', 'firm', 'group', 'enterprise']
+     Admin roles: {'sys', 'admin'}
+     Creatable roles: {'sys': {'enterprise', 'group', 'admin', 'firm'}, 'ad
+     … +9 lines (ctrl+o to expand)
+
+● All permissions are correctly configured. Let me do a quick sanity check on
+  the complete UserManagement.jsx to make sure it's well-formed.
+
+● Read 1 file (ctrl+o to expand)
+
+● Everything looks good. Let me do a final frontend build to confirm.
+
+● Bash(cd D:/fintax_ai/frontend && npx vite build 2>&1 | tail -10)
+  ⎿  computing gzip size...
+     dist/index.html                   0.41 kB │ gzip:   0.30 kB
+     dist/assets/index-CtVj6NbN.css   45.07 kB │ gzip:   8.92 kB
+     … +9 lines (ctrl+o to expand)
+  ⎿  (timeout 1m)
+
+● All done. Here's a summary of what was implemented:
+
+  Database: New user_company_access table + migration script
+  (migrate_permissions.py) that creates 5 preset users (sys/admin/user1-4) with
+  correct roles and company access mappings.
+
+  Backend (7 route files + 2 core files):
+  - api/auth.py — 5-role constants, get_user_company_ids(),
+  require_company_access(), require_admin() now accepts sys+admin
+  - api/routes/users.py — Full rewrite: all users can browse (sys row hidden
+  from non-sys), role-based creation validation via CREATABLE_ROLES, non-admin
+  can only change own password, new /users/{id}/companies endpoints
+  - All data routes (company, chat, profile, data_browser, data_management,
+  history) now require auth + enforce company access
+
+  Frontend (6 files):
+  - useAuth.js — Exports ADMIN_ROLES, ROLE_LABELS, CREATABLE_ROLES, plus isSys,
+  canEditSettings, creatableRoles
+  - UserManagement.jsx — Removed admin-only gate; all users see user list;
+  non-admin only gets "修改密码" on own row; role dropdown filtered by
+  CREATABLE_ROLES; admin/sys get company permission checkboxes in edit modal
+  - BasicSettings.jsx / ServiceSettings.jsx — Read-only warning banner for
+  non-admin roles
+  - Header.jsx — 5-role label mapping
+
+✻ Worked for 17m 57s
