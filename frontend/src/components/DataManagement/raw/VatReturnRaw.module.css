@@ -1,0 +1,28 @@
+.vatContainer {
+  max-width: 1200px;
+}
+
+.colSection {
+  width: 8%;
+}
+
+.colName {
+  width: 28%;
+  text-align: left;
+}
+
+.colLine {
+  width: 6%;
+  text-align: center;
+}
+
+.colAmt {
+  width: 14.5%;
+  text-align: right;
+}
+
+.metaRow {
+  font-size: 12px;
+  line-height: 1.6;
+  margin-bottom: 2px;
+}

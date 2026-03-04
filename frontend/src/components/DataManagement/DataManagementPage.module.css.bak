@@ -1,0 +1,65 @@
+.page {
+  grid-area: main;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--color-body-bg);
+}
+
+.tabBar {
+  display: flex;
+  gap: 32px;
+  background: var(--color-card-bg);
+  border-bottom: 1px solid var(--color-border);
+  padding: 0 40px;
+  flex-shrink: 0;
+  height: 52px;
+  align-items: center;
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 100%;
+  padding: 0 4px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  position: relative;
+  transition: all var(--transition-base);
+}
+
+.tab:hover {
+  color: var(--color-primary);
+}
+
+.tabIcon {
+  opacity: 0.7;
+}
+
+.tabActive {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.tabActive .tabIcon {
+  opacity: 1;
+}
+
+.activeLine {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--color-primary);
+  border-radius: 2px 2px 0 0;
+}
+
+.tabContent {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+}

@@ -1,0 +1,40 @@
+.eitContainer {
+  max-width: 900px;
+}
+
+.colLine {
+  width: 8%;
+  text-align: center;
+}
+
+.colCategory {
+  width: 12%;
+  text-align: center;
+}
+
+.colName {
+  width: 50%;
+  text-align: left;
+}
+
+.colNameWide {
+  width: 62%;
+  text-align: left;
+}
+
+.colAmt {
+  width: 30%;
+  text-align: right;
+}
+
+.extraInfo {
+  font-size: 12px;
+  color: #333;
+  margin-top: 2px;
+}
+
+.sectionRow td {
+  font-weight: 700;
+  text-align: center;
+  background: #fafafa;
+}
