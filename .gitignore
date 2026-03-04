@@ -25,12 +25,10 @@ Thumbs.db
 # Environment / secrets
 .env
 .env.*
-config/settings.py
 
 # Claude Code / MCP local config
 .claude/settings.local.json
 .mcp.json
-.mcp - 副本.json
 .playwright-mcp/
 
 # Node
@@ -44,12 +42,10 @@ frontend/node_modules/
 task_plan.md
 findings.md
 progress.md
-query_history.json
 
 # Query cache
 cache/
 
 # Misc
-新建文件夹/
 D:fintax_ai*/
 profile_v3_full.png
