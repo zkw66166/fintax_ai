@@ -46,6 +46,9 @@ findings.md
 progress.md
 query_history.json
 
+# Query cache
+cache/
+
 # Misc
 新建文件夹/
 D:fintax_ai*/

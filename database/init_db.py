@@ -640,6 +640,38 @@ def get_ddl_statements():
         "CREATE INDEX IF NOT EXISTS idx_etl_error_batch ON etl_error_log(etl_batch_id)",
 
         # ============================================================
+        # 7b. 用户表
+        # ============================================================
+        """CREATE TABLE IF NOT EXISTS users (
+            id            INTEGER PRIMARY KEY AUTOINCREMENT,
+            username      TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            role          TEXT NOT NULL DEFAULT 'user',
+            display_name  TEXT,
+            is_active     INTEGER DEFAULT 1,
+            created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            last_login    TIMESTAMP,
+            created_by    INTEGER,
+            FOREIGN KEY (created_by) REFERENCES users(id)
+        )""",
+        "CREATE UNIQUE INDEX IF NOT EXISTS idx_users_username ON users(username)",
+
+        # ============================================================
+        # 7c. 用户-企业权限关联表
+        # ============================================================
+        """CREATE TABLE IF NOT EXISTS user_company_access (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id     INTEGER NOT NULL,
+            taxpayer_id TEXT NOT NULL,
+            created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            created_by  INTEGER,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY (taxpayer_id) REFERENCES taxpayer_info(taxpayer_id),
+            UNIQUE(user_id, taxpayer_id)
+        )""",
+        "CREATE INDEX IF NOT EXISTS idx_uca_user ON user_company_access(user_id)",
+
+        # ============================================================
         # 8. VAT 查询视图
         # ============================================================
         """CREATE VIEW IF NOT EXISTS vw_vat_return_general AS
@@ -970,6 +1002,7 @@ def get_ddl_statements():
         "CREATE INDEX IF NOT EXISTS idx_is_period ON fs_income_statement_item(period_year, period_month)",
         "CREATE INDEX IF NOT EXISTS idx_is_taxpayer ON fs_income_statement_item(taxpayer_id)",
         "CREATE INDEX IF NOT EXISTS idx_is_taxpayer_period ON fs_income_statement_item(taxpayer_id, period_year, period_month)",
+        "CREATE INDEX IF NOT EXISTS idx_is_taxpayer_period_gaap ON fs_income_statement_item(taxpayer_id, period_year, period_month, gaap_type, revision_no DESC)",
 
         # --- 利润表项目字典表 ---
         """CREATE TABLE IF NOT EXISTS fs_income_statement_item_dict (
@@ -1025,6 +1058,7 @@ def get_ddl_statements():
         "CREATE INDEX IF NOT EXISTS idx_cf_period ON fs_cash_flow_item(period_year, period_month)",
         "CREATE INDEX IF NOT EXISTS idx_cf_taxpayer ON fs_cash_flow_item(taxpayer_id)",
         "CREATE INDEX IF NOT EXISTS idx_cf_taxpayer_period ON fs_cash_flow_item(taxpayer_id, period_year, period_month)",
+        "CREATE INDEX IF NOT EXISTS idx_cf_taxpayer_period_gaap ON fs_cash_flow_item(taxpayer_id, period_year, period_month, gaap_type, revision_no DESC)",
 
         # --- 现金流量表项目字典表 ---
         """CREATE TABLE IF NOT EXISTS fs_cash_flow_item_dict (
@@ -1123,6 +1157,7 @@ def get_ddl_statements():
         "CREATE INDEX IF NOT EXISTS idx_fmi_category ON financial_metrics_item(metric_category)",
         "CREATE INDEX IF NOT EXISTS idx_fmi_code ON financial_metrics_item(metric_code)",
         "CREATE INDEX IF NOT EXISTS idx_fmi_period_type ON financial_metrics_item(period_type)",
+        "CREATE INDEX IF NOT EXISTS idx_fmi_taxpayer_period_type ON financial_metrics_item(taxpayer_id, period_year, period_type, metric_code)",
 
         # ============================================================
         # 4i. 人事薪金表（HR）
