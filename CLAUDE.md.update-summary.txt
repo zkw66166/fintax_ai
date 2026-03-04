@@ -1,0 +1,77 @@
+# CLAUDE.md 更新总结
+
+## 更新时间
+2026-03-03
+
+## 更新内容
+
+### 1. Architecture 部分（第76-150行）
+
+**新增内容**：
+- 完整的两层多轮对话架构说明
+- Tier 1: Financial Data Multi-Turn（财务数据多轮查询）
+  - 触发条件：只包含 financial_data 路由
+  - 行为：实体继承（taxpayer_id, period, domain等）
+  - 示例：连续查询同一公司不同月份的数据
+- Tier 2: Cross-Route Mixed Analysis（跨路由混合多轮查询）
+  - 触发条件：包含≥2种不同路由
+  - 行为：完整上下文投喂给税务筹划专家LLM
+  - 示例：结合税收优惠政策和财务数据进行综合分析
+- 路由决策流程图（ASCII流程图）
+
+### 2. Configuration 部分（第470-481行）
+
+**新增配置项**：
+- `CONVERSATION_ENABLED` — 多轮对话主开关
+- `CONVERSATION_MAX_TURNS` — 默认对话轮数
+- `CONVERSATION_MIN_TURNS` / `CONVERSATION_MAX_TURNS_LIMIT` — 轮数限制
+- `CONVERSATION_TOKEN_BUDGET` — 对话历史token预算
+- `CONVERSATION_BETA_USERS` — Beta用户白名单
+- `MIXED_ANALYSIS_*` — 混合分析相关配置（5个）
+
+### 3. 新增章节：Multi-Turn Conversation（第504-600行）
+
+**章节结构**：
+- 总体介绍（两层架构）
+- Tier 1: Financial Data Multi-Turn
+  - 目的、触发条件、行为、示例、关键模块
+- Tier 2: Cross-Route Mixed Analysis
+  - 目的、触发条件、行为、示例、输出格式、关键模块
+- Routing Decision Flow（路由决策流程）
+- Safety（安全保障）
+
+### 4. Commands 部分（第35-37行）
+
+**新增测试命令**：
+```bash
+# Run mixed analysis tests (cross-route multi-turn synthesis)
+python test_mixed_analysis.py          # Unit tests
+python test_mixed_analysis_e2e.py      # End-to-end tests
+```
+
+## 关键改进
+
+1. **清晰的层次结构**：明确区分两层多轮对话的不同用途和触发条件
+2. **完整的路由逻辑**：详细说明了路由决策的优先级和流程
+3. **实用的示例**：为每一层提供了具体的使用场景示例
+4. **安全保障说明**：强调前端控制和完全隔离的设计
+5. **配置项完整性**：补充了所有相关配置项的说明
+
+## 验证
+
+所有更新已通过以下验证：
+- ✅ 文件格式正确（markdown语法）
+- ✅ 章节结构完整（两层架构都有说明）
+- ✅ 示例代码可读（代码块格式正确）
+- ✅ 流程图清晰（ASCII流程图）
+- ✅ 配置项完整（所有相关配置都已列出）
+
+## 相关文件
+
+- `CLAUDE.md` — 主文档（已更新）
+- `modules/conversation_manager.py` — Tier 1实现
+- `modules/entity_preprocessor.py` — Tier 1实体继承
+- `modules/mixed_analysis_detector.py` — Tier 2检测器
+- `modules/mixed_analysis_executor.py` — Tier 2执行器
+- `test_mixed_analysis.py` — 单元测试
+- `test_mixed_analysis_e2e.py` — 端到端测试
