@@ -1,0 +1,40 @@
+=== Column Mapping Tables ===
+
+account_balance_column_mapping (8 rows) - columns: ['source_column', 'target_field', 'description']
+  {'source_column': '本币期初余额', 'target_field': 'opening_balance', 'description': '期初余额（本币）'}
+  {'source_column': '本币借方发生', 'target_field': 'debit_amount', 'description': '本期借方发生额（本币）'}
+  {'source_column': '本币贷方发生', 'target_field': 'credit_amount', 'description': '本期贷方发生额（本币）'}
+  {'source_column': '本币期末余额', 'target_field': 'closing_balance', 'description': '期末余额（本币）'}
+  {'source_column': '期初余额', 'target_field': 'opening_balance', 'description': '期初余额'}
+  {'source_column': '借方发生额', 'target_field': 'debit_amount', 'description': '借方发生额'}
+  {'source_column': '贷方发生额', 'target_field': 'credit_amount', 'description': '贷方发生额'}
+  {'source_column': '期末余额', 'target_field': 'closing_balance', 'description': '期末余额'}
+
+eit_annual_main_column_mapping (45 rows) - columns: ['line_number', 'column_name', 'business_name']
+  {'line_number': 1, 'column_name': 'revenue', 'business_name': '营业收入'}
+  {'line_number': 2, 'column_name': 'cost', 'business_name': '营业成本'}
+  {'line_number': 3, 'column_name': 'taxes_surcharges', 'business_name': '税金及附加'}
+  {'line_number': 4, 'column_name': 'selling_expenses', 'business_name': '销售费用'}
+  {'line_number': 5, 'column_name': 'admin_expenses', 'business_name': '管理费用'}
+  {'line_number': 6, 'column_name': 'rd_expenses', 'business_name': '研发费用'}
+  {'line_number': 7, 'column_name': 'financial_expenses', 'business_name': '财务费用'}
+  {'line_number': 8, 'column_name': 'other_gains', 'business_name': '其他收益'}
+  {'line_number': 9, 'column_name': 'investment_income', 'business_name': '投资收益'}
+  {'line_number': 10, 'column_name': 'net_exposure_hedge_gains', 'business_name': '净敞口套期收益'}
+  {'line_number': 11, 'column_name': 'fair_value_change_gains', 'business_name': '公允价值变动收益'}
+  {'line_number': 12, 'column_name': 'credit_impairment_loss', 'business_name': '信用减值损失'}
+  {'line_number': 13, 'column_name': 'asset_impairment_loss', 'business_name': '资产减值损失'}
+  {'line_number': 14, 'column_name': 'asset_disposal_gains', 'business_name': '资产处置收益'}
+  {'line_number': 15, 'column_name': 'operating_profit', 'business_name': '营业利润'}
+  {'line_number': 16, 'column_name': 'non_operating_income', 'business_name': '营业外收入'}
+  {'line_number': 17, 'column_name': 'non_operating_expenses', 'business_name': '营业外支出'}
+  {'line_number': 18, 'column_name': 'total_profit', 'business_name': '利润总额'}
+  {'line_number': 19, 'column_name': 'less_foreign_income', 'business_name': '减：境外所得'}
+  {'line_number': 20, 'column_name': 'add_tax_adjust_increase', 'business_name': '加：纳税调整增加额'}
+  {'line_number': 21, 'column_name': 'less_tax_adjust_decrease', 'business_name': '减：纳税调整减少额'}
+  {'line_number': 22, 'column_name': 'exempt_income_deduction_total', 'business_name': '减：免税、减计收入及加计扣除'}
+  {'line_number': 23, 'column_name': 'add_foreign_tax_offset', 'business_name': '加：境外应税所得抵减境内亏损'}
+  {'line_number': 24, 'column_name': 'adjusted_taxable_income', 'business_name': '纳税调整后所得'}
+  {'line_number': 25, 'column_name': 'less_income_exemption', 'business_name': '减：所得减免'}
+  {'line_number': 26, 'column_name': 'less_losses_carried_forward', 'business_name': '减：弥补以前年度亏损'}
+  {'line_number': 27, 'column_name': 'less_taxable_income_deduction', 'business_name': '减：抵扣应纳税所得额'}

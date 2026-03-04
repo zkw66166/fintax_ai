@@ -1,0 +1,6555 @@
+{
+  "account_balance": {
+    "columns": [
+      {
+        "name": "taxpayer_id",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "period_year",
+        "type": "INTEGER",
+        "not_null": true,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "period_month",
+        "type": "INTEGER",
+        "not_null": true,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "account_code",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "revision_no",
+        "type": "INTEGER",
+        "not_null": true,
+        "default": "0",
+        "pk": true
+      },
+      {
+        "name": "submitted_at",
+        "type": "TIMESTAMP",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "etl_batch_id",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "source_doc_id",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "source_unit",
+        "type": "TEXT",
+        "not_null": false,
+        "default": "'元'",
+        "pk": false
+      },
+      {
+        "name": "etl_confidence",
+        "type": "REAL",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "opening_balance",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "debit_amount",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "credit_amount",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "closing_balance",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "idx_balance_taxpayer_period_revision",
+        "unique": false
+      },
+      {
+        "name": "idx_balance_account",
+        "unique": false
+      },
+      {
+        "name": "idx_balance_taxpayer_period",
+        "unique": false
+      },
+      {
+        "name": "idx_balance_taxpayer",
+        "unique": false
+      },
+      {
+        "name": "idx_balance_period",
+        "unique": false
+      },
+      {
+        "name": "sqlite_autoindex_account_balance_1",
+        "unique": true
+      }
+    ],
+    "foreign_keys": [
+      {
+        "from": "account_code",
+        "to_table": "account_master",
+        "to_column": "account_code"
+      }
+    ]
+  },
+  "account_balance_column_mapping": {
+    "columns": [
+      {
+        "name": "source_column",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "target_field",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "description",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "sqlite_autoindex_account_balance_column_mapping_1",
+        "unique": true
+      }
+    ],
+    "foreign_keys": []
+  },
+  "account_master": {
+    "columns": [
+      {
+        "name": "account_code",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "account_name",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "level",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "category",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "balance_direction",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "is_gaap",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": "0",
+        "pk": false
+      },
+      {
+        "name": "is_small",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": "0",
+        "pk": false
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": "1",
+        "pk": false
+      },
+      {
+        "name": "created_at",
+        "type": "TIMESTAMP",
+        "not_null": false,
+        "default": "CURRENT_TIMESTAMP",
+        "pk": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "idx_account_category",
+        "unique": false
+      },
+      {
+        "name": "idx_account_name",
+        "unique": false
+      },
+      {
+        "name": "sqlite_autoindex_account_master_1",
+        "unique": true
+      }
+    ],
+    "foreign_keys": []
+  },
+  "account_synonyms": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "phrase",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "account_code",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "account_name",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "priority",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": "1",
+        "pk": false
+      },
+      {
+        "name": "applicable_standards",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "idx_account_synonyms_phrase",
+        "unique": false
+      },
+      {
+        "name": "sqlite_autoindex_account_synonyms_1",
+        "unique": true
+      }
+    ],
+    "foreign_keys": []
+  },
+  "company_business_registration": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "company_name",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "english_name",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "unified_social_credit_code",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "company_type",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "operation_status",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "established_date",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "approval_date",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "legal_representative",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "registered_capital",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "paid_in_capital",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "insured_count",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "company_scale",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "business_scope",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "registered_address",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "business_term",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "source",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "taxpayer_id",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "industry_commerce_reg_no",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "organization_code",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "contact_phone",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "email",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "taxpayer_qualification",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "former_name",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "province",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "city",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "district",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "website",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "industry",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "industry_level1",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "industry_level2",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "industry_level3",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "registration_authority",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "longitude",
+        "type": "REAL",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "latitude",
+        "type": "REAL",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "extra",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      }
+    ],
+    "indexes": [],
+    "foreign_keys": []
+  },
+  "dim_industry": {
+    "columns": [
+      {
+        "name": "industry_code",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "industry_name",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "parent_code",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "sqlite_autoindex_dim_industry_1",
+        "unique": true
+      }
+    ],
+    "foreign_keys": []
+  },
+  "dim_region": {
+    "columns": [
+      {
+        "name": "region_code",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "region_name",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "parent_code",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "sqlite_autoindex_dim_region_1",
+        "unique": true
+      }
+    ],
+    "foreign_keys": []
+  },
+  "dim_tax_authority": {
+    "columns": [
+      {
+        "name": "tax_authority_code",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "tax_authority_name",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "region_code",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "level",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "sqlite_autoindex_dim_tax_authority_1",
+        "unique": true
+      }
+    ],
+    "foreign_keys": []
+  },
+  "eit_annual_basic_info": {
+    "columns": [
+      {
+        "name": "filing_id",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "tax_return_type_code",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "branch_tax_payment_ratio",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "asset_avg",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "employee_avg",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "industry_code",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "restricted_or_prohibited",
+        "type": "BOOLEAN",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "accounting_standard_code",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "use_general_fs_2019",
+        "type": "BOOLEAN",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "small_micro_enterprise",
+        "type": "BOOLEAN",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "listed_company",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "equity_investment_business",
+        "type": "BOOLEAN",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "overseas_related_transaction",
+        "type": "BOOLEAN",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "foreign_tax_credit_method",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "hainan_ftz_foreign_invest",
+        "type": "BOOLEAN",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "hainan_ftz_industry_category",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "venture_investment_partner",
+        "type": "BOOLEAN",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "venture_investment_enterprise",
+        "type": "BOOLEAN",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "tas_enterprise_type",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "non_profit_org",
+        "type": "BOOLEAN",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "software_ic_enterprise_type",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "ic_project_type",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "tech_sme_reg_no1",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "tech_sme_reg_date1",
+        "type": "DATE",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "tech_sme_reg_no2",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "tech_sme_reg_date2",
+        "type": "DATE",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "hi_tech_cert_no1",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "hi_tech_cert_date1",
+        "type": "DATE",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "hi_tech_cert_no2",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "hi_tech_cert_date2",
+        "type": "DATE",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "reorganization_tax_treatment",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "reorganization_type_code",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "reorganization_party_type",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "relocation_start_date",
+        "type": "DATE",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "relocation_no_income_year",
+        "type": "BOOLEAN",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "relocation_loss_deduction_year",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "nonmonetary_asset_invest",
+        "type": "BOOLEAN",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "nonmonetary_asset_defer_year",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "tech_achievement_invest",
+        "type": "BOOLEAN",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "tech_achievement_defer_year",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "asset_transfer_special_treatment",
+        "type": "BOOLEAN",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "debt_restructuring_defer_year",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "updated_at",
+        "type": "TIMESTAMP",
+        "not_null": false,
+        "default": "CURRENT_TIMESTAMP",
+        "pk": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "sqlite_autoindex_eit_annual_basic_info_1",
+        "unique": true
+      }
+    ],
+    "foreign_keys": [
+      {
+        "from": "filing_id",
+        "to_table": "eit_annual_filing",
+        "to_column": "filing_id"
+      }
+    ]
+  },
+  "eit_annual_filing": {
+    "columns": [
+      {
+        "name": "filing_id",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "taxpayer_id",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "period_year",
+        "type": "INTEGER",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "revision_no",
+        "type": "INTEGER",
+        "not_null": true,
+        "default": "0",
+        "pk": false
+      },
+      {
+        "name": "amount_unit",
+        "type": "TEXT",
+        "not_null": false,
+        "default": "'元'",
+        "pk": false
+      },
+      {
+        "name": "preparer",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "preparer_id",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "agent_organization",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "agent_credit_code",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "taxpayer_sign_date",
+        "type": "DATE",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "accepted_by",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "accepting_tax_office",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "date_accepted",
+        "type": "DATE",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "submitted_at",
+        "type": "TIMESTAMP",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "etl_batch_id",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "source_doc_id",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "etl_confidence",
+        "type": "REAL",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "created_at",
+        "type": "TIMESTAMP",
+        "not_null": false,
+        "default": "CURRENT_TIMESTAMP",
+        "pk": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "idx_eit_annual_filing_taxpayer_period",
+        "unique": false
+      },
+      {
+        "name": "idx_eit_annual_filing_period",
+        "unique": false
+      },
+      {
+        "name": "idx_eit_annual_filing_taxpayer",
+        "unique": false
+      },
+      {
+        "name": "sqlite_autoindex_eit_annual_filing_2",
+        "unique": true
+      },
+      {
+        "name": "sqlite_autoindex_eit_annual_filing_1",
+        "unique": true
+      }
+    ],
+    "foreign_keys": [
+      {
+        "from": "taxpayer_id",
+        "to_table": "taxpayer_info",
+        "to_column": "taxpayer_id"
+      }
+    ]
+  },
+  "eit_annual_incentive_items": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "filing_id",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "section",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "line_number",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "incentive_name",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "amount",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "idx_eit_annual_incentive_filing",
+        "unique": false
+      },
+      {
+        "name": "sqlite_autoindex_eit_annual_incentive_items_1",
+        "unique": true
+      }
+    ],
+    "foreign_keys": [
+      {
+        "from": "filing_id",
+        "to_table": "eit_annual_filing",
+        "to_column": "filing_id"
+      }
+    ]
+  },
+  "eit_annual_main": {
+    "columns": [
+      {
+        "name": "filing_id",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "revenue",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "cost",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "taxes_surcharges",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "selling_expenses",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "admin_expenses",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "rd_expenses",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "financial_expenses",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "other_gains",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "investment_income",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "net_exposure_hedge_gains",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "fair_value_change_gains",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "credit_impairment_loss",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "asset_impairment_loss",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "asset_disposal_gains",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "operating_profit",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "non_operating_income",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "non_operating_expenses",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "total_profit",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "less_foreign_income",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "add_tax_adjust_increase",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "less_tax_adjust_decrease",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "exempt_income_deduction_total",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "add_foreign_tax_offset",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "adjusted_taxable_income",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "less_income_exemption",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "less_losses_carried_forward",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "less_taxable_income_deduction",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "taxable_income",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "tax_rate",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "tax_payable",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "tax_credit_total",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "less_foreign_tax_credit",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "tax_due",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "add_foreign_tax_due",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "less_foreign_tax_credit_amount",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "actual_tax_payable",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "less_prepaid_tax",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "tax_payable_or_refund",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "hq_share",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "fiscal_central_share",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "hq_dept_share",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "less_ethnic_autonomous_relief",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "less_audit_adjustment",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "less_special_adjustment",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "final_tax_payable_or_refund",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "updated_at",
+        "type": "TIMESTAMP",
+        "not_null": false,
+        "default": "CURRENT_TIMESTAMP",
+        "pk": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "sqlite_autoindex_eit_annual_main_1",
+        "unique": true
+      }
+    ],
+    "foreign_keys": [
+      {
+        "from": "filing_id",
+        "to_table": "eit_annual_filing",
+        "to_column": "filing_id"
+      }
+    ]
+  },
+  "eit_annual_main_column_mapping": {
+    "columns": [
+      {
+        "name": "line_number",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "column_name",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "business_name",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      }
+    ],
+    "indexes": [],
+    "foreign_keys": []
+  },
+  "eit_annual_shareholder": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "filing_id",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "shareholder_name",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "id_type",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "id_number",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "investment_ratio",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "dividend_amount",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "nationality_or_address",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "is_remaining_total",
+        "type": "BOOLEAN",
+        "not_null": false,
+        "default": "0",
+        "pk": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "idx_eit_annual_shareholder_filing",
+        "unique": false
+      },
+      {
+        "name": "sqlite_autoindex_eit_annual_shareholder_1",
+        "unique": true
+      }
+    ],
+    "foreign_keys": [
+      {
+        "from": "filing_id",
+        "to_table": "eit_annual_filing",
+        "to_column": "filing_id"
+      }
+    ]
+  },
+  "eit_quarter_filing": {
+    "columns": [
+      {
+        "name": "filing_id",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "taxpayer_id",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "period_year",
+        "type": "INTEGER",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "period_quarter",
+        "type": "INTEGER",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "revision_no",
+        "type": "INTEGER",
+        "not_null": true,
+        "default": "0",
+        "pk": false
+      },
+      {
+        "name": "amount_unit",
+        "type": "TEXT",
+        "not_null": false,
+        "default": "'元'",
+        "pk": false
+      },
+      {
+        "name": "preparer",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "preparer_id",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "agent_organization",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "agent_credit_code",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "taxpayer_sign_date",
+        "type": "DATE",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "accepted_by",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "accepting_tax_office",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "date_accepted",
+        "type": "DATE",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "submitted_at",
+        "type": "TIMESTAMP",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "etl_batch_id",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "source_doc_id",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "etl_confidence",
+        "type": "REAL",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "created_at",
+        "type": "TIMESTAMP",
+        "not_null": false,
+        "default": "CURRENT_TIMESTAMP",
+        "pk": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "idx_eit_quarter_filing_taxpayer_period",
+        "unique": false
+      },
+      {
+        "name": "idx_eit_quarter_filing_period",
+        "unique": false
+      },
+      {
+        "name": "idx_eit_quarter_filing_taxpayer",
+        "unique": false
+      },
+      {
+        "name": "sqlite_autoindex_eit_quarter_filing_2",
+        "unique": true
+      },
+      {
+        "name": "sqlite_autoindex_eit_quarter_filing_1",
+        "unique": true
+      }
+    ],
+    "foreign_keys": [
+      {
+        "from": "taxpayer_id",
+        "to_table": "taxpayer_info",
+        "to_column": "taxpayer_id"
+      }
+    ]
+  },
+  "eit_quarter_incentive_items": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "filing_id",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "section",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "line_number",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "incentive_name",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "amount",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "idx_eit_quarter_incentive_filing",
+        "unique": false
+      },
+      {
+        "name": "sqlite_autoindex_eit_quarter_incentive_items_1",
+        "unique": true
+      }
+    ],
+    "foreign_keys": [
+      {
+        "from": "filing_id",
+        "to_table": "eit_quarter_filing",
+        "to_column": "filing_id"
+      }
+    ]
+  },
+  "eit_quarter_main": {
+    "columns": [
+      {
+        "name": "filing_id",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "employee_quarter_avg",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "asset_quarter_avg",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "restricted_or_prohibited_industry",
+        "type": "BOOLEAN",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "small_micro_enterprise",
+        "type": "BOOLEAN",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "revenue",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "cost",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "total_profit",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "add_specific_business_taxable_income",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "less_non_taxable_income",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "less_accelerated_depreciation",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "tax_free_income_deduction_total",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "income_exemption_total",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "less_losses_carried_forward",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "actual_profit",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "tax_rate",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "tax_payable",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "tax_credit_total",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "less_prepaid_tax_current_year",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "less_specific_business_prepaid",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "current_tax_payable_or_refund",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "hq_share_total",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "hq_share",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "fiscal_central_share",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "hq_business_dept_share",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "branch_share_ratio",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "branch_share_amount",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "ethnic_autonomous_relief_amount",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "final_tax_payable_or_refund",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "updated_at",
+        "type": "TIMESTAMP",
+        "not_null": false,
+        "default": "CURRENT_TIMESTAMP",
+        "pk": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "sqlite_autoindex_eit_quarter_main_1",
+        "unique": true
+      }
+    ],
+    "foreign_keys": [
+      {
+        "from": "filing_id",
+        "to_table": "eit_quarter_filing",
+        "to_column": "filing_id"
+      }
+    ]
+  },
+  "eit_quarter_main_column_mapping": {
+    "columns": [
+      {
+        "name": "line_number",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "column_name",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "business_name",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      }
+    ],
+    "indexes": [],
+    "foreign_keys": []
+  },
+  "eit_synonyms": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "phrase",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "column_name",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "priority",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": "1",
+        "pk": false
+      },
+      {
+        "name": "scope_view",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "taxpayer_type",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "idx_eit_synonyms_scope",
+        "unique": false
+      },
+      {
+        "name": "idx_eit_synonyms_phrase",
+        "unique": false
+      },
+      {
+        "name": "sqlite_autoindex_eit_synonyms_1",
+        "unique": true
+      }
+    ],
+    "foreign_keys": []
+  },
+  "etl_error_log": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "etl_batch_id",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "source_doc_id",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "taxpayer_id",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "period_year",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "period_month",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "table_name",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "error_type",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "error_message",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "created_at",
+        "type": "TIMESTAMP",
+        "not_null": false,
+        "default": "CURRENT_TIMESTAMP",
+        "pk": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "idx_etl_error_batch",
+        "unique": false
+      }
+    ],
+    "foreign_keys": []
+  },
+  "financial_metrics": {
+    "columns": [
+      {
+        "name": "taxpayer_id",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "period_year",
+        "type": "INTEGER",
+        "not_null": true,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "period_month",
+        "type": "INTEGER",
+        "not_null": true,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "metric_category",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "metric_code",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "metric_name",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "metric_value",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "metric_unit",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "evaluation_level",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "calculated_at",
+        "type": "TIMESTAMP",
+        "not_null": false,
+        "default": "CURRENT_TIMESTAMP",
+        "pk": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "idx_fm_code",
+        "unique": false
+      },
+      {
+        "name": "idx_fm_category",
+        "unique": false
+      },
+      {
+        "name": "idx_fm_taxpayer_period",
+        "unique": false
+      },
+      {
+        "name": "idx_fm_period",
+        "unique": false
+      },
+      {
+        "name": "idx_fm_taxpayer",
+        "unique": false
+      },
+      {
+        "name": "sqlite_autoindex_financial_metrics_1",
+        "unique": true
+      }
+    ],
+    "foreign_keys": [
+      {
+        "from": "taxpayer_id",
+        "to_table": "taxpayer_info",
+        "to_column": "taxpayer_id"
+      }
+    ]
+  },
+  "financial_metrics_item": {
+    "columns": [
+      {
+        "name": "taxpayer_id",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "period_year",
+        "type": "INTEGER",
+        "not_null": true,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "period_month",
+        "type": "INTEGER",
+        "not_null": true,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "period_type",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "metric_code",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "metric_name",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "metric_category",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "metric_value",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "metric_unit",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "evaluation_level",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "calculated_at",
+        "type": "TIMESTAMP",
+        "not_null": false,
+        "default": "CURRENT_TIMESTAMP",
+        "pk": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "idx_fmi_period_type",
+        "unique": false
+      },
+      {
+        "name": "idx_fmi_code",
+        "unique": false
+      },
+      {
+        "name": "idx_fmi_category",
+        "unique": false
+      },
+      {
+        "name": "idx_fmi_taxpayer_period",
+        "unique": false
+      },
+      {
+        "name": "idx_fmi_period",
+        "unique": false
+      },
+      {
+        "name": "idx_fmi_taxpayer",
+        "unique": false
+      },
+      {
+        "name": "sqlite_autoindex_financial_metrics_item_1",
+        "unique": true
+      }
+    ],
+    "foreign_keys": [
+      {
+        "from": "metric_code",
+        "to_table": "financial_metrics_item_dict",
+        "to_column": "metric_code"
+      },
+      {
+        "from": "taxpayer_id",
+        "to_table": "taxpayer_info",
+        "to_column": "taxpayer_id"
+      }
+    ]
+  },
+  "financial_metrics_item_dict": {
+    "columns": [
+      {
+        "name": "metric_code",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "metric_name",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "metric_category",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "metric_unit",
+        "type": "TEXT",
+        "not_null": false,
+        "default": "''",
+        "pk": false
+      },
+      {
+        "name": "formula_desc",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "source_domains",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "period_types",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "eval_rules",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "eval_ascending",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": "0",
+        "pk": false
+      },
+      {
+        "name": "display_order",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": "0",
+        "pk": false
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": "1",
+        "pk": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "sqlite_autoindex_financial_metrics_item_dict_1",
+        "unique": true
+      }
+    ],
+    "foreign_keys": []
+  },
+  "financial_metrics_synonyms": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "phrase",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "column_name",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "priority",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": "1",
+        "pk": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "idx_fm_synonyms_phrase",
+        "unique": false
+      },
+      {
+        "name": "sqlite_autoindex_financial_metrics_synonyms_1",
+        "unique": true
+      }
+    ],
+    "foreign_keys": []
+  },
+  "fs_balance_sheet_item": {
+    "columns": [
+      {
+        "name": "taxpayer_id",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "period_year",
+        "type": "INTEGER",
+        "not_null": true,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "period_month",
+        "type": "INTEGER",
+        "not_null": true,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "gaap_type",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "item_code",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "revision_no",
+        "type": "INTEGER",
+        "not_null": true,
+        "default": "0",
+        "pk": true
+      },
+      {
+        "name": "submitted_at",
+        "type": "TIMESTAMP",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "etl_batch_id",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "source_doc_id",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "source_unit",
+        "type": "TEXT",
+        "not_null": false,
+        "default": "'元'",
+        "pk": false
+      },
+      {
+        "name": "etl_confidence",
+        "type": "REAL",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "beginning_balance",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "ending_balance",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "item_name",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "line_number",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "section",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "idx_bs_taxpayer_period_gaap",
+        "unique": false
+      },
+      {
+        "name": "idx_bs_taxpayer_period",
+        "unique": false
+      },
+      {
+        "name": "idx_bs_taxpayer",
+        "unique": false
+      },
+      {
+        "name": "idx_bs_period",
+        "unique": false
+      },
+      {
+        "name": "sqlite_autoindex_fs_balance_sheet_item_1",
+        "unique": true
+      }
+    ],
+    "foreign_keys": []
+  },
+  "fs_balance_sheet_item_dict": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "gaap_type",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "item_code",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "item_name",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "line_number",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "section",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "display_order",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "is_total",
+        "type": "BOOLEAN",
+        "not_null": false,
+        "default": "0",
+        "pk": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "idx_bs_dict_gaap",
+        "unique": false
+      },
+      {
+        "name": "sqlite_autoindex_fs_balance_sheet_item_dict_1",
+        "unique": true
+      }
+    ],
+    "foreign_keys": []
+  },
+  "fs_balance_sheet_synonyms": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "phrase",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "column_name",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "gaap_type",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "priority",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": "1",
+        "pk": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "idx_bs_synonyms_gaap",
+        "unique": false
+      },
+      {
+        "name": "idx_bs_synonyms_phrase",
+        "unique": false
+      },
+      {
+        "name": "sqlite_autoindex_fs_balance_sheet_synonyms_1",
+        "unique": true
+      }
+    ],
+    "foreign_keys": []
+  },
+  "fs_cash_flow_item": {
+    "columns": [
+      {
+        "name": "taxpayer_id",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "period_year",
+        "type": "INTEGER",
+        "not_null": true,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "period_month",
+        "type": "INTEGER",
+        "not_null": true,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "gaap_type",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "item_code",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "revision_no",
+        "type": "INTEGER",
+        "not_null": true,
+        "default": "0",
+        "pk": true
+      },
+      {
+        "name": "submitted_at",
+        "type": "TIMESTAMP",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "etl_batch_id",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "source_doc_id",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "source_unit",
+        "type": "TEXT",
+        "not_null": false,
+        "default": "'元'",
+        "pk": false
+      },
+      {
+        "name": "etl_confidence",
+        "type": "REAL",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "current_amount",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "cumulative_amount",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "item_name",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "line_number",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "category",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "idx_cf_taxpayer_period",
+        "unique": false
+      },
+      {
+        "name": "idx_cf_taxpayer",
+        "unique": false
+      },
+      {
+        "name": "idx_cf_period",
+        "unique": false
+      },
+      {
+        "name": "sqlite_autoindex_fs_cash_flow_item_1",
+        "unique": true
+      }
+    ],
+    "foreign_keys": []
+  },
+  "fs_cash_flow_item_dict": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "gaap_type",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "item_code",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "item_name",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "line_number",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "category",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "display_order",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "is_total",
+        "type": "BOOLEAN",
+        "not_null": false,
+        "default": "0",
+        "pk": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "idx_cf_dict_gaap",
+        "unique": false
+      },
+      {
+        "name": "sqlite_autoindex_fs_cash_flow_item_dict_1",
+        "unique": true
+      }
+    ],
+    "foreign_keys": []
+  },
+  "fs_cash_flow_synonyms": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "phrase",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "column_name",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "gaap_type",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "priority",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": "1",
+        "pk": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "idx_cf_synonyms_gaap",
+        "unique": false
+      },
+      {
+        "name": "idx_cf_synonyms_phrase",
+        "unique": false
+      },
+      {
+        "name": "sqlite_autoindex_fs_cash_flow_synonyms_1",
+        "unique": true
+      }
+    ],
+    "foreign_keys": []
+  },
+  "fs_income_statement_item": {
+    "columns": [
+      {
+        "name": "taxpayer_id",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "period_year",
+        "type": "INTEGER",
+        "not_null": true,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "period_month",
+        "type": "INTEGER",
+        "not_null": true,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "gaap_type",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "item_code",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "revision_no",
+        "type": "INTEGER",
+        "not_null": true,
+        "default": "0",
+        "pk": true
+      },
+      {
+        "name": "submitted_at",
+        "type": "TIMESTAMP",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "etl_batch_id",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "source_doc_id",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "source_unit",
+        "type": "TEXT",
+        "not_null": false,
+        "default": "'元'",
+        "pk": false
+      },
+      {
+        "name": "etl_confidence",
+        "type": "REAL",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "current_amount",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "cumulative_amount",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "item_name",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "line_number",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "category",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "idx_is_taxpayer_period",
+        "unique": false
+      },
+      {
+        "name": "idx_is_taxpayer",
+        "unique": false
+      },
+      {
+        "name": "idx_is_period",
+        "unique": false
+      },
+      {
+        "name": "sqlite_autoindex_fs_income_statement_item_1",
+        "unique": true
+      }
+    ],
+    "foreign_keys": []
+  },
+  "fs_income_statement_item_dict": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "gaap_type",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "item_code",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "item_name",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "line_number",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "category",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "display_order",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "is_total",
+        "type": "BOOLEAN",
+        "not_null": false,
+        "default": "0",
+        "pk": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "idx_is_dict_gaap",
+        "unique": false
+      },
+      {
+        "name": "sqlite_autoindex_fs_income_statement_item_dict_1",
+        "unique": true
+      }
+    ],
+    "foreign_keys": []
+  },
+  "fs_income_statement_synonyms": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "phrase",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "column_name",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "gaap_type",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "priority",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": "1",
+        "pk": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "idx_is_synonyms_gaap",
+        "unique": false
+      },
+      {
+        "name": "idx_is_synonyms_phrase",
+        "unique": false
+      },
+      {
+        "name": "sqlite_autoindex_fs_income_statement_synonyms_1",
+        "unique": true
+      }
+    ],
+    "foreign_keys": []
+  },
+  "hr_employee_column_mapping": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "source_column",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "target_field",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "table_name",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "description",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      }
+    ],
+    "indexes": [],
+    "foreign_keys": []
+  },
+  "hr_employee_info": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "company_code",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "company_name",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "dept_code",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "dept_name",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "dept_level",
+        "type": "INTEGER",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "employee_id",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "employee_name",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "id_card",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "gender",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "birth_date",
+        "type": "DATE",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "age",
+        "type": "INTEGER",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "education",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "education_degree",
+        "type": "INTEGER",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "major",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "major_type",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "entry_date",
+        "type": "DATE",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "work_years",
+        "type": "DECIMAL(4,1)",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "total_work_years",
+        "type": "DECIMAL(4,1)",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "position_code",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "position_name",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "position_type",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "employment_type",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "social_insurance_city",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "is_on_the_job",
+        "type": "INTEGER",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "resign_date",
+        "type": "DATE",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "is_high_tech_person",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "high_tech_cert_type",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "high_tech_cert_name",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "high_tech_work_days",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "create_time",
+        "type": "DATETIME",
+        "not_null": false,
+        "default": "CURRENT_TIMESTAMP",
+        "pk": false
+      },
+      {
+        "name": "update_time",
+        "type": "DATETIME",
+        "not_null": false,
+        "default": "CURRENT_TIMESTAMP",
+        "pk": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "idx_hr_emp_is_on_job",
+        "unique": false
+      },
+      {
+        "name": "idx_hr_emp_is_high_tech",
+        "unique": false
+      },
+      {
+        "name": "idx_hr_emp_position_type",
+        "unique": false
+      },
+      {
+        "name": "idx_hr_emp_dept_code",
+        "unique": false
+      },
+      {
+        "name": "sqlite_autoindex_hr_employee_info_1",
+        "unique": true
+      }
+    ],
+    "foreign_keys": []
+  },
+  "hr_employee_salary": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "employee_id",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "salary_month",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "income_wage",
+        "type": "DECIMAL(12,2)",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "income_bonus_yearly",
+        "type": "DECIMAL(12,2)",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "income_bonus_quarterly",
+        "type": "DECIMAL(12,2)",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "income_bonus_monthly",
+        "type": "DECIMAL(12,2)",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "income_bonus_performance",
+        "type": "DECIMAL(12,2)",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "income_bonus_other",
+        "type": "DECIMAL(12,2)",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "allowance_transport",
+        "type": "DECIMAL(12,2)",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "allowance_meal",
+        "type": "DECIMAL(12,2)",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "allowance_housing",
+        "type": "DECIMAL(12,2)",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "allowance_high_temp",
+        "type": "DECIMAL(12,2)",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "allowance_shift",
+        "type": "DECIMAL(12,2)",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "allowance_other",
+        "type": "DECIMAL(12,2)",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "total_income",
+        "type": "DECIMAL(12,2)",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "cost_deductible",
+        "type": "DECIMAL(12,2)",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "tax_free_income",
+        "type": "DECIMAL(12,2)",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "other_income_deduct",
+        "type": "DECIMAL(12,2)",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "deduction_si_pension",
+        "type": "DECIMAL(12,2)",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "deduction_si_medical",
+        "type": "DECIMAL(12,2)",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "deduction_si_unemployment",
+        "type": "DECIMAL(12,2)",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "deduction_housing_fund",
+        "type": "DECIMAL(12,2)",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "total_special_deduction",
+        "type": "DECIMAL(12,2)",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "deduction_child_edu",
+        "type": "DECIMAL(12,2)",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "deduction_continue_edu",
+        "type": "DECIMAL(12,2)",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "deduction_housing_loan",
+        "type": "DECIMAL(12,2)",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "deduction_housing_rent",
+        "type": "DECIMAL(12,2)",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "deduction_elderly_care",
+        "type": "DECIMAL(12,2)",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "deduction_3yo_child_care",
+        "type": "DECIMAL(12,2)",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "total_special_add_deduction",
+        "type": "DECIMAL(12,2)",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "deduction_enterprise_annuity",
+        "type": "DECIMAL(12,2)",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "deduction_commercial_health",
+        "type": "DECIMAL(12,2)",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "deduction_tax_deferred_pension",
+        "type": "DECIMAL(12,2)",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "deduction_other_allowable",
+        "type": "DECIMAL(12,2)",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "total_other_deduction",
+        "type": "DECIMAL(12,2)",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "donation_allowable",
+        "type": "DECIMAL(12,2)",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "taxable_income",
+        "type": "DECIMAL(12,2)",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "tax_rate",
+        "type": "DECIMAL(5,2)",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "quick_deduction",
+        "type": "DECIMAL(12,2)",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "tax_payable",
+        "type": "DECIMAL(12,2)",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "tax_reduction",
+        "type": "DECIMAL(12,2)",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "tax_withheld",
+        "type": "DECIMAL(12,2)",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "tax_refund_or_pay",
+        "type": "DECIMAL(12,2)",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "company_si_pension",
+        "type": "DECIMAL(12,2)",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "company_si_medical",
+        "type": "DECIMAL(12,2)",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "company_si_unemployment",
+        "type": "DECIMAL(12,2)",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "company_si_injury",
+        "type": "DECIMAL(12,2)",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "company_si_maternity",
+        "type": "DECIMAL(12,2)",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "company_housing_fund",
+        "type": "DECIMAL(12,2)",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "company_total_benefit",
+        "type": "DECIMAL(12,2)",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "gross_salary",
+        "type": "DECIMAL(12,2)",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "net_salary",
+        "type": "DECIMAL(12,2)",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "remark",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "create_time",
+        "type": "DATETIME",
+        "not_null": false,
+        "default": "CURRENT_TIMESTAMP",
+        "pk": false
+      },
+      {
+        "name": "update_time",
+        "type": "DATETIME",
+        "not_null": false,
+        "default": "CURRENT_TIMESTAMP",
+        "pk": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "idx_hr_sal_employee",
+        "unique": false
+      },
+      {
+        "name": "idx_hr_sal_month",
+        "unique": false
+      },
+      {
+        "name": "sqlite_autoindex_hr_employee_salary_1",
+        "unique": true
+      }
+    ],
+    "foreign_keys": []
+  },
+  "hr_employee_synonyms": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "phrase",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "column_name",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "priority",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": "1",
+        "pk": false
+      },
+      {
+        "name": "scope_view",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "idx_hr_emp_syn_phrase",
+        "unique": false
+      },
+      {
+        "name": "sqlite_autoindex_hr_employee_synonyms_1",
+        "unique": true
+      }
+    ],
+    "foreign_keys": []
+  },
+  "hr_salary_column_mapping": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "source_column",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "target_field",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "table_name",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "description",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      }
+    ],
+    "indexes": [],
+    "foreign_keys": []
+  },
+  "hr_salary_synonyms": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "phrase",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "column_name",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "priority",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": "1",
+        "pk": false
+      },
+      {
+        "name": "scope_view",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "idx_hr_sal_syn_phrase",
+        "unique": false
+      },
+      {
+        "name": "sqlite_autoindex_hr_salary_synonyms_1",
+        "unique": true
+      }
+    ],
+    "foreign_keys": []
+  },
+  "inv_column_mapping": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "source_column",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "target_field",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "table_name",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "description",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      }
+    ],
+    "indexes": [],
+    "foreign_keys": []
+  },
+  "inv_spec_purchase": {
+    "columns": [
+      {
+        "name": "taxpayer_id",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "period_year",
+        "type": "INTEGER",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "period_month",
+        "type": "INTEGER",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "invoice_format",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "invoice_pk",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "line_no",
+        "type": "INTEGER",
+        "not_null": true,
+        "default": "1",
+        "pk": true
+      },
+      {
+        "name": "invoice_code",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "invoice_number",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "digital_invoice_no",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "seller_tax_id",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "seller_name",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "buyer_tax_id",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "buyer_name",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "invoice_date",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "tax_category_code",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "special_business_type",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "goods_name",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "specification",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "unit",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "quantity",
+        "type": "REAL",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "unit_price",
+        "type": "REAL",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "amount",
+        "type": "REAL",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "tax_rate",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "tax_amount",
+        "type": "REAL",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "total_amount",
+        "type": "REAL",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "invoice_source",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "invoice_type",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "invoice_status",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "is_positive",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "risk_level",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "issuer",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "remark",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "submitted_at",
+        "type": "TIMESTAMP",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "etl_batch_id",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "idx_inv_purchase_date",
+        "unique": false
+      },
+      {
+        "name": "idx_inv_purchase_pk",
+        "unique": false
+      },
+      {
+        "name": "idx_inv_purchase_taxpayer_period",
+        "unique": false
+      },
+      {
+        "name": "sqlite_autoindex_inv_spec_purchase_1",
+        "unique": true
+      }
+    ],
+    "foreign_keys": []
+  },
+  "inv_spec_sales": {
+    "columns": [
+      {
+        "name": "taxpayer_id",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "period_year",
+        "type": "INTEGER",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "period_month",
+        "type": "INTEGER",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "invoice_format",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "invoice_pk",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "line_no",
+        "type": "INTEGER",
+        "not_null": true,
+        "default": "1",
+        "pk": true
+      },
+      {
+        "name": "invoice_code",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "invoice_number",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "digital_invoice_no",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "seller_tax_id",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "seller_name",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "buyer_tax_id",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "buyer_name",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "invoice_date",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "amount",
+        "type": "REAL",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "tax_amount",
+        "type": "REAL",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "total_amount",
+        "type": "REAL",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "invoice_source",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "invoice_type",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "invoice_status",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "is_positive",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "risk_level",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "issuer",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "remark",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "submitted_at",
+        "type": "TIMESTAMP",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "etl_batch_id",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "idx_inv_sales_date",
+        "unique": false
+      },
+      {
+        "name": "idx_inv_sales_pk",
+        "unique": false
+      },
+      {
+        "name": "idx_inv_sales_taxpayer_period",
+        "unique": false
+      },
+      {
+        "name": "sqlite_autoindex_inv_spec_sales_1",
+        "unique": true
+      }
+    ],
+    "foreign_keys": []
+  },
+  "inv_synonyms": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "phrase",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "column_name",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "priority",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": "1",
+        "pk": false
+      },
+      {
+        "name": "scope_view",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "idx_inv_synonyms_phrase",
+        "unique": false
+      },
+      {
+        "name": "sqlite_autoindex_inv_synonyms_1",
+        "unique": true
+      }
+    ],
+    "foreign_keys": []
+  },
+  "metric_definition": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "metric_key",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "taxpayer_type",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "source_domain",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "source_view",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "dim_item_type",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "dim_time_range",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "value_expr",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "agg_func",
+        "type": "TEXT",
+        "not_null": false,
+        "default": "'SUM'",
+        "pk": false
+      },
+      {
+        "name": "revision_strategy",
+        "type": "TEXT",
+        "not_null": false,
+        "default": "'latest'",
+        "pk": false
+      },
+      {
+        "name": "normalized_metric_name",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "priority",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": "1",
+        "pk": false
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": "1",
+        "pk": false
+      }
+    ],
+    "indexes": [],
+    "foreign_keys": [
+      {
+        "from": "metric_key",
+        "to_table": "metric_registry",
+        "to_column": "metric_key"
+      }
+    ]
+  },
+  "metric_registry": {
+    "columns": [
+      {
+        "name": "metric_key",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "metric_name",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "description",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "unit",
+        "type": "TEXT",
+        "not_null": false,
+        "default": "'元'",
+        "pk": false
+      },
+      {
+        "name": "value_type",
+        "type": "TEXT",
+        "not_null": false,
+        "default": "'NUMERIC'",
+        "pk": false
+      },
+      {
+        "name": "domain",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "allow_cross_type",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": "0",
+        "pk": false
+      },
+      {
+        "name": "allow_cross_domain",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": "0",
+        "pk": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "sqlite_autoindex_metric_registry_1",
+        "unique": true
+      }
+    ],
+    "foreign_keys": []
+  },
+  "metric_synonyms": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "phrase",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "metric_key",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "priority",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": "1",
+        "pk": false
+      }
+    ],
+    "indexes": [],
+    "foreign_keys": [
+      {
+        "from": "metric_key",
+        "to_table": "metric_registry",
+        "to_column": "metric_key"
+      }
+    ]
+  },
+  "taxpayer_credit_grade_year": {
+    "columns": [
+      {
+        "name": "taxpayer_id",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "year",
+        "type": "INTEGER",
+        "not_null": true,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "credit_grade",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "published_at",
+        "type": "DATE",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "source_doc_id",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "etl_batch_id",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "idx_credit_year_grade",
+        "unique": false
+      },
+      {
+        "name": "sqlite_autoindex_taxpayer_credit_grade_year_1",
+        "unique": true
+      }
+    ],
+    "foreign_keys": [
+      {
+        "from": "taxpayer_id",
+        "to_table": "taxpayer_info",
+        "to_column": "taxpayer_id"
+      }
+    ]
+  },
+  "taxpayer_info": {
+    "columns": [
+      {
+        "name": "taxpayer_id",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "taxpayer_name",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "taxpayer_type",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "registration_type",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "legal_representative",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "establish_date",
+        "type": "DATE",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "industry_code",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "industry_name",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "tax_authority_code",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "tax_authority_name",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "tax_bureau_level",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "region_code",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "region_name",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "credit_grade_current",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "credit_grade_year",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "accounting_standard",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "status",
+        "type": "TEXT",
+        "not_null": false,
+        "default": "'active'",
+        "pk": false
+      },
+      {
+        "name": "updated_at",
+        "type": "TIMESTAMP",
+        "not_null": false,
+        "default": "CURRENT_TIMESTAMP",
+        "pk": false
+      },
+      {
+        "name": "registered_capital",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "registered_address",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "business_scope",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "operating_status",
+        "type": "TEXT",
+        "not_null": false,
+        "default": "'存续'",
+        "pk": false
+      },
+      {
+        "name": "collection_method",
+        "type": "TEXT",
+        "not_null": false,
+        "default": "'查账征收'",
+        "pk": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "idx_taxpayer_type_industry",
+        "unique": false
+      },
+      {
+        "name": "idx_taxpayer_type",
+        "unique": false
+      },
+      {
+        "name": "idx_taxpayer_authority",
+        "unique": false
+      },
+      {
+        "name": "idx_taxpayer_region",
+        "unique": false
+      },
+      {
+        "name": "idx_taxpayer_industry",
+        "unique": false
+      },
+      {
+        "name": "idx_taxpayer_name",
+        "unique": false
+      },
+      {
+        "name": "sqlite_autoindex_taxpayer_info_1",
+        "unique": true
+      }
+    ],
+    "foreign_keys": []
+  },
+  "taxpayer_profile_snapshot_month": {
+    "columns": [
+      {
+        "name": "taxpayer_id",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "period_year",
+        "type": "INTEGER",
+        "not_null": true,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "period_month",
+        "type": "INTEGER",
+        "not_null": true,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "industry_code",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "tax_authority_code",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "region_code",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "credit_grade",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "employee_scale",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "revenue_scale",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "source_doc_id",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "etl_batch_id",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "updated_at",
+        "type": "TIMESTAMP",
+        "not_null": false,
+        "default": "CURRENT_TIMESTAMP",
+        "pk": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "idx_snap_month_credit",
+        "unique": false
+      },
+      {
+        "name": "idx_snap_month_industry",
+        "unique": false
+      },
+      {
+        "name": "sqlite_autoindex_taxpayer_profile_snapshot_month_1",
+        "unique": true
+      }
+    ],
+    "foreign_keys": [
+      {
+        "from": "taxpayer_id",
+        "to_table": "taxpayer_info",
+        "to_column": "taxpayer_id"
+      }
+    ]
+  },
+  "unmatched_phrases": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "phrase",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "context_query",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "frequency",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": "1",
+        "pk": false
+      },
+      {
+        "name": "first_seen",
+        "type": "TIMESTAMP",
+        "not_null": false,
+        "default": "CURRENT_TIMESTAMP",
+        "pk": false
+      },
+      {
+        "name": "last_seen",
+        "type": "TIMESTAMP",
+        "not_null": false,
+        "default": "CURRENT_TIMESTAMP",
+        "pk": false
+      },
+      {
+        "name": "status",
+        "type": "TEXT",
+        "not_null": false,
+        "default": "'pending'",
+        "pk": false
+      },
+      {
+        "name": "suggested_column",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "suggested_priority",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": "2",
+        "pk": false
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "processed_by",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "processed_at",
+        "type": "TIMESTAMP",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "idx_unmatched_status",
+        "unique": false
+      },
+      {
+        "name": "idx_unmatched_phrase",
+        "unique": false
+      }
+    ],
+    "foreign_keys": []
+  },
+  "user_query_log": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "session_id",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "user_query",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "normalized_query",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "taxpayer_id",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "taxpayer_name",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "period_year",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "period_month",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "domain",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "success",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": "0",
+        "pk": false
+      },
+      {
+        "name": "error_message",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "generated_sql",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "execution_time_ms",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "created_at",
+        "type": "TIMESTAMP",
+        "not_null": false,
+        "default": "CURRENT_TIMESTAMP",
+        "pk": false
+      },
+      {
+        "name": "user_ip",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "user_agent",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "idx_query_log_taxpayer_period",
+        "unique": false
+      },
+      {
+        "name": "idx_query_log_taxpayer",
+        "unique": false
+      },
+      {
+        "name": "idx_query_log_success",
+        "unique": false
+      },
+      {
+        "name": "idx_query_log_created",
+        "unique": false
+      }
+    ],
+    "foreign_keys": []
+  },
+  "vat_general_column_mapping": {
+    "columns": [
+      {
+        "name": "line_number",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "column_name",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "business_name",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      }
+    ],
+    "indexes": [],
+    "foreign_keys": []
+  },
+  "vat_return_general": {
+    "columns": [
+      {
+        "name": "taxpayer_id",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "period_year",
+        "type": "INTEGER",
+        "not_null": true,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "period_month",
+        "type": "INTEGER",
+        "not_null": true,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "item_type",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "time_range",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "revision_no",
+        "type": "INTEGER",
+        "not_null": true,
+        "default": "0",
+        "pk": true
+      },
+      {
+        "name": "submitted_at",
+        "type": "TIMESTAMP",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "etl_batch_id",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "source_doc_id",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "source_unit",
+        "type": "TEXT",
+        "not_null": false,
+        "default": "'元'",
+        "pk": false
+      },
+      {
+        "name": "etl_confidence",
+        "type": "REAL",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "sales_taxable_rate",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "sales_goods",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "sales_services",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "sales_adjustment_check",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "sales_simple_method",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "sales_simple_adjust_check",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "sales_export_credit_refund",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "sales_tax_free",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "sales_tax_free_goods",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "sales_tax_free_services",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "output_tax",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "input_tax",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "last_period_credit",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "transfer_out",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "export_refund",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "tax_check_supplement",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "deductible_total",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "actual_deduct",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "tax_payable",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "end_credit",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "simple_tax",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "simple_tax_check_supplement",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "tax_reduction",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "total_tax_payable",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "unpaid_begin",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "export_receipt_tax",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "paid_current",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "prepaid_installment",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "prepaid_export_receipt",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "paid_last_period",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "paid_arrears",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "unpaid_end",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "arrears",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "supplement_refund",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "immediate_refund",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "unpaid_check_begin",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "paid_check_current",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "unpaid_check_end",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "city_maintenance_tax",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "education_surcharge",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "local_education_surcharge",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "idx_general_dimensions",
+        "unique": false
+      },
+      {
+        "name": "idx_general_taxpayer_period_revision",
+        "unique": false
+      },
+      {
+        "name": "idx_general_taxpayer_period",
+        "unique": false
+      },
+      {
+        "name": "idx_vat_taxpayer",
+        "unique": false
+      },
+      {
+        "name": "idx_vat_period",
+        "unique": false
+      },
+      {
+        "name": "sqlite_autoindex_vat_return_general_1",
+        "unique": true
+      }
+    ],
+    "foreign_keys": []
+  },
+  "vat_return_small": {
+    "columns": [
+      {
+        "name": "taxpayer_id",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "period_year",
+        "type": "INTEGER",
+        "not_null": true,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "period_month",
+        "type": "INTEGER",
+        "not_null": true,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "item_type",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "time_range",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "revision_no",
+        "type": "INTEGER",
+        "not_null": true,
+        "default": "0",
+        "pk": true
+      },
+      {
+        "name": "submitted_at",
+        "type": "TIMESTAMP",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "etl_batch_id",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "source_doc_id",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "source_unit",
+        "type": "TEXT",
+        "not_null": false,
+        "default": "'元'",
+        "pk": false
+      },
+      {
+        "name": "etl_confidence",
+        "type": "REAL",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "sales_3percent",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "sales_3percent_invoice_spec",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "sales_3percent_invoice_other",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "sales_5percent",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "sales_5percent_invoice_spec",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "sales_5percent_invoice_other",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "sales_used_assets",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "sales_used_assets_invoice_other",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "sales_tax_free",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "sales_tax_free_micro",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "sales_tax_free_threshold",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "sales_tax_free_other",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "sales_export_tax_free",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "sales_export_tax_free_invoice_other",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "tax_due_current",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "tax_due_reduction",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "tax_free_amount",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "tax_free_micro",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "tax_free_threshold",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "tax_due_total",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "tax_prepaid",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "tax_supplement_refund",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "city_maintenance_tax",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "education_surcharge",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "local_education_surcharge",
+        "type": "NUMERIC",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "idx_small_dimensions",
+        "unique": false
+      },
+      {
+        "name": "idx_small_taxpayer_period_revision",
+        "unique": false
+      },
+      {
+        "name": "idx_small_taxpayer_period",
+        "unique": false
+      },
+      {
+        "name": "idx_small_taxpayer",
+        "unique": false
+      },
+      {
+        "name": "idx_small_period",
+        "unique": false
+      },
+      {
+        "name": "sqlite_autoindex_vat_return_small_1",
+        "unique": true
+      }
+    ],
+    "foreign_keys": []
+  },
+  "vat_small_column_mapping": {
+    "columns": [
+      {
+        "name": "line_number",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "column_name",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "business_name",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      }
+    ],
+    "indexes": [],
+    "foreign_keys": []
+  },
+  "vat_synonyms": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": null,
+        "pk": true
+      },
+      {
+        "name": "phrase",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "column_name",
+        "type": "TEXT",
+        "not_null": true,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "priority",
+        "type": "INTEGER",
+        "not_null": false,
+        "default": "1",
+        "pk": false
+      },
+      {
+        "name": "taxpayer_type",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      },
+      {
+        "name": "scope_view",
+        "type": "TEXT",
+        "not_null": false,
+        "default": null,
+        "pk": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "idx_synonyms_scope",
+        "unique": false
+      },
+      {
+        "name": "idx_synonyms_phrase",
+        "unique": false
+      },
+      {
+        "name": "sqlite_autoindex_vat_synonyms_1",
+        "unique": true
+      }
+    ],
+    "foreign_keys": []
+  },
+  "__views__": [
+    "vw_vat_return_general",
+    "vw_vat_return_small",
+    "vw_eit_annual_main",
+    "vw_eit_quarter_main",
+    "vw_financial_statement",
+    "vw_account_balance",
+    "vw_inv_spec_purchase",
+    "vw_inv_spec_sales",
+    "vw_enterprise_profile",
+    "vw_balance_sheet_eas",
+    "vw_balance_sheet_sas",
+    "vw_profit_eas",
+    "vw_profit_sas",
+    "vw_cash_flow_eas",
+    "vw_cash_flow_sas",
+    "vw_financial_metrics"
+  ],
+  "__global_indexes__": [
+    "idx_taxpayer_name",
+    "idx_taxpayer_industry",
+    "idx_taxpayer_region",
+    "idx_taxpayer_authority",
+    "idx_snap_month_industry",
+    "idx_snap_month_credit",
+    "idx_credit_year_grade",
+    "idx_vat_period",
+    "idx_vat_taxpayer",
+    "idx_general_taxpayer_period",
+    "idx_small_period",
+    "idx_small_taxpayer",
+    "idx_small_taxpayer_period",
+    "idx_eit_annual_filing_taxpayer",
+    "idx_eit_annual_filing_period",
+    "idx_eit_annual_shareholder_filing",
+    "idx_eit_annual_incentive_filing",
+    "idx_eit_quarter_filing_taxpayer",
+    "idx_eit_quarter_filing_period",
+    "idx_eit_quarter_incentive_filing",
+    "idx_eit_synonyms_phrase",
+    "idx_eit_synonyms_scope",
+    "idx_account_name",
+    "idx_account_category",
+    "idx_balance_period",
+    "idx_balance_taxpayer",
+    "idx_balance_taxpayer_period",
+    "idx_balance_account",
+    "idx_balance_taxpayer_period_revision",
+    "idx_account_synonyms_phrase",
+    "idx_synonyms_phrase",
+    "idx_synonyms_scope",
+    "idx_query_log_created",
+    "idx_query_log_success",
+    "idx_query_log_taxpayer",
+    "idx_unmatched_phrase",
+    "idx_unmatched_status",
+    "idx_etl_error_batch",
+    "idx_inv_purchase_taxpayer_period",
+    "idx_inv_purchase_pk",
+    "idx_inv_purchase_date",
+    "idx_inv_sales_taxpayer_period",
+    "idx_inv_sales_pk",
+    "idx_inv_sales_date",
+    "idx_inv_synonyms_phrase",
+    "idx_bs_dict_gaap",
+    "idx_bs_period",
+    "idx_bs_taxpayer",
+    "idx_bs_taxpayer_period",
+    "idx_bs_taxpayer_period_gaap",
+    "idx_bs_synonyms_phrase",
+    "idx_bs_synonyms_gaap",
+    "idx_is_period",
+    "idx_is_taxpayer",
+    "idx_is_taxpayer_period",
+    "idx_is_dict_gaap",
+    "idx_is_synonyms_phrase",
+    "idx_is_synonyms_gaap",
+    "idx_cf_period",
+    "idx_cf_taxpayer",
+    "idx_cf_taxpayer_period",
+    "idx_cf_dict_gaap",
+    "idx_cf_synonyms_phrase",
+    "idx_cf_synonyms_gaap",
+    "idx_fm_taxpayer",
+    "idx_fm_period",
+    "idx_fm_taxpayer_period",
+    "idx_fm_category",
+    "idx_fm_code",
+    "idx_fm_synonyms_phrase",
+    "idx_general_taxpayer_period_revision",
+    "idx_small_taxpayer_period_revision",
+    "idx_taxpayer_type",
+    "idx_general_dimensions",
+    "idx_small_dimensions",
+    "idx_taxpayer_type_industry",
+    "idx_query_log_taxpayer_period",
+    "idx_eit_annual_filing_taxpayer_period",
+    "idx_eit_quarter_filing_taxpayer_period",
+    "idx_fmi_taxpayer",
+    "idx_fmi_period",
+    "idx_fmi_taxpayer_period",
+    "idx_fmi_category",
+    "idx_fmi_code",
+    "idx_fmi_period_type",
+    "idx_hr_emp_dept_code",
+    "idx_hr_emp_position_type",
+    "idx_hr_emp_is_high_tech",
+    "idx_hr_emp_is_on_job",
+    "idx_hr_emp_syn_phrase",
+    "idx_hr_sal_month",
+    "idx_hr_sal_employee",
+    "idx_hr_sal_syn_phrase"
+  ]
+}
