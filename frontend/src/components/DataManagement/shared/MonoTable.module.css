@@ -1,0 +1,149 @@
+/* ── Container: scrollable both directions ── */
+.tableContainer {
+  width: 100%;
+  overflow: auto;
+  flex: 1;
+  position: relative;
+  border-bottom-left-radius: var(--radius-lg);
+  border-bottom-right-radius: var(--radius-lg);
+}
+
+.tableContainer.resizing {
+  cursor: col-resize;
+  user-select: none;
+}
+
+/* ── Fixed-layout table ── */
+.table {
+  border-collapse: collapse;
+  font-size: 13px;
+  table-layout: fixed;
+}
+
+/* ── Header cells ── */
+.th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #f8fafc;
+  font-weight: 700;
+  font-size: 13px;
+  line-height: 1.25;
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  text-align: center;
+  vertical-align: middle;
+  white-space: normal;
+  user-select: none;
+  /* relative needed for resize handle positioning */
+}
+
+/* Two-line header text with ellipsis on line 2 */
+.headerText {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  line-height: 1.25;
+  max-height: 2.5em;
+}
+
+/* ── Body cells ── */
+.td {
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Alignment ── */
+.alignRight {
+  text-align: right;
+}
+
+/* ── Frozen columns ── */
+.frozen {
+  position: sticky;
+  z-index: 1;
+  background: #fff;
+}
+
+.th.frozen {
+  z-index: 3;
+  background: #f8fafc;
+}
+
+/* Shadow on last frozen column edge */
+.frozenShadow::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: -6px;
+  bottom: 0;
+  width: 6px;
+  background: linear-gradient(to right, rgba(0, 0, 0, 0.06), transparent);
+  pointer-events: none;
+}
+
+/* ── Resize handle ── */
+.resizeHandle {
+  position: absolute;
+  top: 0;
+  right: -2px;
+  width: 5px;
+  height: 100%;
+  cursor: col-resize;
+  z-index: 4;
+}
+
+.resizeHandle:hover,
+.resizeHandle:active {
+  background: var(--color-primary, #2563eb);
+  opacity: 0.3;
+}
+
+/* ── Tooltip ── */
+.tooltip {
+  position: absolute;
+  z-index: 10;
+  background: #1e293b;
+  color: #fff;
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm, 4px);
+  pointer-events: none;
+  box-shadow: var(--shadow-md, 0 4px 6px rgba(0, 0, 0, 0.1));
+  max-width: 300px;
+  word-break: break-word;
+  white-space: normal;
+  line-height: 1.4;
+}
+
+/* ── Zebra striping + hover ── */
+.table tbody tr:nth-child(even) .td {
+  background: #fafbfc;
+}
+
+.table tbody tr:nth-child(even) .td.frozen {
+  background: #fafbfc;
+}
+
+.table tbody tr:hover .td {
+  background: #f0f4ff;
+}
+
+.table tbody tr:hover .td.frozen {
+  background: #f0f4ff;
+}
+
+/* ── Borderless variant ── */
+.borderless .th,
+.borderless .td {
+  border: none;
+  border-bottom: 1px solid var(--color-border);
+}

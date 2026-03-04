@@ -1,0 +1,26 @@
+.bsContainer {
+  min-width: 1000px;
+  max-width: 1400px;
+}
+
+.colName {
+  width: 22%;
+  text-align: left;
+}
+
+.colLine {
+  width: 5%;
+  text-align: center;
+}
+
+.colAmt {
+  width: 14%;
+  text-align: right;
+}
+
+.nameCell {
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

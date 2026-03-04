@@ -1,0 +1,18 @@
+.cfContainer {
+  max-width: 1000px;
+}
+
+.colName {
+  width: 40%;
+  text-align: left;
+}
+
+.colLine {
+  width: 8%;
+  text-align: center;
+}
+
+.colAmt {
+  width: 26%;
+  text-align: right;
+}

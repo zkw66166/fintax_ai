@@ -1,0 +1,459 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-height: 100%;
+}
+
+.headerCard {
+  background: var(--color-card-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 20px 32px;
+  display: flex;
+  gap: 48px;
+  box-shadow: var(--shadow-sm);
+}
+
+.overviewItem {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.ovIcon {
+  width: 44px;
+  height: 44px;
+  background: #fdf4ff;
+  color: #a21caf;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ovLabel {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+.ovValue {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-top: 2px;
+}
+
+.unit {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  margin-left: 2px;
+}
+
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.searchBox {
+  position: relative;
+  flex: 1;
+  max-width: 400px;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-text-muted);
+  pointer-events: none;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 10px 16px 10px 40px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  background: var(--color-card-bg);
+  transition: all var(--transition-base);
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-50);
+}
+
+.toolActions {
+  display: flex;
+  gap: 12px;
+}
+
+.btnAction {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #fff;
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.btnAction:hover {
+  background: var(--color-body-bg);
+  border-color: var(--color-text-muted);
+}
+
+.btnPrimary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 20px;
+  background: var(--color-primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.btnPrimary:hover {
+  background: var(--color-primary-dark);
+}
+
+.tableCard {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-card-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.companyTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.companyTable th {
+  text-align: left;
+  padding: 14px 24px;
+  background: #f8fafc;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.companyTable td {
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--color-border-light);
+  vertical-align: middle;
+}
+
+.companyTable tr:last-child td {
+  border-bottom: none;
+}
+
+.companyTable tr:hover td {
+  background: #fdfdfd;
+}
+
+.companyInfo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.companyAvatar {
+  width: 32px;
+  height: 32px;
+  background: #f1f5f9;
+  color: #64748b;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.companyName {
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 14px;
+}
+
+.companyTax {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+.statusBadge {
+  display: inline-flex;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.stOk {
+  background: #ecfdf5;
+  color: #059669;
+}
+
+.stWait {
+  background: #fffbeb;
+  color: #d97706;
+}
+
+.dateText {
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.progressWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 120px;
+}
+
+.progressLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-align: right;
+}
+
+.progressBar {
+  height: 6px;
+  background: #f1f5f9;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: var(--color-primary);
+  border-radius: 3px;
+}
+
+.emptyTable {
+  padding: 60px 0;
+  text-align: center;
+  color: var(--color-text-muted);
+  background: #fafafa;
+}
+
+.loadingArea,
+.emptyArea {
+  padding: 100px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--color-border);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 20px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+/* 数据更新区域 */
+.updateSection {
+  background: var(--color-card-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  min-height: 500px; /* 确保有足够高度显示5个更新项 */
+}
+
+.updateHeader {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--color-border-light);
+  background: #fafafa;
+}
+
+.updateTitle {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1e3a5f;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.updateIcon {
+  color: var(--color-primary);
+  opacity: 0.8;
+}
+
+.updateContent {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.updateItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border-bottom: 1px solid #e8e8e8;
+  transition: background-color 0.2s;
+}
+
+.updateItem:hover {
+  background-color: #f5f5f5;
+}
+
+.updateItem:last-child {
+  border-bottom: none;
+}
+
+.updateInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.updateItemTitle {
+  font-weight: 500;
+  font-size: 14px;
+  color: #262626;
+}
+
+.updateDesc {
+  font-size: 12px;
+  color: #8c8c8c;
+  line-height: 1.5;
+}
+
+.updateButton {
+  padding: 6px 16px;
+  background: #1890ff;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  min-width: 100px;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.updateButton:hover:not(:disabled) {
+  background: #40a9ff;
+}
+
+.updateButton:disabled {
+  background: #d9d9d9;
+  cursor: not-allowed;
+}
+
+.updateResult {
+  margin-top: 16px;
+  padding: 12px;
+  border-radius: 4px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.updateResult.success {
+  background: #f6ffed;
+  border: 1px solid #b7eb8f;
+}
+
+.updateResult.error {
+  background: #fff2f0;
+  border: 1px solid #ffccc7;
+}
+
+.resultIcon {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.resultMessage {
+  flex: 1;
+  font-size: 14px;
+}
+
+.resultDetails {
+  margin-top: 8px;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: monospace;
+}
+
+.resultDetails div {
+  margin: 2px 0;
+}
+
+/* 表格滚动容器 */
+.tableWrapper {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* 自定义滚动条样式 */
+.tableWrapper::-webkit-scrollbar {
+  width: 8px;
+}
+
+.tableWrapper::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+.tableWrapper::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.tableWrapper::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* 固定表头 */
+.companyTable thead {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
