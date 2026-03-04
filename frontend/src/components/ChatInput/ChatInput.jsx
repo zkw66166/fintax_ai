@@ -7,7 +7,28 @@ const MODES = [
   { key: 'concise', label: '简报' },
 ]
 
-export default function ChatInput({ onSend, isStreaming, onCancel, responseMode, onModeChange, onToggleSelectionMode, pendingInputText, onPendingInputTextConsumed }) {
+const THINKING_MODES = [
+  { key: 'quick', label: '快捷' },
+  { key: 'think', label: '思考' },
+  { key: 'deep', label: '深度思考' },
+]
+
+export default function ChatInput({
+  onSend,
+  isStreaming,
+  onCancel,
+  responseMode,
+  onModeChange,
+  thinkingMode,
+  onThinkingModeChange,
+  pendingInputText,
+  onPendingInputTextConsumed,
+  conversationDepth,
+  onConversationDepthChange,
+  conversationEnabled,
+  onConversationEnabledChange,
+  onClearContext,
+}) {
   const [text, setText] = useState('')
   const ref = useRef(null)
 
@@ -72,8 +93,47 @@ export default function ChatInput({ onSend, isStreaming, onCancel, responseMode,
             </span>
           ))}
         </div>
+        <div className={s.conversationSettings}>
+          <label className={s.conversationLabel}>
+            <input
+              type="checkbox"
+              checked={conversationEnabled}
+              onChange={(e) => onConversationEnabledChange(e.target.checked)}
+            />
+            多轮对话
+          </label>
+          {conversationEnabled && (
+            <>
+              <select
+                className={s.depthSelect}
+                value={conversationDepth}
+                onChange={(e) => onConversationDepthChange(Number(e.target.value))}
+              >
+                <option value={2}>2轮</option>
+                <option value={3}>3轮</option>
+                <option value={4}>4轮</option>
+                <option value={5}>5轮</option>
+              </select>
+              <button
+                className={s.clearContextBtn}
+                onClick={onClearContext}
+                title="清除对话上下文"
+              >
+                清除上下文
+              </button>
+            </>
+          )}
+        </div>
         <div className={s.bottomRight}>
-          <button className={s.manageBtn} onClick={onToggleSelectionMode}>管理消息</button>
+          {THINKING_MODES.map((m) => (
+            <span
+              key={m.key}
+              className={`${s.modeTag} ${thinkingMode === m.key ? (m.key === 'quick' ? s.activeQuick : s.activeThinking) : ''}`}
+              onClick={() => onThinkingModeChange(m.key)}
+            >
+              {m.label}
+            </span>
+          ))}
           <span className={s.charCount}>{text.length}/500字符</span>
         </div>
       </div>

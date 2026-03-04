@@ -1,16 +1,17 @@
 .label {
   display: inline-block;
-  padding: 0 6px;
-  border-radius: 2px;
+  padding: 0 8px;
+  border-radius: var(--radius-full);
   font-size: 11px;
-  line-height: 18px;
+  line-height: 20px;
   white-space: nowrap;
+  font-weight: 500;
 }
 /* 正面评价统一用暖橙 */
 .positive { background: #fff7e6; color: #ff7d00; }
-.growth   { background: #e6f7ff; color: #1677ff; }
-.neutral  { background: #f5f5f5; color: #666666; }
-.warning  { background: #fff7e6; color: #fa8c16; }
-.negative { background: #fff1f0; color: #f53f3f; }
+.growth   { background: #e6f7ff; color: #2563eb; }
+.neutral  { background: #f5f5f5; color: #64748b; }
+.warning  { background: var(--color-warning-light); color: #d97706; }
+.negative { background: var(--color-error-light); color: var(--color-error); }
 .purple   { background: #f9f0ff; color: #722ed1; }
 .orange   { background: #fff7e6; color: #ff7d00; }

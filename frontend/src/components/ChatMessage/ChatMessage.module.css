@@ -3,7 +3,7 @@
   max-width: 70%;
   background: var(--color-primary-light);
   padding: 10px 14px;
-  border-radius: 12px 12px 2px 12px;
+  border-radius: 16px 16px 4px 16px;
 }
 .userTs {
   font-size: 11px;
@@ -14,16 +14,21 @@
   align-self: flex-start;
   max-width: 100%;
   background: var(--color-card-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+  border-radius: 4px 16px 16px 16px;
   padding: 14px 18px;
+  user-select: text;
+}
+.userMsg {
+  user-select: text;
 }
 .routeBadge {
   display: inline-block;
-  padding: 2px 8px;
-  border-radius: 4px;
+  padding: 2px 10px;
+  border-radius: var(--radius-full);
   font-size: 12px;
   margin-bottom: 8px;
+  font-weight: 500;
 }
 .routeFinancial {
   background: #e0f2fe;
@@ -36,6 +41,19 @@
 .routeRegulation {
   background: #f3e8ff;
   color: #9333ea;
+}
+.cacheBadge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  margin-left: 6px;
+  margin-bottom: 8px;
+  font-weight: 500;
+  background: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+  vertical-align: middle;
 }
 .aiLabel {
   font-weight: 600;
@@ -76,12 +94,23 @@
 }
 .loading {
   display: flex;
+  align-items: center;
   gap: 4px;
   padding: 8px 0;
 }
+.stageText {
+  margin-left: 8px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  animation: fadeIn 0.3s ease-in;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateX(-4px); }
+  to { opacity: 1; transform: translateX(0); }
+}
 .dot {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
   background: var(--color-primary);
   border-radius: 50%;
   animation: bounce 1.4s infinite ease-in-out both;
@@ -95,6 +124,30 @@
 .errorMsg {
   color: var(--color-error);
   font-size: 13px;
+}
+.copyRow {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+.copyBtn {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: border-color var(--transition-fast), color var(--transition-fast), background var(--transition-fast);
+}
+.copyBtn:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: var(--color-primary-light);
+}
+.copyBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 /* Metric display */
@@ -159,6 +212,47 @@
   color: var(--color-primary);
 }
 
+/* Interpretation section */
+.interpretSection {
+  margin-top: 16px;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #f0f9ff 0%, #f5f3ff 100%);
+  border-radius: 8px;
+  border-left: 3px solid #6366f1;
+}
+.interpretHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.interpretTitle {
+  font-weight: 600;
+  font-size: 13px;
+  color: #4f46e5;
+}
+.interpretLoading {
+  font-size: 12px;
+  color: #6366f1;
+  animation: fadeIn 0.3s ease-in;
+}
+.interpretContent {
+  font-size: 13px;
+  line-height: 1.7;
+  color: #334155;
+}
+.interpretContent p { margin: 4px 0; }
+.interpretContent strong { color: #1e293b; }
+.interpretContent ul, .interpretContent ol {
+  padding-left: 18px;
+  margin: 4px 0;
+}
+.interpretError {
+  font-size: 12px;
+  color: #94a3b8;
+  font-style: italic;
+}
+
 /* Selection mode */
 .selectWrap {
   display: flex;
@@ -170,4 +264,15 @@
   width: 16px;
   height: 16px;
   cursor: pointer;
+}
+
+/* Empty state */
+.emptyState {
+  color: #666;
+  font-style: italic;
+  padding: 12px;
+  background: #f5f5f5;
+  border-radius: 4px;
+  margin: 8px 0;
+  text-align: center;
 }

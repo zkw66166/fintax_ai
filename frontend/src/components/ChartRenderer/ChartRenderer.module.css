@@ -6,3 +6,25 @@
   height: 300px;
   max-width: 100%;
 }
+
+.multiPieContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: flex-start;
+}
+
+.pieChartItem {
+  position: relative;
+  height: 300px;
+  width: calc(50% - 10px);
+  min-width: 400px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 900px) {
+  .pieChartItem {
+    width: 100%;
+    min-width: 300px;
+  }
+}

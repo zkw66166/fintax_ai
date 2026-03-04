@@ -38,7 +38,7 @@ export default function TaxModule({ data }) {
           labels={['增值税', '企业所得税']}
           datasets={[{
             data: [tax?.vat_total || 0, tax?.eit_total || 0],
-            backgroundColor: ['#1677ff', '#722ed1'],
+            backgroundColor: ['#93c5fd', '#c4b5fd'],
           }]}
           height={180} />
       </div>

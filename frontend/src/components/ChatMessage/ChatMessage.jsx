@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import ResultTable from '../ResultTable/ResultTable'
 import ChartRenderer from '../ChartRenderer/ChartRenderer'
@@ -12,7 +12,27 @@ const ROUTE_CONFIG = {
   regulation: { label: '🤖 法规知识库', cls: s.routeRegulation },
 }
 
-export default function ChatMessage({ msg, isSelectionMode, isSelected, onToggleSelect }) {
+export default function ChatMessage({ msg, interpretation, isSelectionMode, isSelected, onToggleSelect, questionText }) {
+  const [copied, setCopied] = useState(false)
+  const copyToClipboard = async (text, e) => {
+    e?.stopPropagation()
+    if (!text) return
+    try {
+      await navigator.clipboard.writeText(text)
+    } catch (_) {
+      const ta = document.createElement('textarea')
+      ta.value = text
+      ta.style.position = 'fixed'
+      ta.style.left = '-9999px'
+      document.body.appendChild(ta)
+      ta.focus()
+      ta.select()
+      try { document.execCommand('copy') } catch (_) {}
+      document.body.removeChild(ta)
+    }
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1500)
+  }
   const checkbox = isSelectionMode && (
     <label className={s.selectWrap} onClick={(e) => e.stopPropagation()}>
       <input
@@ -52,12 +72,31 @@ export default function ChatMessage({ msg, isSelectionMode, isSelected, onToggle
     return buildGrowthChartData(dd.growth)
   }, [showChart, dd?.growth])
 
+  const canCopy = msg.status === 'done' || msg.status === 'error'
+
+  const buildCopyText = () => {
+    const q = questionText ? `问题：${questionText}` : ''
+    const parts = []
+    if (q) parts.push(q)
+    const answer = buildAnswerText(msg)
+    if (answer) parts.push(`回答：${answer}`)
+    if (interpretation?.text) parts.push(`数据解读：${interpretation.text}`)
+    return parts.join('\n\n')
+  }
+
+  const handleCopy = (e) => {
+    if (!canCopy) return
+    const text = buildCopyText()
+    copyToClipboard(text, e)
+  }
+
   return (
     <div className={s.aiMsg} style={isSelectionMode ? { display: 'flex', gap: 8 } : undefined}>
       {checkbox}
       <div style={{ flex: 1, minWidth: 0 }}>
         <div className={s.aiLabel}>智能体:</div>
         <span className={`${s.routeBadge} ${rc.cls}`}>{rc.label}</span>
+        {msg.cacheHit && <span className={s.cacheBadge}>缓存结果</span>}
 
         {/* Loading state */}
         {msg.status === 'loading' && (
@@ -65,6 +104,7 @@ export default function ChatMessage({ msg, isSelectionMode, isSelected, onToggle
             <span className={s.dot} />
             <span className={s.dot} />
             <span className={s.dot} />
+            {msg.stageText && <span className={s.stageText}>{msg.stageText}</span>}
           </div>
         )}
 
@@ -146,7 +186,13 @@ export default function ChatMessage({ msg, isSelectionMode, isSelected, onToggle
         {/* Done: no display_data, fallback to raw results */}
         {isDone && !dd && msg.result?.results && showTable && (
           <div className={s.content}>
-            <ResultTable results={msg.result.results} />
+            {msg.result.results.length > 0 ? (
+              <ResultTable results={msg.result.results} />
+            ) : msg.content ? (
+              <ReactMarkdown>{msg.content}</ReactMarkdown>
+            ) : (
+              <p className={s.emptyState}>查询完成，当前条件下无数据。请检查查询期间或导入相关数据。</p>
+            )}
           </div>
         )}
 
@@ -167,11 +213,52 @@ export default function ChatMessage({ msg, isSelectionMode, isSelected, onToggle
         {/* Error */}
         {msg.status === 'error' && <div className={s.errorMsg}>{msg.content || '查询失败'}</div>}
 
+        {/* Data interpretation */}
+        {isDone && mode !== 'concise' && interpretation && (interpretation.text || interpretation.status === 'streaming') && (
+          <InterpretationSection interpretation={interpretation} />
+        )}
+
         {/* Pipeline detail for financial_data */}
         {isDone && msg.pipelineDetail && <PipelineDetail detail={msg.pipelineDetail} />}
+
+        <div className={s.copyRow}>
+          <button className={s.copyBtn} onClick={handleCopy} disabled={!canCopy}>
+            {copied ? '已复制' : '复制'}
+          </button>
+        </div>
       </div>
     </div>
   )
+}
+
+function buildAnswerText(msg) {
+  if (!msg) return ''
+  if (msg.content) return msg.content
+  if (msg.status === 'error') return msg.content || '查询失败'
+  const dd = msg.result?.display_data
+  if (!dd) return ''
+  if (dd.summary) return dd.summary
+  if (dd.display_type === 'metric' && dd.metric_display) {
+    return dd.metric_display.map((m) => `${m.label}: ${m.formatted_value}`).join('\n')
+  }
+  if (dd.display_type === 'kv' && dd.table) {
+    return tableToText(dd.table)
+  }
+  if (dd.display_type === 'table' && dd.table) {
+    return tableToText(dd.table)
+  }
+  if (dd.display_type === 'cross_domain' && dd.sub_tables) {
+    return dd.sub_tables.map((st) => `${st.domain_cn}\n${tableToText(st.table)}`).join('\n\n')
+  }
+  if (dd.table) return tableToText(dd.table)
+  return ''
+}
+
+function tableToText(table) {
+  if (!table || !table.headers || !table.rows) return ''
+  const header = table.headers.join('\t')
+  const rows = table.rows.map((row) => table.headers.map((h) => row[h] ?? '').join('\t'))
+  return [header, ...rows].join('\n')
 }
 
 
@@ -229,6 +316,30 @@ function SubDomainSection({ st, showChart, showGrowth }) {
       {showChart && st.chart_data && <ChartRenderer chartData={st.chart_data} />}
       {showGrowth && st.growth && <GrowthTable growth={st.growth} />}
       {growthChart && <ChartRenderer chartData={growthChart} />}
+    </div>
+  )
+}
+
+
+function InterpretationSection({ interpretation }) {
+  if (!interpretation) return null
+  return (
+    <div className={s.interpretSection}>
+      <div className={s.interpretHeader}>
+        <span className={s.interpretTitle}>数据解读</span>
+        {interpretation.status === 'streaming' && (
+          <span className={s.interpretLoading}>分析中...</span>
+        )}
+      </div>
+      {interpretation.status === 'error' && (
+        <div className={s.interpretError}>数据解读暂时不可用</div>
+      )}
+      {interpretation.text && (
+        <div className={s.interpretContent}>
+          <ReactMarkdown>{interpretation.text}</ReactMarkdown>
+          {interpretation.status === 'streaming' && <span className={s.cursor} />}
+        </div>
+      )}
     </div>
   )
 }

@@ -3,82 +3,203 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 20px;
+  padding: 0 40px;
   background: var(--color-header-bg);
   border-bottom: 1px solid var(--color-border);
-  z-index: 10;
+  box-shadow: var(--shadow-xs);
+  z-index: 100;
+  height: var(--header-height);
 }
+
+.logoArea {
+  display: flex;
+  align-items: center;
+}
+
 .logo {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
-.logoIcon {
-  font-size: 24px;
+
+.logoImg {
+  width: 36px;
+  height: 36px;
+  background: #a21caf;
+  /* Mockup maroon-ish color */
+  background: linear-gradient(135deg, #7c2d12, #450a0a);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
+
 .logoTitle {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 700;
-  color: var(--color-text);
+  color: #1e293b;
+  line-height: 1.2;
 }
+
 .logoSub {
-  font-size: 10px;
-  color: var(--color-text-secondary);
-  letter-spacing: 0.5px;
+  font-size: 9px;
+  color: var(--color-text-muted);
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  margin-top: 1px;
 }
+
+.centerArea {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
+.companyBox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #eff6ff;
+  border: 1px solid #dbeafe;
+  padding: 6px 16px;
+  border-radius: var(--radius-md);
+  transition: all var(--transition-base);
+}
+
+.companyBox:hover {
+  background: #e0f2fe;
+  border-color: #bae6fd;
+}
+
+.companyIcon {
+  color: var(--color-primary);
+}
+
 .companySelect {
-  padding: 6px 12px;
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  font-size: 13px;
-  background: #fff;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e3a5f;
   cursor: pointer;
+  outline: none;
+  padding-right: 4px;
 }
-.rightInfo {
+
+.rightArea {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.timeDisplay {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  padding-right: 24px;
+  border-right: 1px solid var(--color-border);
+}
+
+.actionIcons {
   display: flex;
   align-items: center;
   gap: 16px;
-  font-size: 13px;
-  color: var(--color-text-secondary);
 }
-.clock {
-  font-variant-numeric: tabular-nums;
-}
-.bell {
+
+.iconBtn {
   position: relative;
   cursor: pointer;
-  font-size: 18px;
+  color: var(--color-text-secondary);
+  transition: color var(--transition-fast);
+  display: flex;
+  align-items: center;
 }
+
+.iconBtn:hover {
+  color: var(--color-primary);
+}
+
 .badge {
   position: absolute;
   top: -6px;
   right: -8px;
-  background: var(--color-error);
+  background: #f43f5e;
   color: #fff;
   font-size: 10px;
-  padding: 1px 4px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
   border-radius: 8px;
-  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #fff;
+  font-weight: 700;
 }
-.user {
+
+.userProfile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 8px;
+  border-radius: var(--radius-full);
+  transition: background var(--transition-fast);
+  cursor: pointer;
+}
+
+.userProfile:hover {
+  background: var(--color-body-bg);
+}
+
+.userInfo {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
 }
+
 .userName {
-  font-size: 13px;
+  font-size: 14px;
+  font-weight: 600;
   color: var(--color-text);
-  font-weight: 500;
+  line-height: 1.2;
 }
+
 .userRole {
   font-size: 11px;
-  color: var(--color-text-secondary);
+  color: var(--color-text-muted);
 }
-.logout {
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  background: #8b5cf6;
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(139, 92, 246, 0.3);
+}
+
+.logoutBtn {
+  background: transparent;
+  border: none;
+  color: var(--color-text-muted);
   cursor: pointer;
-  font-size: 18px;
-  color: var(--color-text-secondary);
+  padding: 8px;
+  border-radius: var(--radius-md);
+  transition: all var(--transition-base);
+  display: flex;
+  align-items: center;
 }
-.logout:hover {
+
+.logoutBtn:hover {
   color: var(--color-error);
+  background: var(--color-error-light);
 }

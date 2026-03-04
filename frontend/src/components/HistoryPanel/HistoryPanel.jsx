@@ -1,15 +1,22 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import useChatHistory from '../../hooks/useChatHistory'
 import s from './HistoryPanel.module.css'
 
-export default function HistoryPanel({ items, setItems, onSelect }) {
+export default function HistoryPanel({ items, setItems, onSelect, onReinvoke }) {
   const [selected, setSelected] = useState(new Set())
   const [searchText, setSearchText] = useState('')
   const { removeEntries } = useChatHistory(items, setItems)
+  const listRef = useRef(null)
 
   const filtered = searchText
     ? items.filter((item) => item.query.includes(searchText))
     : items
+
+  useEffect(() => {
+    if (!listRef.current || filtered.length === 0) return
+    const first = listRef.current.querySelector('[data-history-item="0"]')
+    if (first) first.scrollIntoView({ block: 'start' })
+  }, [filtered.length, searchText])
 
   const toggle = useCallback((ts, e) => {
     e.stopPropagation()
@@ -28,6 +35,13 @@ export default function HistoryPanel({ items, setItems, onSelect }) {
       .filter((i) => i !== -1)
     removeEntries(indices)
     setSelected(new Set())
+  }
+
+  const handleReinvoke = (e, item, index) => {
+    e.stopPropagation()
+    if (onReinvoke) {
+      onReinvoke(index)
+    }
   }
 
   return (
@@ -49,19 +63,35 @@ export default function HistoryPanel({ items, setItems, onSelect }) {
           onChange={(e) => setSearchText(e.target.value)}
         />
       </div>
-      <div className={s.list}>
+      <div className={s.list} ref={listRef}>
         {filtered.length === 0 && <div className={s.empty}>{searchText ? '无匹配记录' : '暂无历史记录'}</div>}
-        {filtered.map((item) => (
-          <div key={item.timestamp} className={s.item} onClick={() => onSelect(item)}>
-            <input
-              type="checkbox"
-              className={s.checkbox}
-              checked={selected.has(item.timestamp)}
-              onChange={(e) => toggle(item.timestamp, e)}
-            />
-            <span className={s.itemText}>{item.query}</span>
-          </div>
-        ))}
+        {filtered.map((item, idx) => {
+          // Find the actual index in the original items array
+          const actualIndex = items.findIndex((i) => i.timestamp === item.timestamp)
+          return (
+            <div
+              key={item.timestamp}
+              className={s.item}
+              data-history-item={idx === 0 ? '0' : undefined}
+              onClick={() => onSelect(item)}
+            >
+              <input
+                type="checkbox"
+                className={s.checkbox}
+                checked={selected.has(item.timestamp)}
+                onChange={(e) => toggle(item.timestamp, e)}
+              />
+              <span className={s.itemText}>{item.query}</span>
+              <button
+                className={s.reinvokeBtn}
+                onClick={(e) => handleReinvoke(e, item, actualIndex)}
+                title="重新运行"
+              >
+                ↻
+              </button>
+            </div>
+          )
+        })}
       </div>
     </aside>
   )

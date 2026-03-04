@@ -1,27 +1,34 @@
 import s from './Sidebar.module.css'
+import { LayoutDashboard, MessageSquare, Briefcase, Database, Settings } from 'lucide-react'
 
 const MENU = [
-  { icon: '🏠', label: '工作台', disabled: true },
-  { icon: '💬', label: 'AI智问', key: 'chat' },
-  { icon: '🏢', label: '企业画像', key: 'profile' },
-  { icon: '📊', label: '数据管理', disabled: true },
-  { icon: '⚙️', label: '系统设置', disabled: true },
+  { icon: LayoutDashboard, label: '工作台', key: 'dashboard' },
+  { icon: MessageSquare, label: 'AI智问', key: 'chat' },
+  { icon: Briefcase, label: '企业画像', key: 'profile' },
+  { icon: Database, label: '数据管理', key: 'data-management' },
+  { icon: Settings, label: '系统设置', key: 'settings' },
 ]
 
 export default function Sidebar({ currentPage, onPageChange }) {
   return (
     <nav className={s.sidebar}>
-      {MENU.map((m) => (
-        <div
-          key={m.label}
-          className={`${s.item} ${m.key === currentPage ? s.active : ''} ${m.disabled ? s.disabled : ''}`}
-          onClick={() => m.key && !m.disabled && onPageChange(m.key)}
-          style={{ cursor: m.key && !m.disabled ? 'pointer' : 'default' }}
-        >
-          <span className={s.icon}>{m.icon}</span>
-          {m.label}
-        </div>
-      ))}
+      <div className={s.menuList}>
+        {MENU.map((m) => {
+          const Icon = m.icon
+          const isActive = m.key === currentPage
+          return (
+            <div
+              key={m.label}
+              className={`${s.item} ${isActive ? s.active : ''} ${m.disabled ? s.disabled : ''}`}
+              onClick={() => m.key && !m.disabled && onPageChange(m.key)}
+              style={{ cursor: m.key && !m.disabled ? 'pointer' : 'default' }}
+            >
+              <Icon size={18} strokeWidth={2} className={s.icon} />
+              <span className={s.label}>{m.label}</span>
+            </div>
+          )
+        })}
+      </div>
     </nav>
   )
 }

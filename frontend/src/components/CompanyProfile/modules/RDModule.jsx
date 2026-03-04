@@ -33,8 +33,8 @@ export default function RDModule({ data }) {
           labels={['2022', '2023', '2024']}
           datasets={[{
             data: [0, 32, 15],
-            borderColor: '#1677ff',
-            pointBackgroundColor: '#1677ff',
+            borderColor: '#93c5fd',
+            pointBackgroundColor: '#93c5fd',
           }]}
           height={120} />
       </div>

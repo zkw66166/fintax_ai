@@ -6,6 +6,7 @@
   padding: 0 20px;
   background: var(--color-header-bg);
   border-top: 1px solid var(--color-border);
-  font-size: 12px;
-  color: var(--color-text-secondary);
+  font-size: 11px;
+  color: var(--color-text-muted);
+  letter-spacing: 0.3px;
 }
