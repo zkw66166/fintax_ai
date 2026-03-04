@@ -1,0 +1,67 @@
+.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}
+
+.container {
+  display: flex;
+  gap: 32px;
+  align-items: center;
+}
+
+.scoreSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  min-width: 160px;
+}
+
+.scoreCircle {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 6px solid;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.scoreValue {
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.scoreLabel {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.scoreLevel {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.metricsGrid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+}
+
+@media (max-width: 1365px) {
+  .container {
+    flex-direction: column;
+  }
+
+  .metricsGrid {
+    width: 100%;
+  }
+}

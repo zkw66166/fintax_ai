@@ -1,0 +1,115 @@
+.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.overallScore {
+  text-align: center;
+  padding: 20px;
+  background: var(--color-bg-primary);
+  border-radius: 8px;
+}
+
+.scoreValue {
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: 8px;
+}
+
+.scoreLabel {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+
+.categories {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.category {
+  padding: 12px;
+  background: var(--color-bg-primary);
+  border-radius: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.categoryName {
+  font-size: 13px;
+  color: var(--color-text-primary);
+}
+
+.categoryStats {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.pass { color: var(--color-success); }
+.fail { color: var(--color-error); }
+
+.issues {
+  margin-top: 8px;
+}
+
+.issuesTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: 8px;
+}
+
+.issuesList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.issue {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  padding: 8px;
+  background: var(--color-bg-primary);
+  border-radius: 4px;
+  border-left: 3px solid var(--color-error);
+}
+
+.runButton {
+  width: 100%;
+  padding: 10px;
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.runButton:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.runButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .categories {
+    grid-template-columns: 1fr;
+  }
+}
