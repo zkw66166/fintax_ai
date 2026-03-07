@@ -1,5 +1,6 @@
 """SSE streaming chat endpoint."""
 import json
+import time
 from typing import List, Dict, Optional
 from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
@@ -8,8 +9,10 @@ from api.schemas import ChatRequest
 from mvp_pipeline import run_pipeline_stream
 from modules.display_formatter import build_display_data
 from modules.db_utils import get_connection
-from config.settings import QUERY_CACHE_ENABLED
+from config.settings import QUERY_CACHE_ENABLED, QUERY_CACHE_ENABLED_L2, TAXPAYER_TYPE_SMART_ADAPT
 from api.services.query_cache import get_cached_query, save_query_cache
+from api.services.query_path_logger import log_query_path
+from api.services.template_cache import detect_cache_domain
 
 router = APIRouter()
 
@@ -39,41 +42,192 @@ def _sse_generator(
     multi_turn_enabled: bool = False,  # 新增：前端是否勾选多轮对话
 ):
     """Wrap run_pipeline_stream as SSE text/event-stream with 3-mode cache."""
+    start_time = time.time()
     print(f"[chat] thinking_mode={thinking_mode}, response_mode={response_mode}, company_id={company_id}, multi_turn={multi_turn_enabled}, query={original_query[:50]}")
 
     # --- Cache check for quick / think modes ---
-    if thinking_mode in ("quick", "think") and QUERY_CACHE_ENABLED:
-        cached = get_cached_query(company_id, original_query, response_mode)
-        if cached:
-            # Deep-copy to avoid mutating the cached data
-            import copy
-            result = copy.deepcopy(cached["result"])
-            result["cache_hit"] = True
-            result["cache_key"] = cached["cache_key"]
-            if thinking_mode == "quick" and cached.get("interpretation"):
-                result["cached_interpretation"] = cached["interpretation"]
-                result["need_reinterpret"] = False
-            else:
-                # think mode: return cached query result, but request fresh interpretation
-                result["cached_interpretation"] = ""
-                result["need_reinterpret"] = True
-            result["response_mode"] = response_mode
-            result["thinking_mode"] = thinking_mode
-            route = result.get("route", "financial_data")
-            stage_data = json.dumps({"route": route, "text": "缓存命中"}, ensure_ascii=False)
-            yield f"event: stage\ndata: {stage_data}\n\n"
-            data = json.dumps(result, ensure_ascii=False)
-            yield f"event: done\ndata: {data}\n\n"
-            return
+    if thinking_mode in ("quick", "think"):
+        # L1 check
+        if QUERY_CACHE_ENABLED:
+            cached = get_cached_query(company_id, original_query, response_mode)
+            if cached:
+                # Deep-copy to avoid mutating the cached data
+                import copy
+                result = copy.deepcopy(cached["result"])
+                result["cache_hit"] = True
+                result["cache_key"] = cached["cache_key"]
+                if thinking_mode == "quick" and cached.get("interpretation"):
+                    result["cached_interpretation"] = cached["interpretation"]
+                    result["need_reinterpret"] = False
+                else:
+                    # think mode: return cached query result, but request fresh interpretation
+                    result["cached_interpretation"] = ""
+                    result["need_reinterpret"] = True
+                result["response_mode"] = response_mode
+                result["thinking_mode"] = thinking_mode
+                route = result.get("route", "financial_data")
+                stage_data = json.dumps({"route": route, "text": "L1缓存命中"}, ensure_ascii=False)
+                yield f"event: stage\ndata: {stage_data}\n\n"
+                data = json.dumps(result, ensure_ascii=False)
+                yield f"event: done\ndata: {data}\n\n"
 
-    # --- Deep mode: flush in-memory pipeline caches so LLM re-generates everything ---
-    if thinking_mode == "deep":
-        try:
-            from modules.cache_manager import clear_cache
-            clear_cache()
-            print("[chat] deep mode: cleared in-memory pipeline caches")
-        except Exception:
-            pass
+                # 记录查询路径
+                log_query_path(original_query, company_id, "l1", time.time() - start_time, thinking_mode, response_mode, True)
+                return
+
+        # L2 Cache check (template cache) - only if L1 missed
+        if QUERY_CACHE_ENABLED_L2 and company_id:
+            from api.services.template_cache import get_template_cache, instantiate_sql
+            from modules.db_utils import get_taxpayer_info
+
+            try:
+                taxpayer_type, accounting_standard = get_taxpayer_info(company_id)
+
+                # 检测查询的域类别（用于域感知缓存键）
+                query_domain = ""
+                try:
+                    from modules.entity_preprocessor import preprocess_entities
+                    entities_for_cache = preprocess_entities(original_query, company_id)
+                    query_domain = entities_for_cache.get("domain_hint", "")
+                except Exception:
+                    pass  # 域检测失败不影响缓存查找
+
+                print(f"[L2 Cache] Checking for company_id={company_id}, type={taxpayer_type}, standard={accounting_standard}, domain={query_domain}")
+                l2_cached = get_template_cache(original_query, response_mode, taxpayer_type, accounting_standard, domain=query_domain)
+
+                if l2_cached:
+                    print(f"[L2 Cache] Hit: query={original_query[:50]}, type={taxpayer_type}")
+                    sql = instantiate_sql(l2_cached["sql_template"], company_id)
+                    print(f"[L2 Cache] Instantiated SQL for company_id={company_id}:")
+                    print(f"  SQL preview: {sql[:200]}...")
+
+                    conn = get_connection()
+                    try:
+                        rows = conn.execute(sql).fetchall()
+                        rows = [dict(row) for row in rows]
+                        print(f"[L2 Cache] SQL executed, returned {len(rows)} rows")
+                        if len(rows) > 0:
+                            print(f"[L2 Cache] First row: {rows[0]}")
+                    except Exception as e:
+                        print(f"[L2 Cache] SQL failed: {e}")
+                        rows = []
+                    finally:
+                        conn.close()
+
+                    result = {
+                        "success": len(rows) > 0,
+                        "route": "financial_data",
+                        "domain": l2_cached.get("domain", "unknown"),
+                        "sql": sql,
+                        "results": rows,  # Fixed: use 'results' not 'data' to match pipeline format
+                        "entities": l2_cached.get("intent", {}),
+                        "cache_hit": True,
+                        "cache_source": "l2",
+                        "need_reinterpret": True,
+                        "response_mode": response_mode,
+                        "thinking_mode": thinking_mode
+                    }
+
+                    try:
+                        display_data = build_display_data(result, query=original_query)
+                        result["display_data"] = display_data
+                    except Exception as e:
+                        print(f"[L2 Cache] build_display_data failed: {e}")
+
+                    stage_data = json.dumps({"route": "financial_data", "text": "L2缓存命中"}, ensure_ascii=False)
+                    yield f"event: stage\ndata: {stage_data}\n\n"
+                    data = json.dumps(result, ensure_ascii=False)
+                    yield f"event: done\ndata: {data}\n\n"
+
+                    # 记录查询路径
+                    log_query_path(original_query, company_id, "l2", time.time() - start_time, thinking_mode, response_mode, True)
+                    return
+
+                # 域感知智能适配
+                print(f"[L2 Cache] Miss for type={taxpayer_type}, domain={query_domain}, trying smart adaptation...")
+                if TAXPAYER_TYPE_SMART_ADAPT:
+                    from api.services.view_adapter import adapt_sql_for_type, adapt_sql_for_financial_statement
+                    from api.services.template_cache import save_template_cache
+
+                    cache_domain = detect_cache_domain(domain=query_domain)
+
+                    if cache_domain == "financial_statement":
+                        # 财务报表：按会计准则适配（与纳税人类型无关）
+                        opposite_standard = "小企业会计准则" if accounting_standard == "企业会计准则" else "企业会计准则"
+                        print(f"[L2 Adapt] Financial statement: trying opposite standard={opposite_standard}")
+                        oc = get_template_cache(original_query, response_mode, taxpayer_type, opposite_standard, domain=query_domain)
+                        if not oc:
+                            # 也尝试另一种纳税人类型 + 对立会计准则
+                            other_type = "小规模纳税人" if taxpayer_type == "一般纳税人" else "一般纳税人"
+                            oc = get_template_cache(original_query, response_mode, other_type, opposite_standard, domain=query_domain)
+                        if oc:
+                            print(f"[L2 Adapt] Found cache with standard={oc.get('accounting_standard')}, adapting...")
+                            ad = adapt_sql_for_financial_statement(oc["sql_template"], opposite_standard, accounting_standard)
+                            if ad:
+                                sql = instantiate_sql(ad, company_id)
+                                conn = get_connection()
+                                try:
+                                    rows = [dict(r) for r in conn.execute(sql).fetchall()]
+                                    conn.close()
+                                    print(f"[L2 Adapt] FS adapted: {len(rows)} rows")
+                                    if rows:
+                                        save_template_cache(original_query, response_mode, taxpayer_type, accounting_standard, oc.get("intent", {}), ad, oc.get("domain", "unknown"))
+                                        result = {"success": True, "route": "financial_data", "domain": oc.get("domain"), "sql": sql, "results": rows, "entities": oc.get("intent", {}), "cache_hit": True, "cache_source": "l2_adapted", "need_reinterpret": True, "response_mode": response_mode, "thinking_mode": thinking_mode}
+                                        try:
+                                            result["display_data"] = build_display_data(result, query=original_query)
+                                        except:
+                                            pass
+                                        yield f"event: stage\ndata: {json.dumps({'route': 'financial_data', 'text': 'L2缓存适配'}, ensure_ascii=False)}\n\n"
+                                        yield f"event: done\ndata: {json.dumps(result, ensure_ascii=False)}\n\n"
+                                        log_query_path(original_query, company_id, "l2_adapted", time.time() - start_time, thinking_mode, response_mode, True)
+                                        return
+                                except Exception as e:
+                                    print(f"[L2 Adapt] FS SQL failed: {e}")
+                                    conn.close()
+                    else:
+                        # 非财务报表域（VAT 不适配、EIT 无需适配）：保留旧版遍历逻辑
+                        for ot, os in [("一般纳税人", "企业会计准则"), ("小规模纳税人", "小企业会计准则")]:
+                            if ot == taxpayer_type:
+                                continue
+                            print(f"[L2 Adapt] Checking opposite type: {ot} with standard {os}")
+                            oc = get_template_cache(original_query, response_mode, ot, os, domain=query_domain)
+                            if not oc:
+                                continue
+                            print(f"[L2 Adapt] Found cache for type={ot}, attempting adaptation...")
+                            ad = adapt_sql_for_type(oc["sql_template"], ot, taxpayer_type, os, accounting_standard)
+                            if not ad:
+                                continue
+                            print(f"[L2 Adapt] {ot}→{taxpayer_type}")
+                            sql = instantiate_sql(ad, company_id)
+                            conn = get_connection()
+                            try:
+                                rows = [dict(r) for r in conn.execute(sql).fetchall()]
+                                conn.close()
+                                print(f"[L2 Adapt] SQL executed, returned {len(rows)} rows")
+                                if rows:
+                                    save_template_cache(original_query, response_mode, taxpayer_type, accounting_standard, oc.get("intent", {}), ad, oc.get("domain", "unknown"))
+                                    result = {"success": True, "route": "financial_data", "domain": oc.get("domain"), "sql": sql, "results": rows, "entities": oc.get("intent", {}), "cache_hit": True, "cache_source": "l2_adapted", "need_reinterpret": True, "response_mode": response_mode, "thinking_mode": thinking_mode}
+                                    try:
+                                        result["display_data"] = build_display_data(result, query=original_query)
+                                    except:
+                                        pass
+                                    yield f"event: stage\ndata: {json.dumps({'route': 'financial_data', 'text': 'L2缓存适配'}, ensure_ascii=False)}\n\n"
+                                    yield f"event: done\ndata: {json.dumps(result, ensure_ascii=False)}\n\n"
+                                    log_query_path(original_query, company_id, "l2_adapted", time.time() - start_time, thinking_mode, response_mode, True)
+                                    return
+                                else:
+                                    print(f"[L2 Adapt] SQL returned 0 rows, continuing")
+                            except Exception as e:
+                                print(f"[L2 Adapt] SQL execution failed: {e}")
+                                conn.close()
+            except Exception as e:
+                print(f"[L2 Cache] Error: {e}")
+
+        # In-memory pipeline cache removed (conflicted with L1/L2)
+        # L1/L2 persistent cache is now the sole caching strategy
+
+    # --- Deep mode: no in-memory cache to clear ---
+    # In-memory pipeline cache removed (conflicted with L1/L2)
 
     # --- Normal pipeline execution ---
     for event in run_pipeline_stream(
@@ -101,6 +255,32 @@ def _sse_generator(
                         result["empty_data_message"] = display_data["empty_data_message"]
                 except Exception as e:
                     print(f"[display_data] 构建失败: {e}")
+
+                # "本年"/"今年" 0 行结果友好提示
+                results_data = result.get("results", [])
+                if not results_data and company_id:
+                    has_current_year_ref = any(kw in original_query for kw in ("本年", "今年"))
+                    if has_current_year_ref:
+                        try:
+                            import datetime
+                            cur_year = datetime.date.today().year
+                            conn_check = get_connection()
+                            row = conn_check.execute("""
+                                SELECT MAX(period_year) FROM (
+                                    SELECT period_year FROM fs_cash_flow_item WHERE taxpayer_id = ?
+                                    UNION SELECT period_year FROM fs_income_statement_item WHERE taxpayer_id = ?
+                                    UNION SELECT period_year FROM fs_balance_sheet_item WHERE taxpayer_id = ?
+                                    UNION SELECT period_year FROM vat_return_item WHERE taxpayer_id = ?
+                                )
+                            """, (company_id, company_id, company_id, company_id)).fetchone()
+                            conn_check.close()
+                            if row and row[0] and row[0] < cur_year:
+                                latest_year = row[0]
+                                msg = f"该企业暂无{cur_year}年数据，最新数据截至{latest_year}年。请尝试指定具体年份查询。"
+                                result["empty_data_message"] = msg
+                                print(f"[chat] 本年查询无数据: {msg}")
+                        except Exception as e:
+                            print(f"[chat] 本年数据检查失败: {e}")
             result["response_mode"] = response_mode
 
             # Save to persistent cache (strip transient keys before saving)
@@ -112,12 +292,36 @@ def _sse_generator(
                 cache_key = save_query_cache(
                     company_id, original_query, response_mode, route, save_result
                 )
+
+            # Save to L2 template cache
+            if QUERY_CACHE_ENABLED_L2 and result.get("success") and route == "financial_data" and company_id:
+                from api.services.template_cache import save_template_cache, templatize_sql
+                from modules.db_utils import get_taxpayer_info
+
+                try:
+                    sql = result.get("sql", "")
+                    if sql:
+                        template, success = templatize_sql(sql, company_id)
+                        if success:
+                            taxpayer_type, accounting_standard = get_taxpayer_info(company_id)
+                            save_template_cache(
+                                original_query, response_mode, taxpayer_type,
+                                accounting_standard, result.get("intent", {}),
+                                template, result.get("domain", "unknown")
+                            )
+                            print(f"[L2 Cache] Saved: query={original_query[:50]}, type={taxpayer_type}")
+                except Exception as e:
+                    print(f"[L2 Cache] Save failed: {e}")
+
             result["cache_key"] = cache_key
             result["cache_hit"] = False
             result["need_reinterpret"] = False
 
             data = json.dumps(result, ensure_ascii=False)
             yield f"event: done\ndata: {data}\n\n"
+
+            # 记录查询路径
+            log_query_path(original_query, company_id, "pipeline", time.time() - start_time, thinking_mode, response_mode, result.get("success", False), result.get("error"))
 
 
 @router.post("/chat")

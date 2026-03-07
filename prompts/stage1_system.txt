@@ -49,6 +49,37 @@
 15. 若用户问题同时涉及多个域的指标（如"营业收入"属于利润表 + "增值税销售额"属于VAT），设domain=cross_domain，并在cross_domain_list中列出涉及的子域
 16. 若无法判断，根据已识别实体中的domain_hint决定
 
+【跨域检测注意事项】
+- 只有当用户明确提到发票相关词汇时，才将 invoice 加入 cross_domain_list
+  - 发票关键词: "发票"、"进项发票"、"销项发票"、"采购发票"、"销售发票"、"专用发票"、"普通发票"、"开票"、"红冲"、"作废"、"发票金额"、"发票税额"
+- 以下词汇不属于发票域，属于税务申报域（eit 或 vat）:
+  - "缴纳"、"支付"、"实际缴纳"、"应缴"、"已缴"
+  - "纳税额"、"税额"、"应纳税额"、"应纳税"
+  - "税负"、"税负率"
+- 跨域检测应严格基于用户明确提到的指标所属域，不要过度推测
+- 保守策略: 如果不确定是否包含某个域，宁可不包含
+
+【跨域查询的metrics提取】
+当 domain=cross_domain 时，必须在 select.metrics 中列出用户明确要求的所有指标，使用物理列名：
+- "应纳税所得额" → taxable_income (EIT年度) 或 actual_profit (EIT季度)
+- "实际缴纳的企业所得税额" → actual_tax_payable (EIT年度) 或 tax_payable (EIT季度)
+- "利润总额" → total_profit
+- "净利润" → net_profit
+- "营业收入" → operating_revenue
+- "所得税税负率"、"增值税税负率" 等财务指标 → 保留原始中文名称（financial_metrics域通过metric_name过滤）
+
+示例：
+用户问题："2025年第4季度应纳税所得额、实际缴纳的企业所得税额、利润总额、所得税税负率"
+输出JSON：
+{
+  "domain": "cross_domain",
+  "cross_domain_list": ["eit", "profit", "financial_metrics"],
+  "select": {
+    "metrics": ["actual_profit", "tax_payable", "total_profit", "所得税税负率"]
+  },
+  ...
+}
+
 【资产负债表与科目余额表的关键区别】
 - 资产负债表：报表级汇总数据，列为 {item_code}_begin（年初余额）和 {item_code}_end（期末余额）
 - 科目余额表：科目级明细数据，列为 opening_balance（期初余额）、debit_amount（借方发生额）、credit_amount（贷方发生额）、closing_balance（期末余额）

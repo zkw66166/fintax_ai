@@ -7,7 +7,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from config.settings import DB_PATH, MAX_ROWS, CACHE_ENABLED, ROUTER_ENABLED
+from config.settings import DB_PATH, MAX_ROWS, ROUTER_ENABLED
 from modules.entity_preprocessor import detect_entities, detect_entities_with_context, normalize_query, get_scope_view
 from modules.intent_parser import parse_intent
 from modules.constraint_injector import inject_constraints
@@ -53,15 +53,94 @@ def is_multi_period_query(entities: dict) -> bool:
     return False
 
 
-# 导入缓存管理器
-if CACHE_ENABLED:
-    from modules.cache_manager import (
-        get_cached_intent, cache_intent,
-        get_cached_sql, cache_sql,
-        get_cached_result, cache_result,
-        get_cached_cross_domain, cache_cross_domain,
-        get_cache_stats
-    )
+def _extract_requested_metrics(query: str, entities: dict) -> list:
+    """从用户查询中提取所有请求的指标名称（中文）。
+
+    使用简单的分隔符拆分 + 噪音词过滤。
+
+    Returns:
+        ['应纳税所得额', '实际缴纳的企业所得税额', '利润总额', '所得税税负率']
+    """
+    import re
+
+    # Remove taxpayer name, dates, common noise words
+    cleaned = query
+    if entities.get('taxpayer_name'):
+        cleaned = cleaned.replace(entities['taxpayer_name'], '')
+
+    # Remove date patterns
+    cleaned = re.sub(r'\d{4}年?', '', cleaned)
+    cleaned = re.sub(r'第?[一二三四1-4]季度?', '', cleaned)
+    cleaned = re.sub(r'\d{1,2}月', '', cleaned)
+
+    # Split by common delimiters
+    parts = re.split(r'[、，,和与及以及]', cleaned)
+
+    # Filter noise words
+    noise = {'分析', '查询', '情况', '数据', '多少', '趋势', '变化', '对比', '比较',
+             '的', '和', '与', '及', '以及', '还有', '怎么样', '如何', '是多少', '是'}
+
+    metrics = []
+    for part in parts:
+        part = part.strip()
+        if part and part not in noise and len(part) > 1:
+            metrics.append(part)
+
+    return metrics
+
+
+def _fuzzy_match_metric(requested: str, returned: str) -> bool:
+    """模糊匹配两个指标名称。
+
+    匹配规则:
+    1. 完全相同
+    2. 一个是另一个的子串
+    3. 去除常见修饰词后相同（如"实际缴纳的"、"应"等）
+    4. 核心词匹配（如"企业所得税"）
+
+    Args:
+        requested: 用户请求的指标名称
+        returned: 概念管线返回的指标名称
+
+    Returns:
+        是否匹配
+    """
+    # 完全相同
+    if requested == returned:
+        return True
+
+    # 子串匹配
+    if requested in returned or returned in requested:
+        return True
+
+    # 去除常见修饰词后匹配
+    modifiers = ['实际缴纳的', '实际', '应纳', '应', '本期', '本年', '累计', '合计']
+    req_cleaned = requested
+    ret_cleaned = returned
+
+    for mod in modifiers:
+        req_cleaned = req_cleaned.replace(mod, '')
+        ret_cleaned = ret_cleaned.replace(mod, '')
+
+    # 去除修饰词后的完全匹配
+    if req_cleaned == ret_cleaned:
+        return True
+
+    # 去除修饰词后的子串匹配
+    if req_cleaned in ret_cleaned or ret_cleaned in req_cleaned:
+        return True
+
+    # 核心词匹配：提取核心业务词（如"企业所得税"、"增值税"）
+    # 如果两个指标都包含相同的核心词，且长度相近，则认为匹配
+    core_words = ['企业所得税', '增值税', 'VAT', 'EIT', '利润', '资产', '负债', '现金流']
+    for core in core_words:
+        if core in requested and core in returned:
+            # 核心词相同，且长度差异不超过5个字符，认为匹配
+            if abs(len(requested) - len(returned)) <= 5:
+                return True
+
+    return False
+
 
 
 def run_pipeline_stream(
@@ -373,23 +452,11 @@ def run_pipeline(user_query: str, db_path: str = None, progress_callback=None, c
 
         print(f"[3] 调用LLM阶段1（意图解析）...")
 
-        # 尝试从缓存获取
-        intent = None
-        if CACHE_ENABLED:
-            intent = get_cached_intent(normalized, entities.get('taxpayer_type'), hits)
-            if intent:
-                print(f"    ✓ 缓存命中 (0ms)")
-
-        # 缓存未命中，调用LLM
-        if intent is None:
-            t0 = time.time()
-            intent = parse_intent(resolved_query, entities, hits, conversation_history=conversation_history)
-            elapsed_ms = int((time.time() - t0) * 1000)
-            print(f"    调用LLM ({elapsed_ms}ms)")
-
-            # 缓存结果
-            if CACHE_ENABLED:
-                cache_intent(normalized, entities.get('taxpayer_type'), hits, intent)
+        # 调用LLM（内存缓存已移除）
+        t0 = time.time()
+        intent = parse_intent(resolved_query, entities, hits, conversation_history=conversation_history)
+        elapsed_ms = int((time.time() - t0) * 1000)
+        print(f"    调用LLM ({elapsed_ms}ms)")
 
         result['intent'] = intent
         domain = intent.get('domain', domain_hint or 'vat')
@@ -431,23 +498,52 @@ def run_pipeline(user_query: str, db_path: str = None, progress_callback=None, c
             time_gran = entities.get('time_granularity') or detect_time_granularity(resolved_query, entities)
             is_multi_period = is_multi_period_query(entities)
             if len(concepts) >= 1 and time_gran and not is_multi_period:
+                # NEW: Extract all requested metrics
+                requested_metrics = _extract_requested_metrics(resolved_query, entities)
                 print(f"[3b2] 单概念时序管线: {[c['name'] for c in concepts]}, 粒度={time_gran}")
+                print(f"      请求指标: {requested_metrics}")
                 if progress_callback:
                     progress_callback(0.50, "📊 正在执行概念查询...")
                 concept_result = _run_concept_pipeline(
                     conn, entities, concepts, time_gran, resolved_query
                 )
                 if concept_result.get('success'):
-                    result['success'] = True
-                    result['results'] = concept_result.get('results', [])
-                    result['cross_domain_summary'] = concept_result.get('cross_domain_summary')
-                    result['concept_pipeline'] = True
-                    _log_query(conn, user_query, normalized, entities, intent, None,
-                               True, None)
-                    if progress_callback:
-                        progress_callback(1.0, "✅ 概念查询完成")
-                    return result
-                print(f"    概念管线失败，回退标准NL2SQL管线")
+                    # NEW: Validate completeness
+                    returned_metrics = set()
+                    for r in concept_result.get('results', []):
+                        # Extract metric name from result
+                        if 'metric_name' in r:
+                            returned_metrics.add(r['metric_name'])
+                        elif 'concept_name' in r:
+                            returned_metrics.add(r['concept_name'])
+                        # Also check column names in result dict
+                        for key in r.keys():
+                            if key not in ('period', 'period_year', 'period_month', 'period_quarter', 'quarter'):
+                                returned_metrics.add(key)
+
+                    # Fuzzy match: check if requested metrics are covered
+                    missing = []
+                    for req in requested_metrics:
+                        # Check if req matches any returned metric using fuzzy matching
+                        if not any(_fuzzy_match_metric(req, ret) for ret in returned_metrics):
+                            missing.append(req)
+
+                    if missing:
+                        print(f"      概念管线不完整，缺失: {missing}，回退标准NL2SQL管线")
+                        # Fall through to standard pipeline
+                    else:
+                        print(f"      概念管线完整，返回结果")
+                        result['success'] = True
+                        result['results'] = concept_result.get('results', [])
+                        result['cross_domain_summary'] = concept_result.get('cross_domain_summary')
+                        result['concept_pipeline'] = True
+                        _log_query(conn, user_query, normalized, entities, intent, None,
+                                   True, None)
+                        if progress_callback:
+                            progress_callback(1.0, "✅ 概念查询完成")
+                        return result
+                else:
+                    print(f"    概念管线失败，回退标准NL2SQL管线")
             elif is_multi_period:
                 print(f"[3b2] 检测到多期间查询，跳过概念管线，走标准NL2SQL管线")
 
@@ -459,23 +555,55 @@ def run_pipeline(user_query: str, db_path: str = None, progress_callback=None, c
             time_gran = entities.get('time_granularity') or detect_time_granularity(resolved_query, entities)
             is_multi_period = is_multi_period_query(entities)
             if len(concepts) >= 1 and time_gran and not is_multi_period:
+                # NEW: Extract all requested metrics
+                requested_metrics = _extract_requested_metrics(resolved_query, entities)
                 print(f"[3c] 概念管线: {[c['name'] for c in concepts]}, 粒度={time_gran}")
+                print(f"     请求指标: {requested_metrics}")
                 if progress_callback:
                     progress_callback(0.50, "📊 正在执行概念查询...")
                 concept_result = _run_concept_pipeline(
                     conn, entities, concepts, time_gran, resolved_query
                 )
                 if concept_result.get('success'):
-                    result['success'] = True
-                    result['results'] = concept_result.get('results', [])
-                    result['cross_domain_summary'] = concept_result.get('cross_domain_summary')
-                    result['concept_pipeline'] = True
-                    _log_query(conn, user_query, normalized, entities, intent, None,
-                               True, None)
-                    if progress_callback:
-                        progress_callback(1.0, "✅ 概念查询完成")
-                    return result
-                print(f"    概念管线失败，回退LLM跨域管线")
+                    # NEW: Validate completeness
+                    returned_metrics = set()
+                    for r in concept_result.get('results', []):
+                        # Extract metric name from result
+                        if 'metric_name' in r:
+                            returned_metrics.add(r['metric_name'])
+                        elif 'concept_name' in r:
+                            returned_metrics.add(r['concept_name'])
+                        # Also check column names in result dict
+                        for key in r.keys():
+                            if key not in ('period', 'period_year', 'period_month', 'period_quarter', 'quarter'):
+                                returned_metrics.add(key)
+
+                    print(f"     返回指标: {list(returned_metrics)}")
+
+                    # Fuzzy match: check if requested metrics are covered
+                    missing = []
+                    for req in requested_metrics:
+                        # Check if req matches any returned metric using fuzzy matching
+                        if not any(_fuzzy_match_metric(req, ret) for ret in returned_metrics):
+                            missing.append(req)
+
+                    if missing:
+                        print(f"     缺失指标: {missing}")
+                        print(f"     概念管线不完整，回退LLM跨域管线")
+                        # Fall through to LLM cross-domain pipeline
+                    else:
+                        print(f"     概念管线完整，返回结果")
+                        result['success'] = True
+                        result['results'] = concept_result.get('results', [])
+                        result['cross_domain_summary'] = concept_result.get('cross_domain_summary')
+                        result['concept_pipeline'] = True
+                        _log_query(conn, user_query, normalized, entities, intent, None,
+                                   True, None)
+                        if progress_callback:
+                            progress_callback(1.0, "✅ 概念查询完成")
+                        return result
+                else:
+                    print(f"    概念管线失败，回退LLM跨域管线")
             elif is_multi_period:
                 print(f"[3c] 检测到多期间查询，跳过概念管线，走LLM跨域管线")
 
@@ -512,23 +640,11 @@ def run_pipeline(user_query: str, db_path: str = None, progress_callback=None, c
 
         print(f"[5] 调用LLM阶段2（SQL生成, domain={domain}）...")
 
-        # 尝试从缓存获取
-        sql = None
-        if CACHE_ENABLED:
-            sql = get_cached_sql(constraints)
-            if sql:
-                print(f"    ✓ 缓存命中 (0ms)")
-
-        # 缓存未命中，调用LLM
-        if sql is None:
-            t0 = time.time()
-            sql = generate_sql(constraints, domain=domain, conversation_history=conversation_history)
-            elapsed_ms = int((time.time() - t0) * 1000)
-            print(f"    调用LLM ({elapsed_ms}ms)")
-
-            # 缓存结果
-            if CACHE_ENABLED:
-                cache_sql(constraints, sql)
+        # 调用LLM（内存缓存已移除）
+        t0 = time.time()
+        sql = generate_sql(constraints, domain=domain, conversation_history=conversation_history)
+        elapsed_ms = int((time.time() - t0) * 1000)
+        print(f"    调用LLM ({elapsed_ms}ms)")
 
         result['sql'] = sql
         print(f"    生成SQL:\n    {sql}")
@@ -560,10 +676,6 @@ def run_pipeline(user_query: str, db_path: str = None, progress_callback=None, c
                 if progress_callback:
                     progress_callback(1.0, "❌ SQL审核失败")
                 return result
-            else:
-                # 重试成功，缓存修正后的SQL
-                if CACHE_ENABLED:
-                    cache_sql(constraints, sql)
 
         print(f"[6] SQL审核通过")
 
@@ -574,21 +686,10 @@ def run_pipeline(user_query: str, db_path: str = None, progress_callback=None, c
         print(f"[7] 执行SQL...")
         params = _build_params(entities, intent)
 
-        # 尝试结果缓存
-        cached_rows = None
-        if CACHE_ENABLED:
-            cached_rows = get_cached_result(sql, params)
-            if cached_rows is not None:
-                print(f"    ✓ 结果缓存命中 ({len(cached_rows)}行)")
-
+        # 执行SQL（内存结果缓存已移除）
         try:
-            if cached_rows is not None:
-                result['results'] = cached_rows
-            else:
-                rows = conn.execute(sql, params).fetchall()
-                result['results'] = [dict(r) for r in rows]
-                if CACHE_ENABLED:
-                    cache_result(sql, params, result['results'])
+            rows = conn.execute(sql, params).fetchall()
+            result['results'] = [dict(r) for r in rows]
             result['success'] = True
             elapsed = int((time.time() - start_time) * 1000)
             print(f"    返回 {len(rows)} 行 ({elapsed}ms)")
@@ -655,27 +756,16 @@ def _generate_subdomain_sql(sd, sub_constraints, conversation_history=None):
     Returns:
         dict: {'domain': sd, 'sql': str} 或 {'domain': sd, 'error': str}
     """
-    from modules.cache_manager import get_cached_sql, cache_sql
     t0 = time.time()
 
-    # 尝试缓存
-    sql = None
-    if CACHE_ENABLED:
-        sql = get_cached_sql(sub_constraints)
-        if sql:
-            print(f"    [{sd}] SQL缓存命中 (0ms)")
-
-    # 缓存未命中，调用LLM
-    if sql is None:
-        try:
-            sql = generate_sql(sub_constraints, domain=sd, conversation_history=conversation_history)
-        except Exception as e:
-            print(f"    [{sd}] SQL生成失败: {e}")
-            return {'domain': sd, 'error': str(e)}
-        elapsed_ms = int((time.time() - t0) * 1000)
-        print(f"    [{sd}] SQL生成 ({elapsed_ms}ms): {sql[:80]}...")
-        if CACHE_ENABLED:
-            cache_sql(sub_constraints, sql)
+    # 调用LLM（内存缓存已移除）
+    try:
+        sql = generate_sql(sub_constraints, domain=sd, conversation_history=conversation_history)
+    except Exception as e:
+        print(f"    [{sd}] SQL生成失败: {e}")
+        return {'domain': sd, 'error': str(e)}
+    elapsed_ms = int((time.time() - t0) * 1000)
+    print(f"    [{sd}] SQL生成 ({elapsed_ms}ms): {sql[:80]}...")
 
     # 审核
     passed, violations = audit_sql(sql, sub_constraints['allowed_views'],
@@ -692,8 +782,6 @@ def _generate_subdomain_sql(sd, sub_constraints, conversation_history=None):
         if not passed:
             print(f"    [{sd}] 重试仍失败: {violations}")
             return {'domain': sd, 'error': f'审核失败: {violations}'}
-        if CACHE_ENABLED:
-            cache_sql(sub_constraints, sql)
 
     return {'domain': sd, 'sql': sql, 'constraints': sub_constraints}
 
@@ -722,23 +810,13 @@ def _run_cross_domain_pipeline(conn, entities, intent, resolved_query,
     operation = detect_cross_domain_operation(resolved_query)
     print(f"    跨域操作类型: {operation}, 子域: {cross_list}")
 
-    # 跨域结果缓存检查
-    period_key = f"{entities.get('period_year')}-{entities.get('period_month')}-{entities.get('period_end_month')}"
-    if CACHE_ENABLED:
-        cached = get_cached_cross_domain(
-            resolved_query, entities.get('taxpayer_id', ''),
-            cross_list, period_key
-        )
-        if cached:
-            print(f"    ✓ 跨域缓存命中")
-            return cached
-
     # 获取原始intent中的metrics列表
     orig_metrics = []
     if intent.get('select') and isinstance(intent['select'], dict):
         orig_metrics = intent['select'].get('metrics', [])
     elif isinstance(intent.get('metrics'), list):
         orig_metrics = intent['metrics']
+    print(f"    [跨域] 原始metrics: {orig_metrics}")
 
     # === Phase 1: 串行构建所有子域intent和约束（快，无LLM） ===
     subdomain_tasks = []  # [(sd, sub_intent, sub_constraints)]
@@ -767,12 +845,41 @@ def _run_cross_domain_pipeline(conn, entities, intent, resolved_query,
         for v in sd_views:
             sd_columns.update(VIEW_COLUMNS.get(v, []))
 
+        print(f"    [{sd}] 子域列: {list(sd_columns)[:10]}...")  # Show first 10 columns
+
         if orig_metrics:
-            filtered_metrics = [m for m in orig_metrics if m in sd_columns]
+            # Special handling for financial_metrics domain
+            if sd == 'financial_metrics':
+                # Financial metrics are stored as metric_name values, not physical columns
+                # Accept Chinese metric names (含"率"的指标) and pass them to LLM
+                filtered_metrics = []
+                for m in orig_metrics:
+                    # Accept if:
+                    # 1. Contains "率" (tax burden rates, profit margins, turnover rates)
+                    # 2. Is English abbreviation (ROE, ROA, EPS)
+                    # 3. Is a physical column (fallback)
+                    if '率' in m or m in ['ROE', 'ROA', 'EPS', 'EBIT', 'EBITDA'] or m in sd_columns:
+                        filtered_metrics.append(m)
+                if filtered_metrics:
+                    print(f"    [financial_metrics] 识别到财务指标: {filtered_metrics}")
+            else:
+                # Standard filtering for physical column-based domains
+                filtered_metrics = [m for m in orig_metrics if m in sd_columns]
+
+            print(f"    [{sd}] 过滤后metrics: {filtered_metrics}")
             if filtered_metrics:
                 sub_intent['select'] = {'metrics': filtered_metrics}
             else:
-                sub_intent['select'] = {'metrics': orig_metrics}
+                # 没有原始metrics匹配该子域的列
+                # 保留原始metrics作为提示，但标记为"用户意图参考"
+                # LLM应从allowed_columns中选择与这些意图相关的所有列
+                unmatched = [m for m in orig_metrics if m not in sd_columns]
+                print(f"    [{sd}] 未匹配的metrics: {unmatched}")
+                print(f"    [{sd}] 传递用户意图参考 (orig_metrics={len(orig_metrics)}个)")
+                sub_intent['select'] = {
+                    'metrics': [],
+                    'user_intent_metrics': orig_metrics  # 新增：用户意图参考
+                }
         else:
             sub_intent['select'] = intent.get('select', {})
 
@@ -850,13 +957,6 @@ def _run_cross_domain_pipeline(conn, entities, intent, resolved_query,
         'cross_domain_operation': operation,
         'sub_results': sub_results,
     }
-
-    # 缓存跨域结果
-    if CACHE_ENABLED and cross_result['success']:
-        cache_cross_domain(
-            resolved_query, entities.get('taxpayer_id', ''),
-            cross_list, period_key, cross_result
-        )
 
     return cross_result
 

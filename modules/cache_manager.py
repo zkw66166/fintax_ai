@@ -1,10 +1,30 @@
-"""缓存管理器 - 两级缓存：Stage 1意图缓存 + Stage 2 SQL缓存"""
+"""缓存管理器 - 已弃用
+
+⚠️ 警告：此模块已弃用，不再使用。
+
+原因：内存缓存使用 query + taxpayer_type 作为键，不包含 company_id，
+导致不同公司的相同类型查询可能返回错误的缓存数据（跨公司缓存污染）。
+
+替代方案：使用 L1/L2 持久化缓存（api/services/query_cache.py 和 template_cache.py），
+它们是公司感知的，提供更好的跨会话持久化，且不会造成数据泄漏。
+
+此模块保留用于向后兼容，但所有函数都已标记为弃用。
+"""
 import hashlib
 import json
 import time
 import threading
+import warnings
 from typing import Optional, Dict, Any, List
 from collections import OrderedDict
+
+# 弃用警告
+warnings.warn(
+    "modules.cache_manager is deprecated and will be removed in a future version. "
+    "Use L1/L2 persistent cache (api/services/query_cache.py, template_cache.py) instead.",
+    DeprecationWarning,
+    stacklevel=2
+)
 
 
 class LRUCache:

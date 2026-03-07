@@ -52,3 +52,29 @@ def close_pooled_connection():
         except Exception:
             pass
         _local.conn = None
+
+
+def get_taxpayer_info(company_id: str) -> tuple:
+    """查询纳税人类型和会计准则
+
+    Args:
+        company_id: 纳税人 ID
+
+    Returns:
+        (taxpayer_type, accounting_standard)
+        例如：("一般纳税人", "企业会计准则") 或 ("小规模纳税人", "小企业会计准则")
+
+    Note:
+        返回原始中文值，与数据库和pipeline代码保持一致
+    """
+    conn = get_connection()
+    try:
+        row = conn.execute(
+            "SELECT taxpayer_type, accounting_standard FROM taxpayer_info WHERE taxpayer_id = ?",
+            (company_id,)
+        ).fetchone()
+        if row:
+            return row["taxpayer_type"], row["accounting_standard"]
+        return "一般纳税人", "企业会计准则"  # 默认值
+    finally:
+        conn.close()

@@ -79,37 +79,24 @@ async def save_history_entry(entry: dict, user: dict = Depends(get_current_user)
 
 @router.delete("/chat/history")
 async def delete_history(body: dict, user: dict = Depends(get_current_user)):
+    """删除历史记录（不删除缓存文件）
+
+    Note: 缓存文件保留，以便其他用户或未来查询可以复用
+    """
     ids = body.get("ids", [])
     history = _load()
 
-    # Collect cache_keys from entries being deleted for cascade cleanup
-    cache_keys_to_delete = []
     if not ids:
-        # Deleting all — collect all cache_keys
-        for h in history:
-            ck = h.get("cache_key", "")
-            if ck:
-                cache_keys_to_delete.append(ck)
+        # 删除全部历史记录
         _save([])
     else:
+        # 删除指定的历史记录
         id_set = set(ids)
-        for i, h in enumerate(history):
-            if i in id_set:
-                ck = h.get("cache_key", "")
-                if ck:
-                    cache_keys_to_delete.append(ck)
         history = [h for i, h in enumerate(history) if i not in id_set]
         _save(history)
 
-    # Cascade delete cache files (non-critical)
-    if cache_keys_to_delete:
-        try:
-            from api.services.query_cache import delete_query_caches
-            delete_query_caches(cache_keys_to_delete)
-        except Exception:
-            pass
-
     return {"ok": True}
+
 
 
 @router.post("/chat/history/reinvoke")
@@ -187,14 +174,8 @@ async def reinvoke_from_history(req: ReinvokeRequest, user: dict = Depends(get_c
                 yield f"event: done\ndata: {data}\n\n"
                 return
 
-        # --- Deep mode: clear caches and re-run full pipeline ---
-        if thinking_mode == "deep":
-            try:
-                from modules.cache_manager import clear_cache
-                clear_cache()
-                print("[reinvoke] deep mode: cleared in-memory pipeline caches")
-            except Exception:
-                pass
+        # --- Deep mode: no in-memory cache to clear ---
+        # In-memory pipeline cache removed (conflicted with L1/L2)
 
         # --- Re-run pipeline with conversation context ---
         # Prepare conversation context for multi-turn queries
