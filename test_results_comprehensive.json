@@ -1,0 +1,734 @@
+{
+  "TSE科技有限公司": {
+    "single": {
+      "科目余额表": [
+        {
+          "query": "TSE科技有限公司去年年底的银行存款余额还有多少？",
+          "success": true,
+          "route": "unknown",
+          "error": null
+        },
+        {
+          "query": "TSE科技有限公司今年每个月末的现金余额变化情况",
+          "success": true,
+          "route": "unknown",
+          "error": null
+        },
+        {
+          "query": "TSE科技有限公司去年第一季度各月管理费用和财务费用的发生额",
+          "success": true,
+          "route": "unknown",
+          "error": null
+        }
+      ],
+      "资产负债表": [
+        {
+          "query": "TSE科技有限公司今年3月底的应收账款有多少？",
+          "success": true,
+          "route": "unknown",
+          "error": null
+        },
+        {
+          "query": "TSE科技有限公司去年每个季度末的短期借款是多少？",
+          "success": true,
+          "route": "unknown",
+          "error": null
+        },
+        {
+          "query": "TSE科技有限公司近两年每年末的总资产和总负债",
+          "success": true,
+          "route": "unknown",
+          "error": null
+        }
+      ],
+      "利润表": [
+        {
+          "query": "TSE科技有限公司上个月的净利润是多少？",
+          "success": true,
+          "route": "unknown",
+          "error": null
+        },
+        {
+          "query": "TSE科技有限公司去年各季度的营业收入",
+          "success": true,
+          "route": "unknown",
+          "error": null
+        },
+        {
+          "query": "TSE科技有限公司今年上半年的营业收入、营业成本和销售费用",
+          "success": true,
+          "route": "unknown",
+          "error": null
+        }
+      ],
+      "现金流量表": [
+        {
+          "query": "TSE科技有限公司今年5月的经营现金流净额",
+          "success": true,
+          "route": "unknown",
+          "error": null
+        },
+        {
+          "query": "TSE科技有限公司去年每个月的投资活动现金流出",
+          "success": true,
+          "route": "unknown",
+          "error": null
+        },
+        {
+          "query": "TSE科技有限公司今年第一季度各月的经营流入和经营流出",
+          "success": true,
+          "route": "unknown",
+          "error": null
+        }
+      ],
+      "增值税申报表": [
+        {
+          "query": "TSE科技有限公司去年12月的销项税",
+          "success": true,
+          "route": "unknown",
+          "error": null
+        },
+        {
+          "query": "TSE科技有限公司今年各季度的应交增值税",
+          "success": true,
+          "route": "unknown",
+          "error": null
+        },
+        {
+          "query": "TSE科技有限公司去年每月增值税申报的销售额、销项税和进项税",
+          "success": true,
+          "route": "unknown",
+          "error": null
+        }
+      ],
+      "企业所得税申报表": [
+        {
+          "query": "TSE科技有限公司2023年汇算清缴的应纳税所得额",
+          "success": true,
+          "route": "unknown",
+          "error": null
+        },
+        {
+          "query": "TSE科技有限公司去年每个季度预缴的所得税",
+          "success": true,
+          "route": "unknown",
+          "error": null
+        },
+        {
+          "query": "TSE科技有限公司2023年各季度申报的营业收入、营业成本和利润总额",
+          "success": true,
+          "route": "unknown",
+          "error": null
+        }
+      ],
+      "进项发票": [
+        {
+          "query": "TSE科技有限公司去年12月采购发票的进项税总额",
+          "success": true,
+          "route": "unknown",
+          "error": null
+        },
+        {
+          "query": "TSE科技有限公司今年每个月的采购金额（不含税）",
+          "success": true,
+          "route": "unknown",
+          "error": null
+        },
+        {
+          "query": "TSE科技有限公司去年各季度采购发票的金额和税额",
+          "success": true,
+          "route": "unknown",
+          "error": null
+        }
+      ],
+      "销项发票": [
+        {
+          "query": "TSE科技有限公司上个月销售发票的总销售额（不含税）",
+          "success": true,
+          "route": "unknown",
+          "error": null
+        },
+        {
+          "query": "TSE科技有限公司去年各月的销项税",
+          "success": true,
+          "route": "unknown",
+          "error": null
+        },
+        {
+          "query": "TSE科技有限公司今年第一季度各月销售发票的金额和税额",
+          "success": true,
+          "route": "unknown",
+          "error": null
+        }
+      ],
+      "关键财务指标": [
+        {
+          "query": "TSE科技有限公司去年年底的资产负债率是多少？",
+          "success": true,
+          "route": "unknown",
+          "error": null
+        },
+        {
+          "query": "TSE科技有限公司今年每月的增值税税负率走势",
+          "success": true,
+          "route": "unknown",
+          "error": null
+        },
+        {
+          "query": "TSE科技有限公司去年各季度的销售收现比和应收账款周转率",
+          "success": true,
+          "route": "unknown",
+          "error": null
+        }
+      ]
+    },
+    "cross": [
+      {
+        "query": "TSE科技有限公司上个月进项税和销项税的比例是多少？",
+        "success": true,
+        "route": "unknown",
+        "error": null
+      },
+      {
+        "query": "TSE科技有限公司今年一季度的所得税费用占利润总额的比重？",
+        "success": true,
+        "route": "unknown",
+        "error": null
+      },
+      {
+        "query": "TSE科技有限公司今年3月底的银行存款余额相当于当月营业收入的几倍？",
+        "success": true,
+        "route": "unknown",
+        "error": null
+      },
+      {
+        "query": "TSE科技有限公司上个月销项税占营业收入的比例？",
+        "success": true,
+        "route": "unknown",
+        "error": null
+      },
+      {
+        "query": "TSE科技有限公司去年全年所得税费用与经营现金流净额的比率？",
+        "success": true,
+        "route": "unknown",
+        "error": null
+      },
+      {
+        "query": "TSE科技有限公司去年12月的（销项税额 - 进项税额）与应纳税额的比值？",
+        "success": true,
+        "route": "unknown",
+        "error": null
+      },
+      {
+        "query": "TSE科技有限公司今年5月的销售收现、营业收入和应收账款余额的比值？",
+        "success": true,
+        "route": "unknown",
+        "error": null
+      },
+      {
+        "query": "TSE科技有限公司25年第四季度的采购金额、销售金额、存货增加额和经营现金流出的关系？",
+        "success": true,
+        "route": "unknown",
+        "error": null
+      },
+      {
+        "query": "TSE科技有限公司去年12月的（银行存款余额 + 应收账款余额 - 短期借款余额）与（销项税额 + 进项税额）的比值？",
+        "success": true,
+        "route": "unknown",
+        "error": null
+      },
+      {
+        "query": "TSE科技有限公司2025全年的（所得税费用 + 增值税应纳税额）与利润总额的比值？",
+        "success": false,
+        "route": "error",
+        "error": "HTTPConnectionPool(host='localhost', port=8000): Read timed out."
+      },
+      {
+        "query": "TSE科技有限公司今年每月的进项税与销项税之比",
+        "success": true,
+        "route": "unknown",
+        "error": null
+      },
+      {
+        "query": "TSE科技有限公司去年各季度所得税费用占利润总额的比例",
+        "success": true,
+        "route": "unknown",
+        "error": null
+      },
+      {
+        "query": "TSE科技有限公司今年每月末的银行存款余额占当月营业收入的比重",
+        "success": true,
+        "route": "unknown",
+        "error": null
+      },
+      {
+        "query": "TSE科技有限公司今年每月销项税占营业收入的比例",
+        "success": true,
+        "route": "unknown",
+        "error": null
+      },
+      {
+        "query": "TSE科技有限公司去年各月所得税费用与经营现金流净额的比率",
+        "success": true,
+        "route": "unknown",
+        "error": null
+      },
+      {
+        "query": "TSE科技有限公司去年各月的（销项税额 - 进项税额）与应纳税额的比值",
+        "success": false,
+        "route": "error",
+        "error": "HTTPConnectionPool(host='localhost', port=8000): Read timed out."
+      },
+      {
+        "query": "TSE科技有限公司今年各月的销售收现、营业收入和应收账款余额的比值",
+        "success": true,
+        "route": "unknown",
+        "error": null
+      },
+      {
+        "query": "TSE科技有限公司去年各季度的采购金额、销售金额、存货增加额和经营现金流出的关系",
+        "success": true,
+        "route": "unknown",
+        "error": null
+      },
+      {
+        "query": "TSE科技有限公司今年各月的（银行存款余额 + 应收账款余额 - 短期借款余额）与（销项税额 + 进项税额）的比值",
+        "success": true,
+        "route": "unknown",
+        "error": null
+      },
+      {
+        "query": "TSE科技有限公司去年各月的（所得税费用 + 增值税应纳税额）与利润总额的比值",
+        "success": true,
+        "route": "unknown",
+        "error": null
+      },
+      {
+        "query": "TSE科技有限公司23-25年营业收入、销项税和经营现金流净额",
+        "success": true,
+        "route": "unknown",
+        "error": null
+      },
+      {
+        "query": "TSE科技有限公司今年各季度总资产、总负债和净利润情况",
+        "success": true,
+        "route": "unknown",
+        "error": null
+      },
+      {
+        "query": "TSE科技有限公司去年每月采购发票金额、销售发票金额和营业成本",
+        "success": true,
+        "route": "unknown",
+        "error": null
+      },
+      {
+        "query": "TSE科技有限公司今年每月银行存款余额、应收账款余额和短期借款余额",
+        "success": true,
+        "route": "unknown",
+        "error": null
+      },
+      {
+        "query": "TSE科技有限公司去年各季度应纳所得税额、利润总额和支付的各项税费",
+        "success": true,
+        "route": "unknown",
+        "error": null
+      },
+      {
+        "query": "TSE科技有限公司2023-25年毛利率、资产负债率和营业收入",
+        "success": true,
+        "route": "unknown",
+        "error": null
+      },
+      {
+        "query": "TSE科技有限公司去年每月销售收现、营业收入和应收账款余额",
+        "success": true,
+        "route": "unknown",
+        "error": null
+      },
+      {
+        "query": "TSE科技有限公司今年各月进项税额、销项税额和应交增值税",
+        "success": true,
+        "route": "unknown",
+        "error": null
+      },
+      {
+        "query": "TSE科技有限公司去年各月的营业收入、净利润、经营活动现金流净额、资产总计、销项税额、应纳所得税额",
+        "success": true,
+        "route": "unknown",
+        "error": null
+      },
+      {
+        "query": "TSE科技有限公司今年各季度的营业收入、营业成本、利润总额、所得税费用、经营活动现金流净额、投资活动现金流净额、资产总计、负债合计、应交增值税、进项税额",
+        "success": true,
+        "route": "unknown",
+        "error": null
+      }
+    ]
+  },
+  "大华智能制造厂": {
+    "single": {
+      "科目余额表": [
+        {
+          "query": "大华智能制造厂去年年底的银行存款余额还有多少？",
+          "success": true,
+          "route": "unknown",
+          "error": null
+        },
+        {
+          "query": "大华智能制造厂今年每个月末的现金余额变化情况",
+          "success": true,
+          "route": "unknown",
+          "error": null
+        },
+        {
+          "query": "大华智能制造厂去年第一季度各月管理费用和财务费用的发生额",
+          "success": true,
+          "route": "unknown",
+          "error": null
+        }
+      ],
+      "资产负债表": [
+        {
+          "query": "大华智能制造厂今年3月底的应收账款有多少？",
+          "success": true,
+          "route": "unknown",
+          "error": null
+        },
+        {
+          "query": "大华智能制造厂去年每个季度末的短期借款是多少？",
+          "success": true,
+          "route": "unknown",
+          "error": null
+        },
+        {
+          "query": "大华智能制造厂近两年每年末的总资产和总负债",
+          "success": true,
+          "route": "unknown",
+          "error": null
+        }
+      ],
+      "利润表": [
+        {
+          "query": "大华智能制造厂上个月的净利润是多少？",
+          "success": true,
+          "route": "unknown",
+          "error": null
+        },
+        {
+          "query": "大华智能制造厂去年各季度的营业收入",
+          "success": true,
+          "route": "unknown",
+          "error": null
+        },
+        {
+          "query": "大华智能制造厂今年上半年的营业收入、营业成本和销售费用",
+          "success": true,
+          "route": "unknown",
+          "error": null
+        }
+      ],
+      "现金流量表": [
+        {
+          "query": "大华智能制造厂今年5月的经营现金流净额",
+          "success": true,
+          "route": "unknown",
+          "error": null
+        },
+        {
+          "query": "大华智能制造厂去年每个月的投资活动现金流出",
+          "success": true,
+          "route": "unknown",
+          "error": null
+        },
+        {
+          "query": "大华智能制造厂今年第一季度各月的经营流入和经营流出",
+          "success": true,
+          "route": "unknown",
+          "error": null
+        }
+      ],
+      "增值税申报表": [
+        {
+          "query": "大华智能制造厂去年12月的销项税",
+          "success": true,
+          "route": "unknown",
+          "error": null
+        },
+        {
+          "query": "大华智能制造厂今年各季度的应交增值税",
+          "success": true,
+          "route": "unknown",
+          "error": null
+        },
+        {
+          "query": "大华智能制造厂去年每月增值税申报的销售额、销项税和进项税",
+          "success": true,
+          "route": "unknown",
+          "error": null
+        }
+      ],
+      "企业所得税申报表": [
+        {
+          "query": "大华智能制造厂2023年汇算清缴的应纳税所得额",
+          "success": true,
+          "route": "unknown",
+          "error": null
+        },
+        {
+          "query": "大华智能制造厂去年每个季度预缴的所得税",
+          "success": true,
+          "route": "unknown",
+          "error": null
+        },
+        {
+          "query": "大华智能制造厂2023年各季度申报的营业收入、营业成本和利润总额",
+          "success": true,
+          "route": "unknown",
+          "error": null
+        }
+      ],
+      "进项发票": [
+        {
+          "query": "大华智能制造厂去年12月采购发票的进项税总额",
+          "success": true,
+          "route": "unknown",
+          "error": null
+        },
+        {
+          "query": "大华智能制造厂今年每个月的采购金额（不含税）",
+          "success": true,
+          "route": "unknown",
+          "error": null
+        },
+        {
+          "query": "大华智能制造厂去年各季度采购发票的金额和税额",
+          "success": true,
+          "route": "unknown",
+          "error": null
+        }
+      ],
+      "销项发票": [
+        {
+          "query": "大华智能制造厂上个月销售发票的总销售额（不含税）",
+          "success": true,
+          "route": "unknown",
+          "error": null
+        },
+        {
+          "query": "大华智能制造厂去年各月的销项税",
+          "success": true,
+          "route": "unknown",
+          "error": null
+        },
+        {
+          "query": "大华智能制造厂今年第一季度各月销售发票的金额和税额",
+          "success": true,
+          "route": "unknown",
+          "error": null
+        }
+      ],
+      "关键财务指标": [
+        {
+          "query": "大华智能制造厂去年年底的资产负债率是多少？",
+          "success": true,
+          "route": "unknown",
+          "error": null
+        },
+        {
+          "query": "大华智能制造厂今年每月的增值税税负率走势",
+          "success": true,
+          "route": "unknown",
+          "error": null
+        },
+        {
+          "query": "大华智能制造厂去年各季度的销售收现比和应收账款周转率",
+          "success": true,
+          "route": "unknown",
+          "error": null
+        }
+      ]
+    },
+    "cross": [
+      {
+        "query": "大华智能制造厂上个月进项税和销项税的比例是多少？",
+        "success": true,
+        "route": "unknown",
+        "error": null
+      },
+      {
+        "query": "大华智能制造厂今年一季度的所得税费用占利润总额的比重？",
+        "success": true,
+        "route": "unknown",
+        "error": null
+      },
+      {
+        "query": "大华智能制造厂今年3月底的银行存款余额相当于当月营业收入的几倍？",
+        "success": true,
+        "route": "unknown",
+        "error": null
+      },
+      {
+        "query": "大华智能制造厂上个月销项税占营业收入的比例？",
+        "success": true,
+        "route": "unknown",
+        "error": null
+      },
+      {
+        "query": "大华智能制造厂去年全年所得税费用与经营现金流净额的比率？",
+        "success": true,
+        "route": "unknown",
+        "error": null
+      },
+      {
+        "query": "大华智能制造厂去年12月的（销项税额 - 进项税额）与应纳税额的比值？",
+        "success": false,
+        "route": "error",
+        "error": "HTTPConnectionPool(host='localhost', port=8000): Read timed out."
+      },
+      {
+        "query": "大华智能制造厂今年5月的销售收现、营业收入和应收账款余额的比值？",
+        "success": true,
+        "route": "unknown",
+        "error": null
+      },
+      {
+        "query": "大华智能制造厂25年第四季度的采购金额、销售金额、存货增加额和经营现金流出的关系？",
+        "success": true,
+        "route": "unknown",
+        "error": null
+      },
+      {
+        "query": "大华智能制造厂去年12月的（银行存款余额 + 应收账款余额 - 短期借款余额）与（销项税额 + 进项税额）的比值？",
+        "success": true,
+        "route": "unknown",
+        "error": null
+      },
+      {
+        "query": "大华智能制造厂2025全年的（所得税费用 + 增值税应纳税额）与利润总额的比值？",
+        "success": false,
+        "route": "error",
+        "error": "HTTPConnectionPool(host='localhost', port=8000): Read timed out."
+      },
+      {
+        "query": "大华智能制造厂今年每月的进项税与销项税之比",
+        "success": true,
+        "route": "unknown",
+        "error": null
+      },
+      {
+        "query": "大华智能制造厂去年各季度所得税费用占利润总额的比例",
+        "success": true,
+        "route": "unknown",
+        "error": null
+      },
+      {
+        "query": "大华智能制造厂今年每月末的银行存款余额占当月营业收入的比重",
+        "success": true,
+        "route": "unknown",
+        "error": null
+      },
+      {
+        "query": "大华智能制造厂今年每月销项税占营业收入的比例",
+        "success": true,
+        "route": "unknown",
+        "error": null
+      },
+      {
+        "query": "大华智能制造厂去年各月所得税费用与经营现金流净额的比率",
+        "success": true,
+        "route": "unknown",
+        "error": null
+      },
+      {
+        "query": "大华智能制造厂去年各月的（销项税额 - 进项税额）与应纳税额的比值",
+        "success": true,
+        "route": "unknown",
+        "error": null
+      },
+      {
+        "query": "大华智能制造厂今年各月的销售收现、营业收入和应收账款余额的比值",
+        "success": true,
+        "route": "unknown",
+        "error": null
+      },
+      {
+        "query": "大华智能制造厂去年各季度的采购金额、销售金额、存货增加额和经营现金流出的关系",
+        "success": true,
+        "route": "unknown",
+        "error": null
+      },
+      {
+        "query": "大华智能制造厂今年各月的（银行存款余额 + 应收账款余额 - 短期借款余额）与（销项税额 + 进项税额）的比值",
+        "success": true,
+        "route": "unknown",
+        "error": null
+      },
+      {
+        "query": "大华智能制造厂去年各月的（所得税费用 + 增值税应纳税额）与利润总额的比值",
+        "success": true,
+        "route": "unknown",
+        "error": null
+      },
+      {
+        "query": "大华智能制造厂23-25年营业收入、销项税和经营现金流净额",
+        "success": true,
+        "route": "unknown",
+        "error": null
+      },
+      {
+        "query": "大华智能制造厂今年各季度总资产、总负债和净利润情况",
+        "success": true,
+        "route": "unknown",
+        "error": null
+      },
+      {
+        "query": "大华智能制造厂去年每月采购发票金额、销售发票金额和营业成本",
+        "success": true,
+        "route": "unknown",
+        "error": null
+      },
+      {
+        "query": "大华智能制造厂今年每月银行存款余额、应收账款余额和短期借款余额",
+        "success": true,
+        "route": "unknown",
+        "error": null
+      },
+      {
+        "query": "大华智能制造厂去年各季度应纳所得税额、利润总额和支付的各项税费",
+        "success": true,
+        "route": "unknown",
+        "error": null
+      },
+      {
+        "query": "大华智能制造厂2023-25年毛利率、资产负债率和营业收入",
+        "success": true,
+        "route": "unknown",
+        "error": null
+      },
+      {
+        "query": "大华智能制造厂去年每月销售收现、营业收入和应收账款余额",
+        "success": true,
+        "route": "unknown",
+        "error": null
+      },
+      {
+        "query": "大华智能制造厂今年各月进项税额、销项税额和应交增值税",
+        "success": true,
+        "route": "unknown",
+        "error": null
+      },
+      {
+        "query": "大华智能制造厂去年各月的营业收入、净利润、经营活动现金流净额、资产总计、销项税额、应纳所得税额",
+        "success": true,
+        "route": "unknown",
+        "error": null
+      },
+      {
+        "query": "大华智能制造厂今年各季度的营业收入、营业成本、利润总额、所得税费用、经营活动现金流净额、投资活动现金流净额、资产总计、负债合计、应交增值税、进项税额",
+        "success": true,
+        "route": "unknown",
+        "error": null
+      }
+    ]
+  }
+}

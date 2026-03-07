@@ -1694,6 +1694,47 @@ CONCEPT_REGISTRY = {
         'quarterly_strategy': 'quarter_end',
         'label': '零申报率', 'aliases': [],
     },
+
+    # ── 跨域计算指标（新增）──────────────────────────────────────
+    # 注意：这些指标实际上已经在 vw_financial_metrics 表中计算好了
+    # 这里注册为概念是为了支持别名匹配和概念管线优化
+    '所得税税负率': {
+        'domain': 'financial_metrics', 'view': 'vw_financial_metrics',
+        'column': 'metric_value', 'agg': None,
+        'filter': {'metric_name': '企业所得税税负率'},
+        'quarterly_strategy': 'quarter_end',
+        'label': '所得税税负率',
+        'aliases': ['EIT税负率', '企业所得税税负率', '企业所得税负担率'],
+    },
+
+    '增值税税负率': {
+        'domain': 'financial_metrics', 'view': 'vw_financial_metrics',
+        'column': 'metric_value', 'agg': None,
+        'filter': {'metric_name': '增值税税负率'},
+        'quarterly_strategy': 'quarter_end',
+        'label': '增值税税负率',
+        'aliases': ['VAT税负率', '增值税负担率'],
+    },
+
+    '增值税纳税额': {
+        'domain': 'vat', 'view': 'vw_vat_return_general',
+        'column': 'tax_payable', 'agg': None,
+        'vat_item_type': '一般项目',
+        'vat_time_range': '本月',
+        'quarterly_strategy': 'sum_months',
+        'label': '增值税纳税额',
+        'aliases': ['增值税应纳税额', '实际缴纳的增值税', '增值税税额', 'VAT纳税额', 'VAT应纳税额'],
+    },
+
+    '企业所得税纳税额': {
+        'domain': 'eit', 'view': 'vw_eit_annual_main',
+        'column': 'actual_tax_payable', 'agg': None,
+        'quarterly_view': 'vw_eit_quarter_main',
+        'quarterly_column': 'tax_payable',
+        'quarterly_strategy': 'quarter_end',
+        'label': '企业所得税纳税额',
+        'aliases': ['企业所得税应纳税额', '实际缴纳的企业所得税', '实际缴纳的企业所得税额', '所得税纳税额', 'EIT纳税额'],
+    },
 }
 
 

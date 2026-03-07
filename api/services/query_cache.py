@@ -12,7 +12,18 @@ import time
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from config.settings import QUERY_CACHE_DIR, QUERY_CACHE_MAX_FILES, QUERY_CACHE_ENABLED
+from config.settings import (
+    QUERY_CACHE_DIR,
+    QUERY_CACHE_ENABLED,
+    QUERY_CACHE_MAX_FILES_L1,
+    QUERY_CACHE_L2_PREFIX
+)
+
+# 向后兼容
+try:
+    from config.settings import QUERY_CACHE_MAX_FILES
+except ImportError:
+    QUERY_CACHE_MAX_FILES = QUERY_CACHE_MAX_FILES_L1
 
 _lock = threading.Lock()
 
@@ -270,15 +281,28 @@ def invalidate_by_company(
     return deleted
 
 
-def cleanup_cache(max_files: int = QUERY_CACHE_MAX_FILES) -> int:
-    """Evict oldest cache entries when count exceeds max_files.  Returns count evicted."""
+def cleanup_cache(max_files: int = None) -> int:
+    """Evict oldest L1 cache entries (excludes template_ files). Returns count evicted."""
+    if max_files is None:
+        max_files = QUERY_CACHE_MAX_FILES_L1
+
     _init()
-    if len(_index) <= max_files:
+
+    # 仅统计 L1 文件（不含 template_ 前缀）
+    l1_keys = [k for k in _index.keys() if not k.startswith(QUERY_CACHE_L2_PREFIX)]
+
+    if len(l1_keys) <= max_files:
         return 0
+
     with _lock:
-        sorted_keys = sorted(_index.items(), key=lambda kv: kv[1])
-        to_evict = len(_index) - max_files
+        # 按访问时间排序
+        sorted_keys = sorted(
+            [(k, _index[k]) for k in l1_keys],
+            key=lambda kv: kv[1]
+        )
+        to_evict = len(l1_keys) - max_files
         evicted = 0
+
         for key, _ in sorted_keys[:to_evict]:
             try:
                 _cache_path(key).unlink(missing_ok=True)
@@ -286,4 +310,5 @@ def cleanup_cache(max_files: int = QUERY_CACHE_MAX_FILES) -> int:
                 evicted += 1
             except Exception:
                 pass
+
         return evicted

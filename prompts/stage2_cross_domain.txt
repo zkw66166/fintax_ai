@@ -56,5 +56,63 @@ LIMIT {max_rows}
 - 利润表默认查询 time_range = '本年累计'
 - VAT一般纳税人默认 item_type = '一般项目', time_range = '累计'
 
+【重要：指标完整性】
+- 用户请求的每个数据指标都必须在SQL结果中体现，即使分布在不同子域视图中
+- 当 metrics 列表为空时，从 allowed_columns 中选择与用户问题最相关的所有指标列
+- 对于企业所得税视图（vw_eit_annual_main / vw_eit_quarter_main），常用列包括：
+  revenue（营业收入）、cost（营业成本）、total_profit（利润总额）、
+  taxable_income（应纳税所得额）、actual_tax_payable（实际应纳所得税额）、
+  tax_rate（税率）、actual_profit（实际利润额）
+- 对于财务指标视图（vw_financial_metrics），通过 metric_name 列过滤具体指标
+- 不要遗漏用户明确要求的指标，每个指标应作为独立的 UNION ALL 子查询
+
+【指标选择策略】
+1. 如果 intent JSON 中 select.metrics 非空，优先使用这些指标
+2. 如果 select.metrics 为空但 select.user_intent_metrics 存在：
+   - user_intent_metrics 是用户原始查询中提到的指标名称（可能是中文或别名）
+   - 从 allowed_columns 中选择与这些意图相关的所有列
+   - 例如：user_intent_metrics 包含 "实际缴纳的企业所得税额"
+     → 对于 EIT 视图，应选择 actual_tax_payable (年度) 或 tax_payable (季度)
+3. 如果两者都为空，从 allowed_columns 中选择该域的核心指标列
+
+【EIT 视图核心列】
+- 年度视图 (vw_eit_annual_main): revenue, cost, total_profit, taxable_income, actual_tax_payable, tax_rate
+- 季度视图 (vw_eit_quarter_main): revenue, cost, total_profit, actual_profit, tax_payable, tax_rate
+
+【Financial Metrics 视图查询】
+- 通过 metric_name 列过滤具体指标
+- 例如：WHERE metric_name = '所得税税负率'
+- 如果 user_intent_metrics 包含中文指标名称，直接用作 metric_name 过滤条件
+
+【财务指标域特殊处理】
+对于 financial_metrics 域 (vw_financial_metrics 视图):
+
+**数据模型**:
+- 该视图使用 metric_name 列存储指标名称（中文）
+- 指标值存储在 metric_value 列（REAL类型）
+- 指标单位存储在 metric_unit 列（如"%"、"元"、"次"）
+- 评估等级存储在 evaluation_level 列（如"优秀"、"良好"、"一般"、"较差"）
+
+**查询方式**:
+当 select.metrics 或 select.user_intent_metrics 包含含"率"的中文指标名称时：
+1. 使用 WHERE metric_name = '指标中文名称' 过滤
+2. SELECT 必须包含: metric_name, metric_value, metric_unit, evaluation_level
+3. 不要尝试将中文指标名映射到物理列名（它们本身就是 metric_name 的值）
+
+**示例**:
+- user_intent_metrics 包含 "所得税税负率"
+  → WHERE metric_name = '所得税税负率'
+- user_intent_metrics 包含 "增值税税负率"
+  → WHERE metric_name = '增值税税负率'
+- user_intent_metrics 包含 ["所得税税负率", "增值税税负率"]
+  → WHERE metric_name IN ('所得税税负率', '增值税税负率')
+
+**常见财务指标**:
+- 税负类: 企业所得税税负率、增值税税负率、综合税负率
+- 盈利类: 销售毛利率、销售净利率、净资产收益率(ROE)、总资产收益率(ROA)
+- 偿债类: 资产负债率、流动比率、速动比率
+- 营运类: 应收账款周转率、存货周转率、总资产周转率
+- 成长类: 营业收入增长率、净利润增长率、总资产增长率
+
 【用户意图JSON】
 {intent_json}

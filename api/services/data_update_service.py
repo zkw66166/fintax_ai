@@ -82,11 +82,13 @@ class DataUpdateService:
     @staticmethod
     def clear_cache(cache_types: Union[str, List[str]] = 'all') -> Dict[str, Any]:
         """
-        清空指定类型的缓存
+        清空指定类型的缓存 (已弃用 - 内存缓存已移除)
+
+        注意：内存缓存已被移除，因为它与 L1/L2 持久化缓存冲突。
+        此方法保留用于向后兼容，但不执行任何操作。
 
         Args:
-            cache_types: 缓存类型列表或 'all'
-                        可选值: ['intent', 'sql', 'result', 'cross_domain'] 或 'all'
+            cache_types: 缓存类型列表或 'all' (已忽略)
 
         Returns:
             {
@@ -94,39 +96,17 @@ class DataUpdateService:
                 'message': str
             }
         """
-        try:
-            from modules.cache_manager import clear_all_caches, clear_cache_by_type
-
-            if cache_types == 'all':
-                result = clear_all_caches()
-                logger.info(f"清空所有缓存: {result['cleared_entries']['total']} 条记录")
-                return result
-
-            # 清空指定类型的缓存
-            if isinstance(cache_types, str):
-                cache_types = [cache_types]
-
-            cleared_entries = {}
-            total = 0
-
-            for cache_type in cache_types:
-                result = clear_cache_by_type(cache_type)
-                cleared_entries[cache_type] = result['cleared_entries']
-                total += result['cleared_entries']
-
-            logger.info(f"清空指定缓存: {cache_types}, 共 {total} 条记录")
-
-            return {
-                'cleared_entries': {
-                    **cleared_entries,
-                    'total': total
-                },
-                'message': f'成功清空 {len(cache_types)} 类缓存，共 {total} 条记录'
-            }
-
-        except Exception as e:
-            logger.error(f"缓存清理失败: {str(e)}", exc_info=True)
-            raise
+        logger.warning("clear_cache() 已弃用：内存缓存已移除，请使用 L1/L2 持久化缓存")
+        return {
+            'cleared_entries': {
+                'intent': 0,
+                'sql': 0,
+                'result': 0,
+                'cross_domain': 0,
+                'total': 0
+            },
+            'message': '内存缓存已移除（与 L1/L2 持久化缓存冲突），无需清理'
+        }
 
     @staticmethod
     def reload_router_config() -> Dict[str, Any]:

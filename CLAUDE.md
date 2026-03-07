@@ -245,20 +245,42 @@ Queries Coze RAG API (SSE streaming) for procedural/regulatory knowledge. Both s
 
 **FastAPI SSE** (`api/routes/chat.py`): wraps generator as `text/event-stream` with `event: stage|chunk|done` + JSON `data:` lines. Attaches `display_data` to financial_data results via `build_display_data()`. Passes `original_query` to pipeline for route-aware query isolation.
 
-### Caching (`modules/cache_manager.py`)
+### Caching (`api/services/query_cache.py`, `api/services/template_cache.py`)
 
-Four-level in-memory LRU cache (enabled via `CACHE_ENABLED` in `config/settings.py`):
-- Stage 1 intent cache: 500 entries, 30min TTL
-- Stage 2 SQL cache: 500 entries, 1hr TTL
-- SQL result cache: 200 entries, 30min TTL
-- Cross-domain result cache: 100 entries, 30min TTL
+Two-level persistent cache system (company-aware, survives server restarts):
+
+**L1 Cache (Full Query Result)**:
+- Stores complete pipeline results including `display_data` and `interpretation`
+- Cache key: MD5 hash of `company_id|normalized_query|response_mode`
+- File-based storage in `cache/` directory
+- LRU eviction: max 1500 files, oldest deleted when exceeded
+- In-memory index for fast lookups (rebuilt on startup)
+
+**L2 Cache (SQL Template)**:
+- Stores SQL templates with placeholders for `taxpayer_id`
+- **Domain-aware cache key** (2026-03-06 refactored):
+  - Financial statements (balance_sheet, profit, cash_flow, account_balance): `MD5(query|mode|fs|accounting_standard)` — keyed by accounting_standard only, taxpayer_type irrelevant
+  - VAT: `MD5(query|mode|vat|taxpayer_type)` — keyed by taxpayer_type only
+  - EIT: `MD5(query|mode|eit)` — no type/standard distinction
+  - Unknown: `MD5(query|mode|taxpayer_type|accounting_standard)` — backward compatible fallback
+- Enables cross-company reuse for same query type
+- Smart adaptation: automatically adapts templates between accounting standards for **financial statements only** (balance sheet, profit statement, cash flow) by swapping `_eas` ↔ `_sas` view suffixes
+- **Limitation**: VAT queries are NOT adapted due to significant column structure differences between 一般纳税人 (output_tax/input_tax/tax_payable) and 小规模纳税人 (tax_due_total)
+- Max 500 files
+
+**Note**: In-memory pipeline cache (Stage 1 intent, Stage 2 SQL, result, cross-domain) has been removed due to cross-company cache pollution issues. The system now relies solely on L1/L2 persistent cache, which is company-aware and provides better cross-session benefits. All taxpayer_type values use Chinese ("一般纳税人", "小规模纳税人") for consistency with database and pipeline code.
+
+**Three-mode cache interaction** (via `api/routes/chat.py`):
+- **Quick mode** (`thinking_mode="quick"`): returns cached result + cached interpretation instantly (no LLM call)
+- **Think mode** (`thinking_mode="think"`): returns cached result + sets `need_reinterpret=True` (frontend triggers fresh LLM interpretation via `/api/interpret`)
+- **Deep mode** (`thinking_mode="deep"`): bypasses persistent cache, re-runs full pipeline
 
 ### Persistent Query Cache (`api/services/query_cache.py`)
 
 File-based persistent cache that survives server restarts and page refreshes:
-- Stores complete pipeline results (including `display_data` and `interpretation`) as JSON files in `cache/` directory
+- Stores complete pipeline results (including `display_data` and `interpretation`) as JSON files in `cache/` directory (L1 cache)
 - Cache key: MD5 hash of `company_id|normalized_query|response_mode`
-- LRU eviction: max 1000 files (`QUERY_CACHE_MAX_FILES`), oldest deleted when exceeded
+- LRU eviction: max 1500 files (`QUERY_CACHE_MAX_FILES_L1`), oldest deleted when exceeded
 - In-memory index for fast lookups (rebuilt on startup from disk)
 - `get_cached_query()` — lookup by company_id + query + response_mode; updates access metadata on hit
 - `save_query_cache()` — save pipeline result + route + interpretation text
@@ -269,7 +291,7 @@ File-based persistent cache that survives server restarts and page refreshes:
 **Three-mode cache interaction** (via `api/routes/chat.py`):
 - **Quick mode** (`thinking_mode="quick"`): returns cached result + cached interpretation instantly (no LLM call)
 - **Think mode** (`thinking_mode="think"`): returns cached result + sets `need_reinterpret=True` (frontend triggers fresh LLM interpretation via `/api/interpret`)
-- **Deep mode** (`thinking_mode="deep"`): clears in-memory pipeline caches, bypasses persistent cache, re-runs full pipeline
+- **Deep mode** (`thinking_mode="deep"`): bypasses persistent cache, re-runs full pipeline
 
 ### History Re-Invocation (`api/routes/history.py`)
 
@@ -331,8 +353,10 @@ All config in `config/settings.py`:
 - `DB_PATH` — SQLite database path
 - `LLM_API_KEY` / `LLM_API_BASE` / `LLM_MODEL` — DeepSeek API settings
 - `LLM_MAX_RETRIES` / `LLM_TIMEOUT` — LLM call resilience (3 retries, 60s timeout)
-- `CACHE_ENABLED` / `CACHE_MAX_SIZE_*` / `CACHE_TTL_*` — four-tier cache tuning (intent, SQL, result, cross-domain)
-- `QUERY_CACHE_ENABLED` / `QUERY_CACHE_DIR` / `QUERY_CACHE_MAX_FILES` — persistent file-based query cache (default: enabled, `cache/` dir, max 1000 files)
+- `CACHE_ENABLED` — **DEPRECATED** (set to `False`); in-memory cache removed due to cross-company pollution
+- `QUERY_CACHE_ENABLED` / `QUERY_CACHE_DIR` / `QUERY_CACHE_MAX_FILES_L1` — L1 persistent cache (default: enabled, `cache/` dir, max 1500 files)
+- `QUERY_CACHE_ENABLED_L2` / `QUERY_CACHE_MAX_FILES_L2` — L2 template cache (default: enabled, max 500 files)
+- `TAXPAYER_TYPE_SMART_ADAPT` — L2 smart adaptation switch (default: `True`)
 - `MAX_ROWS` / `MAX_PERIOD_MONTHS` — pipeline safety limits
 - `TAX_INCENTIVES_DB_PATH` — tax incentive policy database path
 - `COZE_API_URL` / `COZE_PAT_TOKEN` / `COZE_BOT_ID` / `COZE_USER_ID` / `COZE_TIMEOUT` — Coze RAG API settings

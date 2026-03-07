@@ -12,7 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 
-from api.routes import chat, history, company, profile, data_management, data_browser, auth, users, interpret, dashboard
+from api.routes import chat, history, company, profile, data_management, data_browser, auth, users, interpret, dashboard, cache_stats
 
 # Ensure database is ready (reuse app.py logic)
 from config.settings import DB_PATH
@@ -59,6 +59,7 @@ app.include_router(data_management.router, prefix="/api")
 app.include_router(data_browser.router, prefix="/api")
 app.include_router(interpret.router, prefix="/api")
 app.include_router(dashboard.router)
+app.include_router(cache_stats.router, prefix="/api")
 
 # Production: serve React build
 dist_dir = PROJECT_ROOT / "frontend" / "dist"
