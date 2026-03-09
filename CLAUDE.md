@@ -258,14 +258,28 @@ Two-level persistent cache system (company-aware, survives server restarts):
 
 **L2 Cache (SQL Template)**:
 - Stores SQL templates with placeholders for `taxpayer_id`
-- **Domain-aware cache key** (2026-03-06 refactored):
+- **Supports both single-domain and cross-domain queries** (2026-03-08):
+  - Single-domain: stores one SQL template per cache entry
+  - Cross-domain: stores multiple sub-domain SQL templates per cache entry
+- **Domain-aware cache key** (2026-03-06 refactored, 2026-03-08 smart adaptation removed):
   - Financial statements (balance_sheet, profit, cash_flow, account_balance): `MD5(query|mode|fs|accounting_standard)` — keyed by accounting_standard only, taxpayer_type irrelevant
   - VAT: `MD5(query|mode|vat|taxpayer_type)` — keyed by taxpayer_type only
   - EIT: `MD5(query|mode|eit)` — no type/standard distinction
+  - Cross-domain: uses same domain-aware strategy as single-domain
   - Unknown: `MD5(query|mode|taxpayer_type|accounting_standard)` — backward compatible fallback
-- Enables cross-company reuse for same query type
-- Smart adaptation: automatically adapts templates between accounting standards for **financial statements only** (balance sheet, profit statement, cash flow) by swapping `_eas` ↔ `_sas` view suffixes
-- **Limitation**: VAT queries are NOT adapted due to significant column structure differences between 一般纳税人 (output_tax/input_tax/tax_payable) and 小规模纳税人 (tax_due_total)
+- **Exact match strategy** (2026-03-08): Each query generates multiple templates based on domain:
+  - Financial statements: 2 templates per query (企业会计准则, 小企业会计准则)
+  - VAT: 2 templates per query (一般纳税人, 小规模纳税人)
+  - EIT: 1 template per query (no type/standard distinction)
+  - Cross-domain: up to 4 templates per query (2 types × 2 standards), each containing multiple sub-domain SQL templates
+- **Cross-domain template structure** (2026-03-08):
+  - `cache_domain`: "cross_domain"
+  - `sub_templates`: array of `{'domain': str, 'sql_template': str}`
+  - `subdomains`: array of domain names
+  - `cross_domain_operation`: 'compare'|'ratio'|'reconcile'|'list'
+  - On cache hit: instantiates all sub-domain SQLs, executes them, merges results using `merge_cross_domain_results()`
+- **Smart adaptation removed** (2026-03-08): Previously attempted to adapt templates across accounting standards/taxpayer types, but removed due to 20% column structure differences between standards and complete structural differences in VAT views
+- Enables cross-company reuse for same query type + accounting standard/taxpayer type combination
 - Max 500 files
 
 **Note**: In-memory pipeline cache (Stage 1 intent, Stage 2 SQL, result, cross-domain) has been removed due to cross-company cache pollution issues. The system now relies solely on L1/L2 persistent cache, which is company-aware and provides better cross-session benefits. All taxpayer_type values use Chinese ("一般纳税人", "小规模纳税人") for consistency with database and pipeline code.

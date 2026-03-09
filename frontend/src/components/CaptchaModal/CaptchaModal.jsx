@@ -20,7 +20,7 @@ export default function CaptchaModal({ onVerified }) {
     setError('')
 
     try {
-      const result = await verifyCaptcha(input)
+      const result = await verifyCaptcha(input.trim())
 
       if (result.success) {
         onVerified()

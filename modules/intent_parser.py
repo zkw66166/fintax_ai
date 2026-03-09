@@ -43,6 +43,8 @@ def parse_intent(user_query: str, entities: dict, synonym_hits: list, conversati
         entity_info.append(f"taxpayer_name={entities['taxpayer_name']}")
     if entities.get('taxpayer_type'):
         entity_info.append(f"taxpayer_type={entities['taxpayer_type']}")
+    if entities.get('accounting_standard'):
+        entity_info.append(f"accounting_standard={entities['accounting_standard']}")
     if entities.get('period_year'):
         entity_info.append(f"period_year={entities['period_year']}")
     if entities.get('period_month'):
@@ -104,6 +106,47 @@ def parse_intent(user_query: str, entities: dict, synonym_hits: list, conversati
         content = content.strip()
         intent = json.loads(content)
 
+        # CRITICAL FIX: Override LLM's incorrect scope settings with actual accounting_standard from database
+        # The LLM may incorrectly infer accounting standard from taxpayer_type, so we must correct it
+        accounting_standard = entities.get('accounting_standard')
+        if accounting_standard:
+            # Fix balance_sheet_scope
+            if intent.get('balance_sheet_scope'):
+                if accounting_standard == '小企业会计准则':
+                    intent['balance_sheet_scope'] = {
+                        'gaap_type': 'ASSE',
+                        'views': ['vw_balance_sheet_sas'],
+                    }
+                else:
+                    intent['balance_sheet_scope'] = {
+                        'gaap_type': 'ASBE',
+                        'views': ['vw_balance_sheet_eas'],
+                    }
+            # Fix profit_scope
+            if intent.get('profit_scope'):
+                if accounting_standard == '小企业会计准则':
+                    intent['profit_scope'] = {
+                        'accounting_standard': 'SAS',
+                        'views': ['vw_profit_sas'],
+                    }
+                else:
+                    intent['profit_scope'] = {
+                        'accounting_standard': 'ASBE',
+                        'views': ['vw_profit_eas'],
+                    }
+            # Fix cash_flow_scope
+            if intent.get('cash_flow_scope'):
+                if accounting_standard == '小企业会计准则':
+                    intent['cash_flow_scope'] = {
+                        'accounting_standard': '小企业会计准则',
+                        'views': ['vw_cash_flow_sas'],
+                    }
+                else:
+                    intent['cash_flow_scope'] = {
+                        'accounting_standard': '企业会计准则',
+                        'views': ['vw_cash_flow_eas'],
+                    }
+
         # 基本校验 — 域默认值
         domain_hint = entities.get('domain_hint')
         if 'domain' not in intent:
@@ -134,9 +177,9 @@ def parse_intent(user_query: str, entities: dict, synonym_hits: list, conversati
 
         # 资产负债表域默认值
         if intent['domain'] == 'balance_sheet' and not intent.get('balance_sheet_scope'):
-            # 根据纳税人类型/会计准则判断GAAP类型
-            taxpayer_type = entities.get('taxpayer_type')
-            if taxpayer_type == '小规模纳税人':
+            # 使用entities中的accounting_standard（已从数据库查询）
+            accounting_standard = entities.get('accounting_standard')
+            if accounting_standard == '小企业会计准则':
                 intent['balance_sheet_scope'] = {
                     'gaap_type': 'ASSE',
                     'views': ['vw_balance_sheet_sas'],
@@ -149,8 +192,9 @@ def parse_intent(user_query: str, entities: dict, synonym_hits: list, conversati
 
         # 利润表域默认值
         if intent['domain'] == 'profit' and not intent.get('profit_scope'):
-            taxpayer_type = entities.get('taxpayer_type')
-            if taxpayer_type == '小规模纳税人':
+            # 使用entities中的accounting_standard（已从数据库查询）
+            accounting_standard = entities.get('accounting_standard')
+            if accounting_standard == '小企业会计准则':
                 intent['profit_scope'] = {
                     'accounting_standard': 'SAS',
                     'views': ['vw_profit_sas'],
@@ -163,8 +207,9 @@ def parse_intent(user_query: str, entities: dict, synonym_hits: list, conversati
 
         # 现金流量表域默认值
         if intent['domain'] == 'cash_flow' and not intent.get('cash_flow_scope'):
-            taxpayer_type = entities.get('taxpayer_type')
-            if taxpayer_type == '小规模纳税人':
+            # 使用entities中的accounting_standard（已从数据库查询）
+            accounting_standard = entities.get('accounting_standard')
+            if accounting_standard == '小企业会计准则':
                 intent['cash_flow_scope'] = {
                     'accounting_standard': '小企业会计准则',
                     'views': ['vw_cash_flow_sas'],
@@ -233,7 +278,9 @@ def parse_intent(user_query: str, entities: dict, synonym_hits: list, conversati
                                 'views': ['vw_eit_annual_main'],
                             }
                     elif sd == 'balance_sheet':
-                        if taxpayer_type == '小规模纳税人':
+                        # 使用entities中的accounting_standard（已从数据库查询）
+                        accounting_standard = entities.get('accounting_standard')
+                        if accounting_standard == '小企业会计准则':
                             intent[scope_key] = {
                                 'gaap_type': 'ASSE',
                                 'views': ['vw_balance_sheet_sas'],
@@ -244,7 +291,9 @@ def parse_intent(user_query: str, entities: dict, synonym_hits: list, conversati
                                 'views': ['vw_balance_sheet_eas'],
                             }
                     elif sd == 'profit':
-                        if taxpayer_type == '小规模纳税人':
+                        # 使用entities中的accounting_standard（已从数据库查询）
+                        accounting_standard = entities.get('accounting_standard')
+                        if accounting_standard == '小企业会计准则':
                             intent[scope_key] = {
                                 'accounting_standard': 'SAS',
                                 'views': ['vw_profit_sas'],
@@ -255,7 +304,9 @@ def parse_intent(user_query: str, entities: dict, synonym_hits: list, conversati
                                 'views': ['vw_profit_eas'],
                             }
                     elif sd == 'cash_flow':
-                        if taxpayer_type == '小规模纳税人':
+                        # 使用entities中的accounting_standard（已从数据库查询）
+                        accounting_standard = entities.get('accounting_standard')
+                        if accounting_standard == '小企业会计准则':
                             intent[scope_key] = {
                                 'accounting_standard': '小企业会计准则',
                                 'views': ['vw_cash_flow_sas'],

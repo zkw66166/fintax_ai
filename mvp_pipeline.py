@@ -335,6 +335,18 @@ def run_pipeline(user_query: str, db_path: str = None, progress_callback=None, c
             entities = detect_entities_with_context(user_query, conn, conversation_history)
         else:
             entities = detect_entities(user_query, conn)
+
+        # 如果检测到纳税人ID，从数据库获取会计准则
+        if entities.get('taxpayer_id'):
+            from modules.db_utils import get_taxpayer_info
+            tp_type, acct_std = get_taxpayer_info(entities['taxpayer_id'])
+            # 更新entities中的会计准则（如果数据库有值）
+            if acct_std:
+                entities['accounting_standard'] = acct_std
+            # 如果数据库中的taxpayer_type与检测到的不一致，以数据库为准
+            if tp_type and not entities.get('taxpayer_type'):
+                entities['taxpayer_type'] = tp_type
+
         result['entities'] = entities
 
         # 提取上下文信息用于空结果提示
@@ -372,12 +384,10 @@ def run_pipeline(user_query: str, db_path: str = None, progress_callback=None, c
         elif domain_hint == 'account_balance':
             scope_view = get_scope_view(None, domain='account_balance')
         elif domain_hint == 'balance_sheet':
-            # 根据纳税人类型推断会计准则
+            # 从entities获取会计准则（已从数据库查询）
             tp_type = entities.get('taxpayer_type')
-            acct_std = None
-            if tp_type == '小规模纳税人':
-                acct_std = '小企业会计准则'
-            # 也检查用户查询中是否明确提到准则
+            acct_std = entities.get('accounting_standard')  # ✅ Get from entities
+            # 也检查用户查询中是否明确提到准则（用户明确指定优先）
             if '小企业会计准则' in user_query or '小企业' in user_query:
                 acct_std = '小企业会计准则'
             elif '企业会计准则' in user_query:
@@ -385,11 +395,9 @@ def run_pipeline(user_query: str, db_path: str = None, progress_callback=None, c
             scope_view = get_scope_view(tp_type, domain='balance_sheet',
                                         accounting_standard=acct_std)
         elif domain_hint == 'profit':
-            # 根据纳税人类型推断会计准则
+            # 从entities获取会计准则（已从数据库查询）
             tp_type = entities.get('taxpayer_type')
-            acct_std = None
-            if tp_type == '小规模纳税人':
-                acct_std = '小企业会计准则'
+            acct_std = entities.get('accounting_standard')  # ✅ Get from entities
             if '小企业会计准则' in user_query or '小企业' in user_query:
                 acct_std = '小企业会计准则'
             elif '企业会计准则' in user_query:
@@ -397,11 +405,9 @@ def run_pipeline(user_query: str, db_path: str = None, progress_callback=None, c
             scope_view = get_scope_view(tp_type, domain='profit',
                                         accounting_standard=acct_std)
         elif domain_hint == 'cash_flow':
-            # 根据纳税人类型推断会计准则
+            # 从entities获取会计准则（已从数据库查询）
             tp_type = entities.get('taxpayer_type')
-            acct_std = None
-            if tp_type == '小规模纳税人':
-                acct_std = '小企业会计准则'
+            acct_std = entities.get('accounting_standard')  # ✅ Get from entities
             if '小企业会计准则' in user_query or '小企业' in user_query:
                 acct_std = '小企业会计准则'
             elif '企业会计准则' in user_query:
@@ -537,6 +543,7 @@ def run_pipeline(user_query: str, db_path: str = None, progress_callback=None, c
                         result['results'] = concept_result.get('results', [])
                         result['cross_domain_summary'] = concept_result.get('cross_domain_summary')
                         result['concept_pipeline'] = True
+                        result['concept_results'] = concept_result.get('concept_results', [])
                         _log_query(conn, user_query, normalized, entities, intent, None,
                                    True, None)
                         if progress_callback:
@@ -547,66 +554,8 @@ def run_pipeline(user_query: str, db_path: str = None, progress_callback=None, c
             elif is_multi_period:
                 print(f"[3b2] 检测到多期间查询，跳过概念管线，走标准NL2SQL管线")
 
-        # Step 3c: 跨域查询分支（G2）
+        # Step 3c: 跨域查询分支（G2）- 统一使用 LLM 跨域管线
         if domain == 'cross_domain':
-            # 概念管线优先：尝试从查询中提取已注册概念
-            # 注意：多期间比较查询（如"2024Q4与2025Q1"）应走标准管线，不走概念管线
-            concepts = resolve_concepts(resolved_query, entities)
-            time_gran = entities.get('time_granularity') or detect_time_granularity(resolved_query, entities)
-            is_multi_period = is_multi_period_query(entities)
-            if len(concepts) >= 1 and time_gran and not is_multi_period:
-                # NEW: Extract all requested metrics
-                requested_metrics = _extract_requested_metrics(resolved_query, entities)
-                print(f"[3c] 概念管线: {[c['name'] for c in concepts]}, 粒度={time_gran}")
-                print(f"     请求指标: {requested_metrics}")
-                if progress_callback:
-                    progress_callback(0.50, "📊 正在执行概念查询...")
-                concept_result = _run_concept_pipeline(
-                    conn, entities, concepts, time_gran, resolved_query
-                )
-                if concept_result.get('success'):
-                    # NEW: Validate completeness
-                    returned_metrics = set()
-                    for r in concept_result.get('results', []):
-                        # Extract metric name from result
-                        if 'metric_name' in r:
-                            returned_metrics.add(r['metric_name'])
-                        elif 'concept_name' in r:
-                            returned_metrics.add(r['concept_name'])
-                        # Also check column names in result dict
-                        for key in r.keys():
-                            if key not in ('period', 'period_year', 'period_month', 'period_quarter', 'quarter'):
-                                returned_metrics.add(key)
-
-                    print(f"     返回指标: {list(returned_metrics)}")
-
-                    # Fuzzy match: check if requested metrics are covered
-                    missing = []
-                    for req in requested_metrics:
-                        # Check if req matches any returned metric using fuzzy matching
-                        if not any(_fuzzy_match_metric(req, ret) for ret in returned_metrics):
-                            missing.append(req)
-
-                    if missing:
-                        print(f"     缺失指标: {missing}")
-                        print(f"     概念管线不完整，回退LLM跨域管线")
-                        # Fall through to LLM cross-domain pipeline
-                    else:
-                        print(f"     概念管线完整，返回结果")
-                        result['success'] = True
-                        result['results'] = concept_result.get('results', [])
-                        result['cross_domain_summary'] = concept_result.get('cross_domain_summary')
-                        result['concept_pipeline'] = True
-                        _log_query(conn, user_query, normalized, entities, intent, None,
-                                   True, None)
-                        if progress_callback:
-                            progress_callback(1.0, "✅ 概念查询完成")
-                        return result
-                else:
-                    print(f"    概念管线失败，回退LLM跨域管线")
-            elif is_multi_period:
-                print(f"[3c] 检测到多期间查询，跳过概念管线，走LLM跨域管线")
-
             print(f"[3c] 进入跨域查询管线...")
             if progress_callback:
                 progress_callback(0.50, "🔀 正在执行跨域查询...")
@@ -832,10 +781,10 @@ def _run_cross_domain_pipeline(conn, entities, intent, resolved_query,
             sub_intent[scope_key] = intent[scope_key]
         else:
             tp_type = entities.get('taxpayer_type')
-            acct_std = None
-            if tp_type == '小规模纳税人':
-                acct_std = '小企业会计准则'
+            acct_std = entities.get('accounting_standard')  # ✅ Get from entities
+            print(f"    [{sd}] taxpayer_type={tp_type}, accounting_standard={acct_std}")
             view = get_scope_view(tp_type, domain=sd, accounting_standard=acct_std)
+            print(f"    [{sd}] selected view={view}")
             if view:
                 sub_intent[scope_key] = {'views': [view]}
 
@@ -980,9 +929,7 @@ def _run_metric_pipeline(conn, entities, intent, resolved_query, metric_names,
         for var_name, src in metric_def.get('sources', {}).items():
             domain = src['domain']
             tp_type = entities.get('taxpayer_type')
-            acct_std = None
-            if tp_type == '小规模纳税人':
-                acct_std = '小企业会计准则'
+            acct_std = entities.get('accounting_standard')  # ✅ Get from entities
 
             view = get_scope_view(tp_type, domain=domain, accounting_standard=acct_std)
             if not view:
@@ -1076,15 +1023,18 @@ def _run_concept_pipeline(conn, entities, concepts, time_granularity,
         cdef = concept['def']
         name = concept['name']
         label = cdef['label']
-        print(f"    [concept] {name} → {cdef['domain']}.{cdef.get('column', 'computed')}")
+        domain = cdef['domain']  # ✅ Extract domain for L2 cache
+        print(f"    [concept] {name} → {domain}.{cdef.get('column', 'computed')}")
 
         if cdef.get('type') == 'computed':
             data = execute_computed_concept(conn, cdef, entities, time_granularity)
+            sql = None  # Computed concepts don't have SQL
+            params = None
         else:
             sql, params = build_concept_sql(cdef, entities, time_granularity)
             if sql is None:
                 print(f"    [concept] {name}: SQL构建失败")
-                concept_results.append({'name': name, 'label': label, 'data': []})
+                concept_results.append({'name': name, 'label': label, 'domain': domain, 'sql': None, 'params': None, 'data': []})
                 continue
             print(f"    [concept] SQL: {sql}")
             print(f"    [concept] params: {params}")
@@ -1096,7 +1046,14 @@ def _run_concept_pipeline(conn, entities, concepts, time_granularity,
                 print(f"    [concept] {name}: 执行失败 {e}")
                 data = []
 
-        concept_results.append({'name': name, 'label': label, 'data': data})
+        concept_results.append({
+            'name': name,
+            'label': label,
+            'domain': domain,  # ✅ Add domain for L2 cache
+            'sql': sql,        # ✅ Add SQL for L2 cache (None for computed concepts)
+            'params': params,  # ✅ Add params for L2 cache (None for computed concepts)
+            'data': data
+        })
 
     # 合并结果
     merged = merge_concept_results(concept_results, time_granularity)
@@ -1113,6 +1070,7 @@ def _run_concept_pipeline(conn, entities, concepts, time_granularity,
         'results': merged,
         'cross_domain_summary': summary,
         'concept_pipeline': True,
+        'concept_results': concept_results,  # ✅ Return concept_results for L2 cache
     }
 
 

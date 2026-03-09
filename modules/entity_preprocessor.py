@@ -194,11 +194,30 @@ _VAT_KEYWORDS = [
     '进项税额结构明细表', '本期进项税额明细', '增值税减免税申报明细表',
 ]
 
+# VAT/EIT共享关键词：在跨域检测中需要上下文排除
+_VAT_SHARED_KEYWORDS = ['应纳税额', '适用税率']
+_VAT_SHARED_EXCLUSIONS = ['企业所得税应纳税额', '所得税应纳税额',
+                          '企业所得税适用税率', '所得税适用税率']
+
+
+def _has_vat_keyword(query: str) -> bool:
+    """检查查询是否包含VAT独有关键词（排除EIT上下文中的共享关键词）。"""
+    for kw in _VAT_KEYWORDS:
+        if kw in query:
+            if kw in _VAT_SHARED_KEYWORDS:
+                # Shared keyword: check context exclusion
+                if _check_context_keyword(query, kw, _VAT_SHARED_EXCLUSIONS):
+                    return True
+                # else: this occurrence is in EIT context, skip
+            else:
+                return True
+    return False
+
 # 发票域关键词（在VAT之前检测，含"发票"字样优先走invoice域）
 _INVOICE_KEYWORDS = [
     '进项发票', '销项发票', '采购发票', '销售发票',
     '专用发票', '普通发票', '数电票', '红冲发票', '红字发票', '蓝字发票',
-    '开票人', '发票号码', '发票代码', '价税合计', '发票金额', '票面金额',
+    '开票人', '发票号码', '发票代码', '价税合计', '发票金额', '发票税额', '票面金额',
     '采购金额', '采购额',
     '发票',  # 最短的放最后，避免误匹配
     # 补充发票域特有名词
@@ -208,7 +227,9 @@ _INVOICE_KEYWORDS = [
     '已开具', '未开具', '作废', '红冲', '冲红', '有效', '异常', '失控', '滞留', '缺联',
     '红字发票信息表', '蓝字发票',
     '发票代码', '发票号码', '开票日期', '购买方名称', '销售方名称', '货物或应税劳务名称',
-    '规格型号', '单位', '数量', '单价', '金额', '税率', '税额', '价税合计', '备注',
+    '规格型号', '单位', '数量', '单价', '金额', '税率', '价税合计', '备注',
+    # 注意：'税额' 已移除 - 过于通用，会导致误判（如"应纳企业所得税额"）
+    # 使用 '发票税额' 代替（已在上方列表中明确添加）
     '收款人', '复核人', '开票人', '校验码',
     '发票查验', '发票勾选', '发票认证', '发票抵扣', '发票确认', '发票上传', '发票下载',
     '发票查询', '发票开具', '发票作废', '发票红冲', '发票冲红', '发票冲销', '发票更正',
@@ -771,12 +792,14 @@ def detect_entities(user_query: str, db_conn: sqlite3.Connection) -> dict:
 
     # 0i. 跨域检测：如果已检测到一个域，但查询中还包含其他域的独有关键词，升级为cross_domain
     # 注意：共有项目（如"营业收入"同属利润表和EIT）不触发跨域，只有域独有关键词才触发
+    # 注意：关键词仅作为提示以提高准确性，不是主要分类机制。
+    # Stage 1 LLM 应基于专业会计知识进行域分类。
     if result['domain_hint'] and result['domain_hint'] != 'cross_domain':
         detected = result['domain_hint']
         other_domains = set()
 
         # 检查是否同时包含VAT独有关键词（增值税、销项税等不与其他域共享）
-        if detected != 'vat' and any(kw in user_query for kw in _VAT_KEYWORDS):
+        if detected != 'vat' and _has_vat_keyword(user_query):
             other_domains.add('vat')
         # 检查是否同时包含发票域关键词
         if detected != 'invoice' and any(kw in user_query for kw in _INVOICE_KEYWORDS):
@@ -879,25 +902,53 @@ def detect_entities(user_query: str, db_conn: sqlite3.Connection) -> dict:
     if m_quarter:
         result['period_year'] = int(m_quarter.group(1))
         result['period_quarter'] = q_map.get(m_quarter.group(2))
+
+        # Check if user wants all quarters or specific quarter
+        if '各季度' in resolved_query or '每个季度' in resolved_query or '每季度' in resolved_query or '所有季度' in resolved_query:
+            # "各季度" → return all quarter-ends
+            result['all_quarters'] = True
+            result['quarter_mode'] = 'all'
+        else:
+            # "第N季度" → return specific quarter-end only
+            result['quarter_mode'] = 'single'
+
         if result['domain_hint'] is None:
             result['domain_hint'] = 'eit'  # 仅无域信号时默认EIT
         elif result['domain_hint'] != 'eit':
             # 非EIT域：季度→月份范围展开
             q = result['period_quarter']
-            result['period_month'] = (q - 1) * 3 + 1
-            result['period_end_month'] = q * 3
+            if result.get('quarter_mode') == 'all':
+                # "各季度" → all quarter-ends (3, 6, 9, 12)
+                result['period_month'] = 1
+                result['period_end_month'] = 12
+            else:
+                # "第N季度" → specific quarter-end only
+                result['period_month'] = q * 3  # Q4: 12
+                result['period_end_month'] = None  # Single month, not range
     # "Q1 2025" / "2025Q1" 格式
     if not result['period_quarter']:
         m_q2 = re.search(r'(\d{4})年?\s*[Qq]\s*([1-4])', resolved_query)
         if m_q2:
             result['period_year'] = int(m_q2.group(1))
             result['period_quarter'] = int(m_q2.group(2))
+
+            # Check if user wants all quarters or specific quarter
+            if '各季度' in resolved_query or '每个季度' in resolved_query or '每季度' in resolved_query or '所有季度' in resolved_query:
+                result['all_quarters'] = True
+                result['quarter_mode'] = 'all'
+            else:
+                result['quarter_mode'] = 'single'
+
             if result['domain_hint'] is None:
                 result['domain_hint'] = 'eit'
             elif result['domain_hint'] != 'eit':
                 q = result['period_quarter']
-                result['period_month'] = (q - 1) * 3 + 1
-                result['period_end_month'] = q * 3
+                if result.get('quarter_mode') == 'all':
+                    result['period_month'] = 1
+                    result['period_end_month'] = 12
+                else:
+                    result['period_month'] = q * 3
+                    result['period_end_month'] = None
 
     # 2a1. "季度末"特殊处理：只取季度最后一个月，不展开为整个季度
     # 必须在季度展开之前检测，避免被覆盖
@@ -907,6 +958,7 @@ def detect_entities(user_query: str, db_conn: sqlite3.Connection) -> dict:
         result['period_month'] = q * 3  # 季度末月份
         result['period_end_month'] = None  # 清除范围，表示单月查询
         result['quarter_end_mode'] = True  # 标记为季度末模式
+        result['quarter_mode'] = 'single'  # Override to single
 
     # 2a2. 多季度比较: "2024年4季度与2025一季度" / "2024Q4与2025Q1"
     # 注意：必须在单季度检测之后，避免覆盖已提取的第一个季度
@@ -945,6 +997,7 @@ def detect_entities(user_query: str, db_conn: sqlite3.Connection) -> dict:
         has_all_quarters = bool(re.search(r'各季度|每个?季度|所有季度|全部季度', resolved_query))
         if has_all_quarters:
             result['all_quarters'] = True
+            result['quarter_mode'] = 'all'  # Mark as all-quarters mode
             # 对于EIT域，不设置具体季度，让SQL生成 period_quarter IN (1,2,3,4)
             # 对于其他域，展开为全年月份范围
             if result['domain_hint'] == 'eit' or result['domain_hint'] is None:
