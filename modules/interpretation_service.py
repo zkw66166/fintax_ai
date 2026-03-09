@@ -68,10 +68,14 @@ def detect_scenario(result: dict) -> dict:
     if result.get('metric_results'):
         return {'scenario': 'metric_computed'}
 
+    # 检查跨域查询：sub_results 或 sub_tables
     if result.get('cross_domain_summary') or result.get('sub_results'):
         return {'scenario': 'cross_domain'}
 
     dd = result.get('display_data', {})
+    if dd.get('sub_tables'):
+        return {'scenario': 'cross_domain'}
+
     table = dd.get('table', {})
     headers = table.get('headers', [])
     rows = table.get('rows', [])
@@ -139,10 +143,13 @@ SCENARIO_INSTRUCTIONS = {
         "- 如有行业参考值，进行对比"
     ),
     'cross_domain': (
-        "本次查询涉及跨域数据（如利润与增值税、进项与销项等）。请分析：\n"
-        "- 各域数据之间的逻辑一致性和关联关系\n"
-        "- 跨域指标的数值匹配度（如净利润与所得税、营业收入与销项税额）\n"
-        "- 如存在背离或差异，分析可能原因"
+        "本次查询涉及跨域数据（如利润与增值税、资产负债表与利润表等）。请分析：\n"
+        "- **数据完整性检查**：首先确认各域数据是否完整返回（检查\"数据来源\"列）\n"
+        "- **各域数据解读**：分别解读各域的关键指标和数值水平\n"
+        "- **跨域关联分析**：分析各域数据之间的逻辑一致性和关联关系\n"
+        "- **数值匹配度**：评估跨域指标的数值匹配度（如净利润与所得税、营业收入与销项税额）\n"
+        "- **异常识别**：如存在背离或差异，分析可能原因\n"
+        "- **注意**：只有当数据确实缺失时才报告缺失，不要因为数据来自不同域就误判为缺失"
     ),
 }
 
@@ -171,26 +178,72 @@ def _format_data_for_prompt(result: dict, query: str) -> str:
 
     # 优先使用 display_data（已有中文表头和格式化数值）
     dd = result.get('display_data', {})
-    table = dd.get('table', {})
-    headers = table.get('headers', [])
-    rows = table.get('rows', [])
 
-    if headers and rows:
-        display_rows = rows[:50]
+    # 跨域 list 操作：从 sub_tables 提取数据
+    sub_tables = dd.get('sub_tables', [])
+    if sub_tables:
+        # 合并所有子域的表格数据
+        all_headers_set = set()
+        all_rows = []
+
+        for st in sub_tables:
+            domain_cn = st.get('domain_cn', st.get('domain', ''))
+            st_table = st.get('table', {})
+            st_headers = st_table.get('headers', [])
+            st_rows = st_table.get('rows', [])
+
+            # 为每行添加域标识
+            for row in st_rows:
+                row_with_domain = {'数据来源': domain_cn}
+                row_with_domain.update(row)
+                all_rows.append(row_with_domain)
+
+            all_headers_set.update(st_headers)
+
+        # 构建统一表头（数据来源 + 所有指标列）
+        headers = ['数据来源'] + sorted([h for h in all_headers_set if h != '数据来源'])
+
+        # 格式化为文本表格
+        display_rows = all_rows[:50]
         lines = [" | ".join(headers)]
         for row in display_rows:
             lines.append(" | ".join(str(row.get(h, '')) for h in headers))
-        if len(rows) > 50:
-            lines.append(f"... (共{len(rows)}行，仅展示前50行)")
+        if len(all_rows) > 50:
+            lines.append(f"... (共{len(all_rows)}行，仅展示前50行)")
         parts.append(f"查询结果：\n{chr(10).join(lines)}")
-    elif result.get('results'):
-        raw = result['results'][:50]
-        if raw:
-            keys = list(raw[0].keys())
-            lines = [" | ".join(keys)]
-            for row in raw:
-                lines.append(" | ".join(str(row.get(k, '')) for k in keys))
+
+        # 添加子域数据摘要
+        summary_lines = ["各子域数据概览："]
+        for st in sub_tables:
+            domain_cn = st.get('domain_cn', '')
+            st_table = st.get('table', {})
+            row_count = len(st_table.get('rows', []))
+            col_count = len(st_table.get('headers', []))
+            summary_lines.append(f"  - {domain_cn}: {row_count}行 × {col_count}列")
+        parts.append("\n".join(summary_lines))
+
+    # 单域或其他跨域操作
+    else:
+        table = dd.get('table', {})
+        headers = table.get('headers', [])
+        rows = table.get('rows', [])
+
+        if headers and rows:
+            display_rows = rows[:50]
+            lines = [" | ".join(headers)]
+            for row in display_rows:
+                lines.append(" | ".join(str(row.get(h, '')) for h in headers))
+            if len(rows) > 50:
+                lines.append(f"... (共{len(rows)}行，仅展示前50行)")
             parts.append(f"查询结果：\n{chr(10).join(lines)}")
+        elif result.get('results'):
+            raw = result['results'][:50]
+            if raw:
+                keys = list(raw[0].keys())
+                lines = [" | ".join(keys)]
+                for row in raw:
+                    lines.append(" | ".join(str(row.get(k, '')) for k in keys))
+                parts.append(f"查询结果：\n{chr(10).join(lines)}")
 
     # 包含计算型指标信息
     if result.get('metric_results'):

@@ -69,8 +69,14 @@ QUERY_CACHE_L2_PREFIX = "template_"
 # 缓存失效策略
 CACHE_INVALIDATE_L2_ON_DATA_UPDATE = False
 
-# 智能适配开关
-TAXPAYER_TYPE_SMART_ADAPT = True
+# 智能适配开关（已废弃 - 2026-03-08）
+# 原因：会计准则和纳税人类型的列结构差异导致适配不可靠
+# 新策略：每个查询按域分层保存多个精确模板
+# - 财务报表：每个查询2个模板（按会计准则区分）
+# - VAT：每个查询2个模板（按纳税人类型区分）
+# - EIT：每个查询1个模板（无类型/准则区分）
+# - 跨域：每个查询4个模板（保守策略）
+TAXPAYER_TYPE_SMART_ADAPT = False  # DEPRECATED: 保留用于向后兼容，但不再使用
 
 # 对话上下文配置
 CONVERSATION_ENABLED = True  # 功能开关（已启用）

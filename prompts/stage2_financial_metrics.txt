@@ -9,6 +9,7 @@
 
 【模式选择指南】请根据用户问题中的关键词选择对应的SQL模式：
 - 含"比较"/"对比"/"变化"/"差异" + 两个期间 → 【跨期比较查询模式】
+- 含"至"/"到"/"从X到Y" + 两个期间（范围查询，不含"比较"/"对比"等词）→ 【趋势查询模式】（不要用跨期比较模式）
 - 含"列出"/"所有"/"总和"/"合计" + 某类指标 → 【分类汇总明细查询模式】
 - 含多个指标名称 → 【多指标查询模式】
 - 含"趋势"/"走势"/"逐月"/"各月"/"各季度"/"各年" 或 连续多月范围 → 【趋势查询模式】
@@ -26,6 +27,10 @@
    - 月：period_year = :year AND period_month = :month
    - 范围（月）：(period_year*100+period_month) BETWEEN :start_yyyymm AND :end_yyyymm
    - 多年比较：period_year IN (:year1, :year2)
+3. 财务指标粒度过滤（重要）：
+   - 单月查询（如"2025年12月"）：不过滤 period_type
+   - 跨月/跨季/跨年范围查询（如"2025年12月至2026年3月"）：必须添加 AND period_type IN ('quarterly', 'annual')
+   - 原因：月度数据(period_type='monthly')通常为NULL，仅季度和年度数据有值
 
 【财务指标数据结构说明】
 - 财务指标表按月存储，每个纳税人每月有多条记录，每条记录对应一个指标
@@ -35,7 +40,9 @@
   - 用户问"月度"/"按月"时过滤 period_type = 'monthly'
   - 用户问"季度"/"按季"时过滤 period_type = 'quarterly'
   - 用户问"年度"/"按年"/"年末"时过滤 period_type = 'annual'
-  - 未指定粒度时默认不过滤 period_type（返回所有粒度）
+  - 未指定粒度时：
+    * 单月查询：不过滤 period_type（返回所有粒度）
+    * 跨月/跨季/跨年范围查询：过滤 period_type IN ('quarterly', 'annual')（避免月度空值）
 - metric_category: 指标类别（盈利能力、费用控制、偿债能力、营运能力、成长能力、现金流、税负率类、增值税重点指标、所得税重点指标、风险预警类）
 - metric_code: 指标编码（gross_margin, net_margin, roe, net_profit_growth, admin_expense_ratio, sales_expense_ratio, debt_ratio, current_ratio, quick_ratio, cash_debt_coverage, ar_turnover, ar_days, inventory_turnover, asset_turnover, revenue_growth, asset_growth, cash_to_revenue, vat_burden, eit_burden, total_tax_burden, output_input_ratio, transfer_out_ratio, taxable_income_ratio, zero_filing_ratio, invoice_anomaly_ratio）
 - metric_name: 指标中文名称（毛利率、净利率、净资产收益率(ROE)、净利润增长率、管理费用率、销售费用率、资产负债率、流动比率、速动比率、现金债务保障比率、应收账款周转率、应收款周转天数、存货周转率、总资产周转率、营业收入增长率、资产增长率、销售收现比、增值税税负率、企业所得税税负率、综合税负率、销项进项配比率、进项税额转出占比、应税所得率、零申报率、发票开具异常率）
@@ -45,6 +52,9 @@
 - "利润率"指"净利率"（metric_code = 'net_margin'）
 
 【跨期比较查询模式】★ 当用户问"比较"/"对比"/"变化"时必须使用此模式 ★
+注意：此模式仅用于明确的"比较"/"对比"查询（如"比较2024与2025年末资产负债率"）。
+如果用户问"从X到Y"/"X至Y月"等范围查询，应使用【趋势查询模式】，不要用此模式。
+
 当用户比较同一指标在不同期间的数据时（如"比较2024与2025年末资产负债率"），
 使用两个CTE分别查询两个期间，JOIN输出对比列+变动额。禁止使用BETWEEN返回中间月份。
 WITH t1 AS (
@@ -101,16 +111,23 @@ WHERE taxpayer_id = :taxpayer_id AND period_year = :year AND period_month = :mon
 ORDER BY metric_name
 LIMIT {max_rows}
 
-【趋势查询模式】
+【趋势查询模式】★ 当用户问"从X到Y"/"X至Y月"等范围查询，或"趋势"/"走势"/"逐月"/"各月"时必须使用此模式 ★
 当用户查询某指标多个月/季度/年的变化趋势时，每个期间一行：
-SELECT period_year, period_month, metric_name, metric_value, metric_unit, evaluation_level
+SELECT period_year, period_month, period_type, metric_name, metric_value, metric_unit, evaluation_level
 FROM vw_financial_metrics
 WHERE taxpayer_id = :taxpayer_id
   AND (period_year*100+period_month) BETWEEN :start_yyyymm AND :end_yyyymm
   AND metric_name = '资产负债率'
-  AND period_type = 'annual'
+  AND period_type IN ('quarterly', 'annual')
+  AND metric_value IS NOT NULL
 ORDER BY period_year, period_month
 LIMIT {max_rows}
+
+注意：
+- 范围查询（"X至Y"/"X到Y"/"从X到Y"）必须用此模式，不要用跨期比较模式
+- 必须加 metric_value IS NOT NULL 过滤，避免返回空值行
+- 必须加 period_type IN ('quarterly', 'annual') 过滤，避免月度空值
+- 返回范围内所有有数据的期间，不要只返回起止两个端点
 
 【常见查询模式】
 1. 查询某个指标：WHERE metric_name = '毛利率' 或 WHERE metric_code = 'gross_margin'

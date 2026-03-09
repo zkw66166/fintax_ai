@@ -39,6 +39,21 @@ SELECT <columns> FROM latest WHERE rn = 1
 - 用户未指定时间范围 → 默认查询 time_range = '本年累计'（更常用）
 - 用户同时需要本期和累计 → 不加 time_range 过滤，返回两行
 
+【季度查询特殊处理】
+- 单个季度查询（如"第四季度"）：
+  - 使用 period_month = :quarter_end_month AND time_range = '本年累计'
+  - 这样返回该季度末的累计数据（包含该季度的汇总）
+  - 示例：WHERE period_month = 12 AND time_range = '本年累计'
+
+- 多季度查询（如"各季度"）：
+  - 使用 period_month IN (3, 6, 9, 12) AND time_range = '本年累计'
+  - 这样返回每个季度末的累计数据
+  - 示例：WHERE period_month IN (3, 6, 9, 12) AND time_range = '本年累计'
+
+- 月度明细查询（如"第四季度各月"）：
+  - 使用 (period_year*100+period_month) BETWEEN :start_yyyymm AND :end_yyyymm
+  - 示例：WHERE (period_year*100+period_month) BETWEEN 202510 AND 202512
+
 【利润表计算逻辑（用于理解数据关系，不需要在SQL中计算）】
 - 营业利润 = 营业收入 - 营业成本 - 税金及附加 - 销售费用 - 管理费用 - 研发费用 - 财务费用 + 其他收益 + 投资收益 + 公允价值变动收益 - 信用减值损失 - 资产减值损失 + 资产处置收益
 - 利润总额 = 营业利润 + 营业外收入 - 营业外支出

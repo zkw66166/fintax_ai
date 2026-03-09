@@ -139,4 +139,5 @@ def inject_constraints(intent_json: dict) -> dict:
         'allowed_views_text': views_text,
         'allowed_columns_text': "\n".join(columns_text_parts),
         'intent_json_text': json.dumps(intent_json, ensure_ascii=False, indent=2),
+        'quarter_mode': intent_json.get('filters', {}).get('quarter_mode'),  # Pass quarter_mode flag
     }

@@ -74,7 +74,7 @@ async def verify_captcha(req: CaptchaVerifyRequest):
     if not row:
         raise HTTPException(status_code=500, detail="系统配置错误")
 
-    if verify_password(req.code, row["password_hash"]):
+    if verify_password(req.code.strip(), row["password_hash"]):
         return {"success": True, "message": "验证成功"}
     else:
         return {"success": False, "message": "验证码错误"}

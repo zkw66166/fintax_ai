@@ -51,6 +51,19 @@ SELECT <columns> FROM latest WHERE rn = 1
 - 即使用户问"总和"/"合计"，也必须先列出各项目明细行，再用 UNION ALL 追加合计行。
 - 跨期比较时，展示各期原始值 + 变动额，不能只返回一个差值。
 
+【期间过滤规则】
+- 单个季度查询（如"第四季度"）：
+  - 使用 period_month = :quarter_end_month（如Q4用12）
+  - 示例：WHERE period_month = 12
+
+- 多季度查询（如"各季度"）：
+  - 使用 period_month IN (3, 6, 9, 12)
+  - 示例：WHERE period_month IN (3, 6, 9, 12)
+
+- 判断依据：
+  - 如果 filters.period.quarter 存在且 filters.period.end_month 为 null → 单个季度
+  - 如果 filters.period.quarter 存在且 filters.period.end_month 存在 → 多季度
+
 【占比/比例计算模式】★ 当用户问"占比"/"比例"/"比重"/"百分比"时必须使用此模式 ★
 当用户问某项目占总计的比例时（如"应收账款占流动资产的比例"），
 使用 ROUND(component * 100.0 / NULLIF(total, 0), 2) AS "占比(%)" 计算百分比。

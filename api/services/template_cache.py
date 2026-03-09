@@ -129,7 +129,11 @@ def _build_cache_key_v2(query: str, response_mode: str, cache_domain: str,
 
 
 def templatize_sql(sql: str, company_id: str) -> Tuple[str, bool]:
-    """将 SQL 中的纳税人 ID 替换为占位符
+    """将 SQL 中的纳税人 ID 参数占位符替换为模板占位符
+
+    支持两种格式：
+    1. 参数化查询: taxpayer_id = :taxpayer_id → taxpayer_id = {{TAXPAYER_ID}}
+    2. 内联字符串: taxpayer_id = 'HX001' → taxpayer_id = {{TAXPAYER_ID}}
 
     Args:
         sql: 原始 SQL
@@ -141,9 +145,14 @@ def templatize_sql(sql: str, company_id: str) -> Tuple[str, bool]:
     if not sql or not company_id:
         return sql, False
 
-    # 全局替换 taxpayer_id = 'xxx'
-    pattern = rf"\btaxpayer_id\s*=\s*'{re.escape(company_id)}'"
-    template = re.sub(pattern, "taxpayer_id = '{{TAXPAYER_ID}}'", sql, flags=re.IGNORECASE)
+    # 方案1：替换参数化占位符 :taxpayer_id
+    pattern_param = r"\btaxpayer_id\s*=\s*:taxpayer_id\b"
+    template = re.sub(pattern_param, "taxpayer_id = {{TAXPAYER_ID}}", sql, flags=re.IGNORECASE)
+
+    # 方案2：如果没有参数化占位符，尝试替换内联字符串（向后兼容）
+    if "{{TAXPAYER_ID}}" not in template:
+        pattern_inline = rf"\btaxpayer_id\s*=\s*'{re.escape(company_id)}'"
+        template = re.sub(pattern_inline, "taxpayer_id = {{TAXPAYER_ID}}", template, flags=re.IGNORECASE)
 
     # 验证是否有替换
     if "{{TAXPAYER_ID}}" not in template:
@@ -153,22 +162,98 @@ def templatize_sql(sql: str, company_id: str) -> Tuple[str, bool]:
 
 
 def instantiate_sql(template: str, company_id: str) -> str:
-    """将占位符替换为实际纳税人 ID
+    """将占位符替换为参数化占位符
 
     Args:
         template: SQL 模板
-        company_id: 纳税人 ID
+        company_id: 纳税人 ID (此参数保留用于向后兼容，但实际不使用)
 
     Returns:
-        实例化的 SQL
+        实例化的 SQL（使用参数化占位符 :taxpayer_id）
     """
-    return template.replace("{{TAXPAYER_ID}}", company_id)
+    # 将模板占位符替换回参数化占位符，而不是直接替换为公司ID
+    # 这样可以使用 conn.execute(sql, params) 的参数化查询方式
+    return template.replace("{{TAXPAYER_ID}}", ":taxpayer_id")
+
+
+def templatize_cross_domain_sql(sub_results: list, company_id: str) -> Tuple[list, bool]:
+    """将跨域查询的多个子域SQL模板化
+
+    Args:
+        sub_results: 子域结果列表，每个包含 {'domain': str, 'sql': str, 'params': dict, 'data': list}
+        company_id: 纳税人ID
+
+    Returns:
+        (模板化的子域列表, 是否全部成功)
+    """
+    templated_subs = []
+    all_success = True
+
+    for sub in sub_results:
+        sql = sub.get('sql', '')
+        domain = sub.get('domain', 'unknown')
+        params = sub.get('params', {})
+
+        if not sql:
+            all_success = False
+            continue
+
+        template, success = templatize_sql(sql, company_id)
+        if success:
+            # 保存 params 的键列表和静态参数值
+            param_keys = list(params.keys()) if params else []
+            # 静态参数：不依赖运行时 entities 的常量值（如 vat_item_type, vat_time_range, filter_*, time_range）
+            # 排除动态参数：taxpayer_id, year, quarter, month, year_N, month_N
+            static_params = {}
+            if params:
+                for k, v in params.items():
+                    if k not in ('taxpayer_id',) and not k.startswith('year') and not k.startswith('month') and k not in ('quarter',):
+                        static_params[k] = v
+
+            templated_subs.append({
+                'domain': domain,
+                'sql_template': template,
+                'param_keys': param_keys,  # ✅ 保存参数键列表
+                'static_params': static_params  # ✅ 保存静态参数值
+            })
+        else:
+            all_success = False
+
+    return templated_subs, all_success
+
+
+def instantiate_cross_domain_sql(sub_templates: list, company_id: str) -> list:
+    """实例化跨域查询的多个子域SQL模板
+
+    Args:
+        sub_templates: 子域模板列表，每个包含 {'domain': str, 'sql_template': str}
+        company_id: 纳税人ID
+
+    Returns:
+        实例化后的子域SQL列表，格式: [{'domain': str, 'sql': str}, ...]
+    """
+    instantiated = []
+    for sub in sub_templates:
+        template = sub.get('sql_template', '')
+        domain = sub.get('domain', 'unknown')
+
+        if template:
+            sql = instantiate_sql(template, company_id)
+            instantiated.append({
+                'domain': domain,
+                'sql': sql
+            })
+
+    return instantiated
 
 
 def save_template_cache(query: str, response_mode: str, taxpayer_type: str,
                         accounting_standard: str, intent: Dict, sql_template: str,
-                        domain: str) -> str:
-    """保存 L2 模板缓存（域感知缓存键）
+                        domain: str, sub_templates: list = None,
+                        cross_domain_operation: str = None,
+                        pipeline_type: str = None,
+                        time_granularity: str = None) -> str:
+    """保存 L2 模板缓存（域感知缓存键，支持跨域查询和概念管线）
 
     Args:
         query: 用户查询
@@ -176,8 +261,12 @@ def save_template_cache(query: str, response_mode: str, taxpayer_type: str,
         taxpayer_type: 纳税人类型
         accounting_standard: 会计准则
         intent: 意图解析结果
-        sql_template: SQL 模板
+        sql_template: SQL 模板（单域查询）
         domain: 数据域
+        sub_templates: 子域模板列表（跨域查询），格式: [{'domain': str, 'sql_template': str}, ...]
+        cross_domain_operation: 跨域操作类型（'compare'|'ratio'|'reconcile'|'list'）
+        pipeline_type: 管线类型（'concept'|None），用于区分概念管线和 LLM 跨域管线
+        time_granularity: 时间粒度（'quarterly'|'monthly'|'yearly'|None），概念管线使用
 
     Returns:
         缓存键
@@ -188,7 +277,7 @@ def save_template_cache(query: str, response_mode: str, taxpayer_type: str,
     _ensure_dir()
 
     # 域感知缓存键
-    cache_domain = detect_cache_domain(domain=domain, sql_template=sql_template)
+    cache_domain = detect_cache_domain(domain=domain, sql_template=sql_template or "")
     cache_key = _build_cache_key_v2(
         query, response_mode, cache_domain,
         taxpayer_type=taxpayer_type, accounting_standard=accounting_standard
@@ -202,12 +291,34 @@ def save_template_cache(query: str, response_mode: str, taxpayer_type: str,
         "taxpayer_type": taxpayer_type,
         "accounting_standard": accounting_standard,
         "intent": intent,
-        "sql_template": sql_template,
         "domain": domain,
         "created_at": time.time(),
         "last_accessed_at": time.time(),
         "hit_count": 0
     }
+
+    # 跨域查询：保存子域模板列表
+    if sub_templates:
+        # 检测是否为单域概念查询（所有子域来自同一个域）
+        unique_domains = set(s['domain'] for s in sub_templates)
+        if len(unique_domains) == 1 and domain != 'cross_domain':
+            # 单域概念查询：保留原始域名用于域感知缓存键
+            entry["cache_domain"] = domain
+        else:
+            # 真正的跨域查询
+            entry["cache_domain"] = "cross_domain"
+
+        entry["sub_templates"] = sub_templates
+        entry["subdomains"] = [s['domain'] for s in sub_templates]
+        if cross_domain_operation:
+            entry["cross_domain_operation"] = cross_domain_operation
+        if pipeline_type:
+            entry["pipeline_type"] = pipeline_type
+        if time_granularity:
+            entry["time_granularity"] = time_granularity
+    else:
+        # 单域查询：保存单个SQL模板
+        entry["sql_template"] = sql_template
 
     with _lock:
         try:
