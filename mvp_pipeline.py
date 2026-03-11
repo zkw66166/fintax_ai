@@ -373,6 +373,38 @@ def run_pipeline(user_query: str, db_path: str = None, progress_callback=None, c
         if resolved_query != user_query:
             print(f"    日期解析: {resolved_query}")
 
+        # Step 1b: 提前检测计算指标并调整域路由（在同义词标准化前）
+        # 优先级调整（2026-03-10）：
+        # - 带"率"的指标优先走 financial_metrics 域（查表）
+        # - 不带"率"的指标（如"占比"）走 metric_calculator（计算）
+        early_metric_names = []
+        domain_locked = False  # NEW: 域锁定标志
+        if domain_hint != 'financial_metrics':
+            early_metric_names = detect_computed_metrics(resolved_query)
+
+            # 过滤：如果指标名包含"率"，优先走 financial_metrics 域（不走 metric_calculator）
+            if early_metric_names:
+                rate_metrics = [m for m in early_metric_names if '率' in m]
+                non_rate_metrics = [m for m in early_metric_names if '率' not in m]
+
+                if rate_metrics:
+                    print(f"[1b] 检测到'率'型指标: {rate_metrics}，锁定 financial_metrics 域")
+                    # 设置 domain_hint 为 financial_metrics，让 Stage 1 识别为该域
+                    domain_hint = 'financial_metrics'
+                    entities['domain_hint'] = 'financial_metrics'
+                    # 清空 cross_domain_list，防止跨域路由（所有率型指标都在 financial_metrics 表中）
+                    if 'cross_domain_list' in entities:
+                        del entities['cross_domain_list']
+                    early_metric_names = []  # 清空，不走 metric_calculator
+                    domain_locked = True  # NEW: 锁定域，跳过 Stage 1 LLM
+
+                # 保留非"率"型指标走 metric_calculator
+                early_metric_names = non_rate_metrics
+
+        if early_metric_names:
+            print(f"[1b] 提前检测到计算指标: {early_metric_names}")
+            entities['has_computed_metric'] = True
+
         # Step 2: 同义词标准化（域感知）
         if progress_callback:
             progress_callback(0.15, "📝 正在标准化查询...")
@@ -442,32 +474,41 @@ def run_pipeline(user_query: str, db_path: str = None, progress_callback=None, c
         if hits:
             print(f"    命中: {', '.join(h['phrase']+'→'+h['column_name'] for h in hits)}")
 
-        # Step 2b: 提前检测计算指标（在意图解析前，避免被澄清拦截）
-        # 注意：如果域已识别为financial_metrics，跳过G3路径，走标准NL2SQL查询
-        early_metric_names = []
-        if domain_hint != 'financial_metrics':
-            early_metric_names = detect_computed_metrics(resolved_query)
-        if early_metric_names:
-            print(f"[2b] 提前检测到计算指标: {early_metric_names}")
-            entities['has_computed_metric'] = True
-
         # Step 3: 阶段1 — 意图解析(LLM→JSON)
         if progress_callback:
             elapsed = int(time.time() - start_time)
             progress_callback(0.25, f"🤖 正在解析意图... (已用时{elapsed}秒)")
 
-        print(f"[3] 调用LLM阶段1（意图解析）...")
+        # NEW: 如果域已锁定（Step 1b检测到'率'型指标），跳过LLM，直接构造intent
+        if domain_locked:
+            print(f"[3] 域已锁定为 {domain_hint}，跳过LLM阶段1，直接构造intent")
+            # 提取查询中的所有'率'型指标（包括计算指标和存储指标）
+            from modules.metric_calculator import extract_all_rate_metrics
+            detected_metrics = extract_all_rate_metrics(resolved_query)
+            intent = {
+                'domain': domain_hint,
+                'views': ['vw_financial_metrics'],
+                'metrics': detected_metrics,
+                'filters': {},
+                'need_clarification': False
+            }
+            result['intent'] = intent
+            domain = domain_hint
+            result['domain'] = domain
+            print(f"    domain={domain}, metrics={detected_metrics}")
+        else:
+            print(f"[3] 调用LLM阶段1（意图解析）...")
 
-        # 调用LLM（内存缓存已移除）
-        t0 = time.time()
-        intent = parse_intent(resolved_query, entities, hits, conversation_history=conversation_history)
-        elapsed_ms = int((time.time() - t0) * 1000)
-        print(f"    调用LLM ({elapsed_ms}ms)")
+            # 调用LLM（内存缓存已移除）
+            t0 = time.time()
+            intent = parse_intent(resolved_query, entities, hits, conversation_history=conversation_history)
+            elapsed_ms = int((time.time() - t0) * 1000)
+            print(f"    调用LLM ({elapsed_ms}ms)")
 
-        result['intent'] = intent
-        domain = intent.get('domain', domain_hint or 'vat')
-        result['domain'] = domain  # 更新为intent解析后的域
-        print(f"    domain={domain}, need_clarification={intent.get('need_clarification')}")
+            result['intent'] = intent
+            domain = intent.get('domain', domain_hint or 'vat')
+            result['domain'] = domain  # 更新为intent解析后的域
+            print(f"    domain={domain}, need_clarification={intent.get('need_clarification')}")
 
         # 检查是否需要澄清（计算指标查询跳过澄清）
         if intent.get('need_clarification') and not entities.get('has_computed_metric'):
@@ -769,6 +810,20 @@ def _run_cross_domain_pipeline(conn, entities, intent, resolved_query,
 
     # === Phase 1: 串行构建所有子域intent和约束（快，无LLM） ===
     subdomain_tasks = []  # [(sd, sub_intent, sub_constraints)]
+
+    # 检查是否为跨年多期间比较（如"2024年3月和2025年3月"）
+    _start_year = entities.get('period_year')
+    _end_year = entities.get('period_end_year')
+    _start_month = entities.get('period_month')
+    _end_month = entities.get('period_end_month')
+    _is_cross_year_compare = bool(_end_year and _start_year and _end_year != _start_year)
+
+    # 月份→季度映射
+    _MONTH_TO_QUARTER = {1: 1, 2: 1, 3: 1, 4: 2, 5: 2, 6: 2,
+                         7: 3, 8: 3, 9: 3, 10: 4, 11: 4, 12: 4}
+    # 季度→月份列表映射
+    _QUARTER_TO_MONTHS = {1: [1, 2, 3], 2: [4, 5, 6], 3: [7, 8, 9], 4: [10, 11, 12]}
+
     for sd in cross_list:
         sub_intent = {
             'domain': sd,
@@ -787,6 +842,30 @@ def _run_cross_domain_pipeline(conn, entities, intent, resolved_query,
             print(f"    [{sd}] selected view={view}")
             if view:
                 sub_intent[scope_key] = {'views': [view]}
+
+        # 新增：跨年多期间比较时，注入 cross_year_compare 信息到 sub_intent
+        # 让 LLM 能生成正确的跨年比较 SQL（如 period_year IN (:year1, :year2)）
+        if _is_cross_year_compare:
+            _q = None
+            _months_in_quarter = None
+            if _start_month:
+                _q = _MONTH_TO_QUARTER.get(int(_start_month))
+                if _q:
+                    _months_in_quarter = _QUARTER_TO_MONTHS[_q]
+
+            # 检测是否为季度查询（用户说"一季度"/"第一季度"）
+            _is_quarter_query = entities.get('period_quarter') is not None
+
+            sub_intent['cross_year_compare'] = {
+                'year1': _start_year,
+                'year2': _end_year,
+                'month1': _start_month,
+                'month2': _end_month,
+                'quarter': _q,  # 如果月份是季末，传递季度号
+                'months_in_quarter': _months_in_quarter,  # 新增：季度包含的月份列表
+                'is_quarter_query': _is_quarter_query,  # 新增：是否为季度查询
+                'note': f'比较{_start_year}年{_start_month}月与{_end_year}年{_end_month}月的数据'
+            }
 
         # 过滤出属于该子域的metrics
         sd_views = DOMAIN_VIEWS.get(sd, [])
@@ -1098,6 +1177,31 @@ def _build_params(entities: dict, intent: dict) -> dict:
         params['quarter'] = period['quarter']
     elif entities.get('period_quarter'):
         params['quarter'] = entities['period_quarter']
+    else:
+        # 新增：季末月份自动推导 quarter 参数（EIT 季报需要）
+        # 用户说"3月"→Q1, "6月"→Q2, "9月"→Q3, "12月"→Q4
+        _month_to_quarter = {3: 1, 6: 2, 9: 3, 12: 4}
+        _pm = entities.get('period_month') or entities.get('period_end_month')
+        if _pm and int(_pm) in _month_to_quarter:
+            params['quarter'] = _month_to_quarter[int(_pm)]
+
+    # 跨年对比：当 period_year ≠ period_end_year 时，补充 year1/year2 参数
+    # 场景：用户查询"2024年3月和2025年3月..."，entities有period_year=2024, period_end_year=2025
+    _end_year = entities.get('period_end_year')
+    _start_year = params.get('year') or entities.get('period_year')
+    if _end_year and _start_year and _end_year != _start_year:
+        # 补充 year1/year2（LLM 生成跨年比较 SQL 时使用）
+        params.setdefault('year1', _start_year)
+        params.setdefault('year2', _end_year)
+        params.setdefault('start_year', _start_year)
+        params.setdefault('end_year', _end_year)
+        # 新增：补充 month1/month2（profit/VAT 跨年季度比较 SQL 模板使用）
+        _start_month = entities.get('period_month')
+        _end_month = entities.get('period_end_month')
+        if _start_month and 'month1' not in params:
+            params['month1'] = int(_start_month)
+        if _end_month and 'month2' not in params:
+            params['month2'] = int(_end_month)
 
     # 多年对比参数
     period_years = entities.get('period_years')

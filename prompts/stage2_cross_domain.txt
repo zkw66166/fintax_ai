@@ -48,6 +48,18 @@ UNION ALL
 SELECT * FROM vat_data
 LIMIT {max_rows}
 
+【跨年季度比较查询】
+PHASE 2 FIX: 当【用户意图JSON】中出现 cross_year_compare 字段且 is_quarter_query=true 时，表示用户要比较两个不同年份的同一季度。
+例如 cross_year_compare.year1=2024, cross_year_compare.year2=2025, cross_year_compare.quarter=1, cross_year_compare.months_in_quarter=[1,2,3]
+
+此时必须协调多个子域的SQL模板：
+- 每个子域的SQL都应该使用 period_year IN (:year1, :year2) AND period_month = :month1 过滤
+- 季度末月份（如Q1=3月）作为 :month1 参数
+- 利润表/现金流量表：使用 time_range = '本年累计' 获取季度累计数据
+- 资产负债表：直接使用季度末月份数据
+- 增值税：使用季度末月份的累计申报数据
+- 企业所得税：如果是季报，使用 period_quarter = :quarter 过滤
+
 【输出要求】
 - 只输出SQL，不要解释
 - 严格禁止 SELECT *（CTE内部除外，最终SELECT可以用SELECT * FROM cte_name）

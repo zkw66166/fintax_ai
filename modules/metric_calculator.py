@@ -150,6 +150,235 @@ METRIC_FORMULAS = {
         'label': '销售费用率',
         'unit': '%',
     },
+    # ========== 新增指标（2026-03-10 Phase 3）==========
+    # 比例型指标（8个）
+    '流动资产占比': {
+        'formula': 'current_assets / total_assets * 100 if total_assets else None',
+        'sources': {
+            'current_assets': {
+                'domain': 'balance_sheet',
+                'column': 'current_assets_end',
+            },
+            'total_assets': {
+                'domain': 'balance_sheet',
+                'column': 'assets_end',
+            },
+        },
+        'label': '流动资产占比',
+        'unit': '%',
+    },
+    '固定资产占比': {
+        'formula': 'fixed_assets / total_assets * 100 if total_assets else None',
+        'sources': {
+            'fixed_assets': {
+                'domain': 'balance_sheet',
+                'column': 'fixed_assets_end',
+            },
+            'total_assets': {
+                'domain': 'balance_sheet',
+                'column': 'assets_end',
+            },
+        },
+        'label': '固定资产占比',
+        'unit': '%',
+    },
+    '流动负债占比': {
+        'formula': 'current_liabilities / total_liabilities * 100 if total_liabilities else None',
+        'sources': {
+            'current_liabilities': {
+                'domain': 'balance_sheet',
+                'column': 'current_liabilities_end',
+            },
+            'total_liabilities': {
+                'domain': 'balance_sheet',
+                'column': 'liabilities_end',
+            },
+        },
+        'label': '流动负债占比',
+        'unit': '%',
+    },
+    '营业成本占比': {
+        'formula': 'cost / revenue * 100 if revenue else None',
+        'sources': {
+            'cost': {
+                'domain': 'profit',
+                'column': 'operating_cost',
+            },
+            'revenue': {
+                'domain': 'profit',
+                'column': 'operating_revenue',
+            },
+        },
+        'label': '营业成本占比',
+        'unit': '%',
+    },
+    '期间费用占比': {
+        'formula': '(admin + selling + finance) / revenue * 100 if revenue else None',
+        'sources': {
+            'admin': {
+                'domain': 'profit',
+                'column': 'administrative_expense',
+            },
+            'selling': {
+                'domain': 'profit',
+                'column': 'selling_expense',
+            },
+            'finance': {
+                'domain': 'profit',
+                'column': 'financial_expense',
+            },
+            'revenue': {
+                'domain': 'profit',
+                'column': 'operating_revenue',
+            },
+        },
+        'label': '期间费用占比',
+        'unit': '%',
+    },
+    '研发费用占比': {
+        'formula': 'rd_expense / revenue * 100 if revenue else None',
+        'sources': {
+            'rd_expense': {
+                'domain': 'profit',
+                'column': 'rd_expense',
+            },
+            'revenue': {
+                'domain': 'profit',
+                'column': 'operating_revenue',
+            },
+        },
+        'label': '研发费用占比',
+        'unit': '%',
+    },
+    '进项税额占比': {
+        'formula': 'input_tax / output_tax * 100 if output_tax else None',
+        'sources': {
+            'input_tax': {
+                'domain': 'vat',
+                'column': 'input_tax',
+            },
+            'output_tax': {
+                'domain': 'vat',
+                'column': 'output_tax',
+            },
+        },
+        'label': '进项税额占比',
+        'unit': '%',
+    },
+    '留抵税额占比': {
+        'formula': 'carryover_tax / output_tax * 100',
+        'sources': {
+            'carryover_tax': {
+                'domain': 'vat',
+                'column': 'carryover_tax_end',
+            },
+            'output_tax': {
+                'domain': 'vat',
+                'column': 'output_tax',
+            },
+        },
+        'label': '留抵税额占比',
+        'unit': '%',
+    },
+    '产权比率': {
+        'formula': 'total_liabilities / equity',
+        'sources': {
+            'total_liabilities': {
+                'domain': 'balance_sheet',
+                'column': 'total_liabilities_end',
+            },
+            'equity': {
+                'domain': 'balance_sheet',
+                'column': 'equity_end',
+            },
+        },
+        'label': '产权比率',
+        'unit': '',
+    },
+    '权益乘数': {
+        'formula': 'total_assets / equity',
+        'sources': {
+            'total_assets': {
+                'domain': 'balance_sheet',
+                'column': 'total_assets_end',
+            },
+            'equity': {
+                'domain': 'balance_sheet',
+                'column': 'equity_end',
+            },
+        },
+        'label': '权益乘数',
+        'unit': '',
+    },
+    '营业利润率': {
+        'formula': 'operating_profit / revenue * 100',
+        'sources': {
+            'operating_profit': {
+                'domain': 'profit',
+                'column': 'operating_profit',
+                'time_range': '本年累计',
+            },
+            'revenue': {
+                'domain': 'profit',
+                'column': 'operating_revenue',
+                'time_range': '本年累计',
+            },
+        },
+        'label': '营业利润率',
+        'unit': '%',
+    },
+    '成本费用利润率': {
+        'formula': 'total_profit / (cost + admin + selling + finance) * 100',
+        'sources': {
+            'total_profit': {
+                'domain': 'profit',
+                'column': 'total_profit',
+                'time_range': '本年累计',
+            },
+            'cost': {
+                'domain': 'profit',
+                'column': 'operating_cost',
+                'time_range': '本年累计',
+            },
+            'admin': {
+                'domain': 'profit',
+                'column': 'admin_expense',
+                'time_range': '本年累计',
+            },
+            'selling': {
+                'domain': 'profit',
+                'column': 'selling_expense',
+                'time_range': '本年累计',
+            },
+            'finance': {
+                'domain': 'profit',
+                'column': 'finance_expense',
+                'time_range': '本年累计',
+            },
+        },
+        'label': '成本费用利润率',
+        'unit': '%',
+    },
+    '总资产报酬率': {
+        'formula': 'net_profit / avg_assets * 100',
+        'sources': {
+            'net_profit': {
+                'domain': 'profit',
+                'column': 'net_profit',
+                'time_range': '本年累计',
+            },
+            'avg_assets': {
+                'domain': 'balance_sheet',
+                'column': 'total_assets_end',
+                'aggregate': 'AVG',
+            },
+        },
+        'label': '总资产报酬率',
+        'unit': '%',
+    },
+    'ROA': {
+        'alias': '总资产报酬率',
+    },
 }
 
 # 指标同义词映射
@@ -172,6 +401,22 @@ METRIC_SYNONYMS = {
     '销售费用率': '销售费用率',
     '销售费用占比': '销售费用率',
     '利润率': '净利润率',
+    # 新增指标同义词（2026-03-10）
+    '流动资产占比': '流动资产占比',
+    '固定资产占比': '固定资产占比',
+    '流动负债占比': '流动负债占比',
+    '营业成本占比': '营业成本占比',
+    '期间费用占比': '期间费用占比',
+    '研发费用占比': '研发费用占比',
+    '研发占比': '研发费用占比',
+    '进项税额占比': '进项税额占比',
+    '留抵税额占比': '留抵税额占比',
+    '产权比率': '产权比率',
+    '权益乘数': '权益乘数',
+    '营业利润率': '营业利润率',
+    '成本费用利润率': '成本费用利润率',
+    '总资产报酬率': '总资产报酬率',
+    'ROA': '总资产报酬率',
 }
 
 
@@ -203,6 +448,55 @@ def detect_computed_metrics(query: str) -> list:
                     metric = METRIC_FORMULAS[canonical]
                 if canonical not in found:
                     found.append(canonical)
+    return found
+
+
+def extract_all_rate_metrics(query: str) -> list:
+    """提取查询中所有'率'型指标（包括计算指标和存储指标）。
+
+    用于 financial_metrics 域锁定场景，需要提取所有用户请求的指标名称。
+
+    Returns:
+        指标名称列表（去重）
+    """
+    import re
+
+    # 常见的率型指标模式（使用非贪婪匹配，限制长度）
+    rate_patterns = [
+        r'([\u4e00-\u9fa5]{2,8}税负率)',  # X税负率（2-8个汉字）
+        r'([\u4e00-\u9fa5]{2,8}利润率)',  # X利润率
+        r'([\u4e00-\u9fa5]{2,8}资产收益率)',  # X资产收益率
+        r'([\u4e00-\u9fa5]{2,8}负债率)',  # X负债率
+        r'([\u4e00-\u9fa5]{2,8}周转率)',  # X周转率
+        r'([\u4e00-\u9fa5]{2,8}费用率)',  # X费用率
+        r'([\u4e00-\u9fa5]{2,8}毛利率)',  # X毛利率
+        r'([\u4e00-\u9fa5]{2,8}净利率)',  # X净利率
+        r'([\u4e00-\u9fa5]{2,8}比率)',  # X比率
+        r'([\u4e00-\u9fa5]{2,8}增长率)',  # X增长率
+        r'(ROE|ROA)',  # 英文缩写
+    ]
+
+    found = []
+    for pattern in rate_patterns:
+        matches = re.findall(pattern, query)
+        for match in matches:
+            # 过滤掉包含数字的匹配（如"3月利润率"）
+            # 但允许"和"字（如"净利润率和毛利率"）
+            if re.search(r'\d', match):
+                continue
+            # 如果包含"和"，需要拆分
+            if '和' in match:
+                # 跳过，让后续的单独模式匹配
+                continue
+            if match not in found:
+                found.append(match)
+
+    # 特殊处理：单独的"利润率"可能指"净利润率"
+    if '利润率' in query and '利润率' not in found:
+        # 检查是否有其他前缀（如"净利润率"）
+        if not any('利润率' in m for m in found):
+            found.append('利润率')
+
     return found
 
 

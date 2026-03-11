@@ -372,6 +372,15 @@ def _resolve_relative_dates(query: str, today: date = None) -> str:
                '六': 6, '七': 7, '八': 8, '九': 9, '十': 10,
                '十一': 11, '十二': 12}
 
+    # PHASE 0 FIX: Convert Chinese month words to Arabic numerals FIRST
+    # "2024年一月" → "2024年1月", "2025年十二月" → "2025年12月"
+    _MONTH_CN_MAP = {
+        '一': '1', '二': '2', '三': '3', '四': '4', '五': '5', '六': '6',
+        '七': '7', '八': '8', '九': '9', '十': '10', '十一': '11', '十二': '12'
+    }
+    for cn_month, ar_month in _MONTH_CN_MAP.items():
+        query = re.sub(rf'(\d{{4}})\s*年\s*{cn_month}\s*月', rf'\1年{ar_month}月', query)
+
     def _cn_to_int(s):
         """中文数字转int，支持'三'→3, '十二'→12, '3'→3"""
         s = s.strip()
@@ -481,6 +490,18 @@ def _resolve_relative_dates(query: str, today: date = None) -> str:
         return f'{start_y}年到{end_y}年'
     query = re.sub(r'过去' + _NUM_PAT + r'个纳税年度', _replace_past_n_tax_years, query)
 
+    # "过去N年" → "YYYY年到YYYY年"（新增：不带"个纳税年度"的通用表达）
+    def _replace_past_n_years(m):
+        n = _cn_to_int(m.group(1))
+        if n is None:
+            return m.group(0)
+        start_y = cur_year - n
+        end_y = cur_year - 1
+        if n == 1:
+            return f'{end_y}年'
+        return f'{start_y}年到{end_y}年'
+    query = re.sub(r'过去' + _NUM_PAT + r'[个]?年', _replace_past_n_years, query)
+
     # "近N年" / "最近N年" → "YYYY年到YYYY年"
     def _replace_recent_n_years(m):
         n = _cn_to_int(m.group(1))
@@ -580,12 +601,15 @@ def _resolve_relative_dates(query: str, today: date = None) -> str:
 
     # "今年N月" → "YYYY年N月"
     query = re.sub(r'(?:今年|本年)(\d{1,2})月', lambda m: f'{cur_year}年{m.group(1)}月', query)
+    # "去年X月" → "(YYYY-1)年X月"
     query = re.sub(r'去年(\d{1,2})月', lambda m: f'{cur_year - 1}年{m.group(1)}月', query)
+    # "前年X月" → "(YYYY-2)年X月"
+    query = re.sub(r'前年(\d{1,2})月', lambda m: f'{cur_year - 2}年{m.group(1)}月', query)
 
     # 独立的 "今年" / "本年" → "YYYY年" (仅当后面不紧跟数字/月/季度/特殊词)
     query = re.sub(r'(?:今年|本年)(?!\d|年|月|季|上|下|前|全|和|与)', f'{cur_year}年', query)
     query = re.sub(r'(?:去年|上年)(?!\d|年|月|季|上|下|全|底|和|与)', f'{cur_year - 1}年', query)
-    query = re.sub(r'前年(?!\d|年|月|季|和|与)', f'{cur_year - 2}年', query)
+    query = re.sub(r'前年(?!\d|年|季|和|与)', f'{cur_year - 2}年', query)
 
     return query
 
@@ -815,6 +839,13 @@ def detect_entities(user_query: str, db_conn: sqlite3.Connection) -> dict:
                 has_profit_shared = any(kw in user_query for kw in _PROFIT_DEFAULT_ITEMS)
                 if has_profit_shared:
                     has_profit_unique = True
+            # 新增：当detected='eit'且已触发其他跨域（如vat）时，利润表共有项目也应触发profit跨域
+            # 场景：用户同时查询"利润总额、增值税应纳税额、企业所得税应纳税额"（3域查询）
+            # "利润总额"通常来自利润表（月度数据），非EIT申报表（仅年度/季度）
+            elif not has_profit_unique and detected == 'eit' and other_domains:
+                has_profit_shared = any(kw in user_query for kw in _PROFIT_DEFAULT_ITEMS)
+                if has_profit_shared:
+                    has_profit_unique = True
             if has_profit_unique:
                 other_domains.add('profit')
         # 检查是否同时包含资产负债表关键词（含共有项目如"存货"）
@@ -1023,6 +1054,22 @@ def detect_entities(user_query: str, db_conn: sqlite3.Connection) -> dict:
         if result['domain_hint'] is None:
             result['domain_hint'] = 'eit'  # "年度"查询默认EIT
 
+    # 3a. 多年范围检测（优先级高，必须在单年月份提取之前）
+    # "2024年到2026年" / "2024年与2026年" / "2024与2025年末" / "2024-2025" / "2024、2025"
+    m_year_range = re.search(r'(\d{4})\s*年?\s*[到至与和跟及、\-]\s*(\d{4})\s*年?', resolved_query)
+    if m_year_range:
+        start_y = int(m_year_range.group(1))
+        end_y = int(m_year_range.group(2))
+        # 只有在不是跨年月份范围的情况下才设置多年范围
+        # 跨年月份范围会在后面的 m_cross_year 中处理
+        m_cross_year_check = re.search(
+            r'(\d{4})\s*年\s*(\d{1,2})\s*月\s*[到至与和跟及\-]\s*(\d{4})\s*年\s*(\d{1,2})\s*月',
+            resolved_query
+        )
+        if not m_cross_year_check:
+            result['period_year'] = start_y
+            result['period_years'] = list(range(start_y, end_y + 1))
+
     # 4. 提取期次（月份）— 使用resolved_query
     if not result['period_year']:
         m = re.search(r'(\d{4})\s*年\s*(\d{1,2})\s*月', resolved_query)
@@ -1032,7 +1079,8 @@ def detect_entities(user_query: str, db_conn: sqlite3.Connection) -> dict:
 
     if not result['period_year']:
         m = re.search(r'(\d{4})[-/](\d{1,2})', resolved_query)
-        if m:
+        # 排除多年范围的情况（如"2024-2025"）
+        if m and not result.get('period_years'):
             result['period_year'] = int(m.group(1))
             result['period_month'] = int(m.group(2))
 
@@ -1045,38 +1093,35 @@ def detect_entities(user_query: str, db_conn: sqlite3.Connection) -> dict:
 
     # 跨年比较/范围: "2023年12月与2024年12月" / "2024年1月到2025年3月"
     # 支持分隔符：到、至、-、与、和、跟、及
-    m_cross_year = re.search(
-        r'(\d{4})\s*年\s*(\d{1,2})\s*月\s*[到至与和跟及\-]\s*(\d{4})\s*年\s*(\d{1,2})\s*月',
-        resolved_query
-    )
-    if m_cross_year:
-        start_y = int(m_cross_year.group(1))
-        start_m = int(m_cross_year.group(2))
-        end_y = int(m_cross_year.group(3))
-        end_m = int(m_cross_year.group(4))
-        result['period_year'] = start_y
-        result['period_month'] = start_m
-        if start_y == end_y:
-            result['period_end_month'] = end_m
-        else:
-            # 跨年：记录结束年月，pipeline需要特殊处理
-            result['period_end_year'] = end_y
-            result['period_end_month'] = end_m
-
-    # 多年范围: "2024年到2026年" / "2024年与2026年" / "2024与2025年末"
-    m_year_range = re.search(r'(\d{4})\s*年?\s*[到至与和跟及\-]\s*(\d{4})\s*年', resolved_query)
-    if m_year_range and not result.get('period_end_year'):
-        start_y = int(m_year_range.group(1))
-        end_y = int(m_year_range.group(2))
-        result['period_year'] = start_y
-        result['period_years'] = list(range(start_y, end_y + 1))
+    # PHASE 0 FIX: Extract BOTH year-month pairs using findall instead of single search
+    if re.search(r'(\d{4})\s*年\s*(\d{1,2})\s*月\s*[到至与和跟及\-]\s*(\d{4})\s*年\s*(\d{1,2})\s*月', resolved_query):
+        all_year_months = re.findall(r'(\d{4})\s*年\s*(\d{1,2})\s*月', resolved_query)
+        if len(all_year_months) >= 2:
+            start_y = int(all_year_months[0][0])
+            start_m = int(all_year_months[0][1])
+            end_y = int(all_year_months[1][0])
+            end_m = int(all_year_months[1][1])
+            result['period_year'] = start_y
+            result['period_month'] = start_m
+            if start_y == end_y:
+                result['period_end_month'] = end_m
+            else:
+                # 跨年：记录结束年月，pipeline需要特殊处理
+                result['period_end_year'] = end_y
+                result['period_end_month'] = end_m
 
     # "年末" → period_month=12, "年初" → period_month=1（仅在无月份时生效）
     if not result.get('period_month'):
-        if '年末' in resolved_query:
+        if '年末' in resolved_query or '年底' in resolved_query:
             result['period_month'] = 12
+            # 多年年末特殊处理：设置枚举月份列表，标记为每年12月
+            if result.get('period_years') and len(result['period_years']) > 1:
+                result['period_months'] = [12]  # 标记为枚举月份（每年12月）
         elif '年初' in resolved_query and result.get('domain_hint') != 'account_balance':
             result['period_month'] = 1
+            # 多年年初特殊处理：设置枚举月份列表，标记为每年1月
+            if result.get('period_years') and len(result['period_years']) > 1:
+                result['period_months'] = [1]  # 标记为枚举月份（每年1月）
 
     # 枚举月份: "2025年1月、2月、3月" 或 "1月、2月、3月"
     m_enum = re.search(r'(\d{4})\s*年\s*(\d{1,2})\s*月\s*[、,]\s*(\d{1,2})\s*月(?:\s*[、,]\s*(\d{1,2})\s*月)?', resolved_query)

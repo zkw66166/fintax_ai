@@ -1,0 +1,686 @@
+{
+  "货币资金": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "column": "cash_end",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "货币资金",
+    "aliases": [
+      "现金及等价物",
+      "货币资金期末"
+    ]
+  },
+  "应收账款": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "column": "accounts_receivable_end",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "应收账款",
+    "aliases": [
+      "应收款",
+      "应收账款期末"
+    ]
+  },
+  "存货": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "column": "inventory_end",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "存货",
+    "aliases": [
+      "存货期末",
+      "库存"
+    ]
+  },
+  "固定资产": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "column": "fixed_assets_end",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "固定资产",
+    "aliases": [
+      "固定资产期末"
+    ]
+  },
+  "总资产": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "column": "assets_end",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "总资产",
+    "aliases": [
+      "资产合计",
+      "资产总计",
+      "资产总额"
+    ]
+  },
+  "总负债": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "column": "liabilities_end",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "总负债",
+    "aliases": [
+      "负债合计",
+      "负债总计",
+      "负债总额"
+    ]
+  },
+  "所有者权益": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "column": "equity_end",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "所有者权益",
+    "aliases": [
+      "净资产",
+      "所有者权益合计",
+      "权益合计",
+      "股东权益"
+    ]
+  },
+  "流动资产": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "column": "current_assets_end",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "流动资产",
+    "aliases": [
+      "流动资产合计"
+    ]
+  },
+  "流动负债": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "column": "current_liabilities_end",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "流动负债",
+    "aliases": [
+      "流动负债合计"
+    ]
+  },
+  "存货增加额": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "type": "computed",
+    "sources": {
+      "end": {
+        "column": "inventory_end",
+        "period": "current"
+      },
+      "begin": {
+        "column": "inventory_end",
+        "period": "previous"
+      }
+    },
+    "formula": "end - begin",
+    "quarterly_strategy": "quarter_end",
+    "label": "存货增加额",
+    "aliases": [
+      "存货变动",
+      "存货变动额",
+      "存货增加"
+    ]
+  },
+  "应收账款变动额": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "type": "computed",
+    "sources": {
+      "end": {
+        "column": "accounts_receivable_end",
+        "period": "current"
+      },
+      "begin": {
+        "column": "accounts_receivable_end",
+        "period": "previous"
+      }
+    },
+    "formula": "end - begin",
+    "quarterly_strategy": "quarter_end",
+    "label": "应收账款变动额",
+    "aliases": [
+      "应收账款变动",
+      "应收账款增加额"
+    ]
+  },
+  "应付账款": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "column": "accounts_payable_end",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "应付账款",
+    "aliases": [
+      "应付款",
+      "应付账款期末"
+    ]
+  },
+  "预收款项": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "column": "advances_from_customers_end",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "预收款项",
+    "aliases": [
+      "预收账款"
+    ]
+  },
+  "未分配利润": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "column": "retained_earnings_end",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "未分配利润",
+    "aliases": [
+      "留存收益"
+    ]
+  },
+  "交易性金融资产": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "column": "trading_financial_assets_end",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "交易性金融资产",
+    "aliases": []
+  },
+  "衍生金融资产": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "column": "derivative_financial_assets_end",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "衍生金融资产",
+    "aliases": []
+  },
+  "应收票据": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "column": "notes_receivable_end",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "应收票据",
+    "aliases": [
+      "应收票据期末"
+    ]
+  },
+  "应收账款融资": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "column": "accounts_receivable_financing_end",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "应收账款融资",
+    "aliases": []
+  },
+  "预付账款": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "column": "prepayments_end",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "预付账款",
+    "aliases": [
+      "预付款项"
+    ]
+  },
+  "其他应收款": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "column": "other_receivables_end",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "其他应收款",
+    "aliases": []
+  },
+  "合同资产": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "column": "contract_assets_end",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "合同资产",
+    "aliases": []
+  },
+  "持有待售资产": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "column": "held_for_sale_assets_end",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "持有待售资产",
+    "aliases": []
+  },
+  "一年内到期的非流动资产": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "column": "current_portion_non_current_assets_end",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "一年内到期的非流动资产",
+    "aliases": []
+  },
+  "其他流动资产": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "column": "other_current_assets_end",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "其他流动资产",
+    "aliases": []
+  },
+  "非流动资产合计": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "column": "non_current_assets_end",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "非流动资产合计",
+    "aliases": [
+      "非流动资产"
+    ]
+  },
+  "债权投资": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "column": "debt_investments_end",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "债权投资",
+    "aliases": []
+  },
+  "其他债权投资": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "column": "other_debt_investments_end",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "其他债权投资",
+    "aliases": []
+  },
+  "长期应收款": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "column": "long_term_receivables_end",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "长期应收款",
+    "aliases": []
+  },
+  "长期股权投资": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "column": "long_term_equity_investments_end",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "长期股权投资",
+    "aliases": []
+  },
+  "其他权益工具投资": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "column": "other_equity_instruments_invest_end",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "其他权益工具投资",
+    "aliases": []
+  },
+  "其他非流动金融资产": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "column": "other_non_current_financial_assets_end",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "其他非流动金融资产",
+    "aliases": []
+  },
+  "投资性房地产": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "column": "investment_property_end",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "投资性房地产",
+    "aliases": []
+  },
+  "在建工程": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "column": "construction_in_progress_end",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "在建工程",
+    "aliases": []
+  },
+  "生产性生物资产": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "column": "productive_biological_assets_end",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "生产性生物资产",
+    "aliases": []
+  },
+  "油气资产": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "column": "oil_and_gas_assets_end",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "油气资产",
+    "aliases": []
+  },
+  "使用权资产": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "column": "right_of_use_assets_end",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "使用权资产",
+    "aliases": []
+  },
+  "无形资产": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "column": "intangible_assets_end",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "无形资产",
+    "aliases": []
+  },
+  "开发支出": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "column": "development_expenditure_end",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "开发支出",
+    "aliases": []
+  },
+  "商誉": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "column": "goodwill_end",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "商誉",
+    "aliases": []
+  },
+  "长期待摊费用": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "column": "long_term_deferred_expenses_end",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "长期待摊费用",
+    "aliases": []
+  },
+  "递延所得税资产": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "column": "deferred_tax_assets_end",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "递延所得税资产",
+    "aliases": []
+  },
+  "其他非流动资产": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "column": "other_non_current_assets_end",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "其他非流动资产",
+    "aliases": []
+  },
+  "短期借款": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "column": "short_term_loans_end",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "短期借款",
+    "aliases": []
+  },
+  "交易性金融负债": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "column": "trading_financial_liabilities_end",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "交易性金融负债",
+    "aliases": []
+  },
+  "衍生金融负债": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "column": "derivative_financial_liabilities_end",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "衍生金融负债",
+    "aliases": []
+  },
+  "应付票据": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "column": "notes_payable_end",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "应付票据",
+    "aliases": []
+  },
+  "合同负债": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "column": "contract_liabilities_end",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "合同负债",
+    "aliases": []
+  },
+  "应付职工薪酬": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "column": "employee_benefits_payable_end",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "应付职工薪酬",
+    "aliases": []
+  },
+  "应交税费": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "column": "taxes_payable_end",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "应交税费",
+    "aliases": []
+  },
+  "其他应付款": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "column": "other_payables_end",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "其他应付款",
+    "aliases": []
+  },
+  "持有待售负债": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "column": "held_for_sale_liabilities_end",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "持有待售负债",
+    "aliases": []
+  },
+  "一年内到期的非流动负债": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "column": "current_portion_non_current_liabilities_end",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "一年内到期的非流动负债",
+    "aliases": []
+  },
+  "其他流动负债": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "column": "other_current_liabilities_end",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "其他流动负债",
+    "aliases": []
+  },
+  "长期借款": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "column": "long_term_loans_end",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "长期借款",
+    "aliases": []
+  },
+  "应付债券": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "column": "bonds_payable_end",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "应付债券",
+    "aliases": []
+  },
+  "租赁负债": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "column": "lease_liabilities_end",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "租赁负债",
+    "aliases": []
+  },
+  "长期应付款": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "column": "long_term_payables_end",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "长期应付款",
+    "aliases": []
+  },
+  "预计负债": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "column": "provisions_end",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "预计负债",
+    "aliases": []
+  },
+  "递延收益": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "column": "deferred_income_end",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "递延收益",
+    "aliases": []
+  },
+  "递延所得税负债": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "column": "deferred_tax_liabilities_end",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "递延所得税负债",
+    "aliases": []
+  },
+  "其他非流动负债": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "column": "other_non_current_liabilities_end",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "其他非流动负债",
+    "aliases": []
+  },
+  "非流动负债合计": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "column": "non_current_liabilities_end",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "非流动负债合计",
+    "aliases": [
+      "非流动负债"
+    ]
+  },
+  "实收资本": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "column": "share_capital_end",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "实收资本",
+    "aliases": [
+      "股本"
+    ]
+  },
+  "资本公积": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "column": "capital_reserve_end",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "资本公积",
+    "aliases": []
+  },
+  "库存股": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "column": "treasury_stock_end",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "库存股",
+    "aliases": []
+  },
+  "专项储备": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "column": "special_reserve_end",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "专项储备",
+    "aliases": []
+  },
+  "盈余公积": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "column": "surplus_reserve_end",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "盈余公积",
+    "aliases": []
+  },
+  "负债和所有者权益总计": {
+    "domain": "balance_sheet",
+    "view": "vw_balance_sheet_eas",
+    "column": "liabilities_and_equity_end",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "负债和所有者权益总计",
+    "aliases": []
+  }
+}

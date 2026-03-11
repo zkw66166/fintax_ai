@@ -1,0 +1,214 @@
+{
+  "应纳税所得额": {
+    "domain": "eit",
+    "view": "vw_eit_annual_main",
+    "column": "taxable_income",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "quarterly_view": "vw_eit_quarter_main",
+    "quarterly_column": "actual_profit",
+    "label": "应纳税所得额",
+    "aliases": []
+  },
+  "应纳所得税额": {
+    "domain": "eit",
+    "view": "vw_eit_annual_main",
+    "column": "tax_payable",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "quarterly_view": "vw_eit_quarter_main",
+    "quarterly_column": "tax_payable",
+    "label": "应纳所得税额",
+    "aliases": [
+      "应纳企业所得税"
+    ]
+  },
+  "实际利润额": {
+    "domain": "eit",
+    "view": "vw_eit_quarter_main",
+    "column": "actual_profit",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "实际利润额",
+    "aliases": []
+  },
+  "纳税调整增加额": {
+    "domain": "eit",
+    "view": "vw_eit_annual_main",
+    "column": "add_tax_adjust_increase",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "纳税调整增加额",
+    "aliases": [
+      "纳税调增"
+    ]
+  },
+  "纳税调整减少额": {
+    "domain": "eit",
+    "view": "vw_eit_annual_main",
+    "column": "less_tax_adjust_decrease",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "纳税调整减少额",
+    "aliases": [
+      "纳税调减"
+    ]
+  },
+  "免税收入减免所得额合计": {
+    "domain": "eit",
+    "view": "vw_eit_annual_main",
+    "column": "exempt_income_deduction_total",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "免税收入减免所得额合计",
+    "aliases": [
+      "免税减免合计"
+    ]
+  },
+  "弥补以前年度亏损": {
+    "domain": "eit",
+    "view": "vw_eit_annual_main",
+    "column": "less_losses_carried_forward",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "quarterly_view": "vw_eit_quarter_main",
+    "quarterly_column": "less_losses_carried_forward",
+    "label": "弥补以前年度亏损",
+    "aliases": [
+      "弥补亏损"
+    ]
+  },
+  "所得减免": {
+    "domain": "eit",
+    "view": "vw_eit_annual_main",
+    "column": "less_income_exemption",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "所得减免",
+    "aliases": []
+  },
+  "所得税税率": {
+    "domain": "eit",
+    "view": "vw_eit_annual_main",
+    "column": "tax_rate",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "quarterly_view": "vw_eit_quarter_main",
+    "quarterly_column": "tax_rate",
+    "label": "所得税税率",
+    "aliases": [
+      "企业所得税税率"
+    ]
+  },
+  "减免税额合计": {
+    "domain": "eit",
+    "view": "vw_eit_annual_main",
+    "column": "tax_credit_total",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "quarterly_view": "vw_eit_quarter_main",
+    "quarterly_column": "tax_credit_total",
+    "label": "减免税额合计",
+    "aliases": [
+      "税收优惠减免"
+    ]
+  },
+  "实际应纳所得税额": {
+    "domain": "eit",
+    "view": "vw_eit_annual_main",
+    "column": "actual_tax_payable",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "quarterly_view": "vw_eit_quarter_main",
+    "quarterly_column": "tax_payable",
+    "label": "实际应纳所得税额",
+    "aliases": [
+      "实际缴纳的企业所得税额",
+      "实际缴纳所得税额",
+      "实际缴纳企业所得税",
+      "实际应纳税额"
+    ]
+  },
+  "已预缴税额": {
+    "domain": "eit",
+    "view": "vw_eit_annual_main",
+    "column": "less_prepaid_tax",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "quarterly_view": "vw_eit_quarter_main",
+    "quarterly_column": "less_prepaid_tax_current_year",
+    "label": "已预缴税额",
+    "aliases": [
+      "预缴税额"
+    ]
+  },
+  "应补退税额": {
+    "domain": "eit",
+    "view": "vw_eit_annual_main",
+    "column": "tax_payable_or_refund",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "应补退税额",
+    "aliases": [
+      "应补税额",
+      "应退税额"
+    ]
+  },
+  "境外所得": {
+    "domain": "eit",
+    "view": "vw_eit_annual_main",
+    "column": "less_foreign_income",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "境外所得",
+    "aliases": []
+  },
+  "特定业务计算的应纳税所得额": {
+    "domain": "eit",
+    "view": "vw_eit_quarter_main",
+    "column": "add_specific_business_taxable_income",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "特定业务计算的应纳税所得额",
+    "aliases": [
+      "特定业务应纳税所得额"
+    ]
+  },
+  "不征税收入": {
+    "domain": "eit",
+    "view": "vw_eit_quarter_main",
+    "column": "less_non_taxable_income",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "不征税收入",
+    "aliases": []
+  },
+  "本期应补退所得税额": {
+    "domain": "eit",
+    "view": "vw_eit_quarter_main",
+    "column": "current_tax_payable_or_refund",
+    "agg": null,
+    "quarterly_strategy": "quarter_end",
+    "label": "本期应补退所得税额",
+    "aliases": [
+      "本期应补退税额"
+    ]
+  },
+  "企业所得税纳税额": {
+    "domain": "eit",
+    "view": "vw_eit_annual_main",
+    "column": "actual_tax_payable",
+    "agg": null,
+    "quarterly_view": "vw_eit_quarter_main",
+    "quarterly_column": "tax_payable",
+    "quarterly_strategy": "quarter_end",
+    "label": "企业所得税纳税额",
+    "aliases": [
+      "企业所得税应纳税额",
+      "实际缴纳的企业所得税",
+      "实际缴纳的企业所得税额",
+      "所得税纳税额",
+      "EIT纳税额"
+    ]
+  }
+}

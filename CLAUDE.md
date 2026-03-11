@@ -121,13 +121,23 @@ Tier 2: Cross-Route Mixed Analysis (comprehensive synthesis, bypasses original 3
 ### Concept Registry (`modules/concept_registry.py`)
 
 Deterministic cross-domain query engine via pre-registered financial concept mappings:
-- 240+ pre-defined financial concepts (采购金额, 销售金额, 存货增加额, 经营现金流出, etc.)
+- **326 concepts** loaded from JSON config files (`config/concepts/*.json`), with hardcoded fallback
+- **Concept externalization** (2026-03-10): migrated from code to JSON for hot-reload and non-technical editing
+- **Concept segmentation strategy** (mixed approach):
+  - **Financial statements** (balance_sheet, profit, cash_flow): split by accounting standard (EAS/SAS) — 20% column structure difference
+  - **VAT**: split by taxpayer type (一般纳税人/小规模纳税人) — completely different structures
+  - **EIT**: NOT split (annual/quarterly is time dimension, handled by `period_quarter` in entities)
+  - **Invoice**: NOT split (purchase/sales distinguished by concept name, same column structure)
+  - **Financial metrics**: NOT split (unified calculation logic)
+- **Segmentation principle**: split by **structure dimension** (different columns), NOT by **time dimension** (different periods)
 - Concept types: direct values, aggregated values, computed values (e.g. 存货增加额 = end - begin)
 - Quarterly strategies: `sum_months` (aggregate 3 months) vs `quarter_end` (take quarter-end month)
-- Alias resolution with fuzzy matching of user queries to canonical concept names
+- Alias resolution with fuzzy matching; multi-variant mapping (e.g. "货币资金" → ["货币资金", "货币资金_SAS"])
+- Filtering by `accounting_standard` and `taxpayer_type` from entities during concept matching
 - Time granularity detection: monthly/quarterly/yearly patterns from query text
 - When ≥2 concepts detected + time granularity → deterministic SQL construction, bypasses LLM entirely
 - Falls back to LLM-based cross-domain pipeline on failure
+- Hot-reload function: `reload_concepts()` reloads from JSON without server restart
 
 ### Dashboard (工作台) (`frontend/src/components/Dashboard/`)
 

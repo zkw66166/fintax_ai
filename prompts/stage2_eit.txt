@@ -12,6 +12,14 @@
 2. 期间过滤（按用户问题选择）：
    - 年度：period_year = :year
    - 季度：period_year = :year AND period_quarter = :quarter
+   - 跨年同季度比较：period_year IN (:year1, :year2) AND period_quarter = :quarter
+
+【重要：跨年对比查询识别】
+当【用户意图JSON】中出现 cross_year_compare 字段时，表示用户要比较两个不同年份的同一月份/季度。
+例如 cross_year_compare.year1=2024, cross_year_compare.year2=2025, cross_year_compare.quarter=1
+此时必须使用 period_year IN (:year1, :year2) AND period_quarter = :quarter 过滤两年数据。
+- 注意：EIT 季度视图（vw_eit_quarter_main）只有 period_quarter 列，没有 period_month 列！
+- 月份→季度：1/2/3月→1季度，4/5/6月→2季度，7/8/9月→3季度，10/11/12月→4季度
 
 【修订版本处理】
 若需取最新修订版本，使用窗口函数：
@@ -29,7 +37,7 @@ WITH latest AS (
 )
 SELECT <columns> FROM latest WHERE rn = 1
 
-季度预缴：
+季度预缴（单年单季）：
 WITH latest AS (
   SELECT taxpayer_id, taxpayer_name, period_year, period_quarter, revision_no,
          <需要查询的指标列>,
@@ -41,6 +49,25 @@ WITH latest AS (
   WHERE taxpayer_id = :taxpayer_id AND period_year = :year AND period_quarter = :quarter
 )
 SELECT <columns> FROM latest WHERE rn = 1
+
+跨年同季度比较（必须用此模式，不要用 period_month）：
+WITH latest AS (
+  SELECT taxpayer_id, taxpayer_name, period_year, period_quarter, revision_no,
+         <需要查询的指标列>,
+    ROW_NUMBER() OVER (
+      PARTITION BY taxpayer_id, period_year, period_quarter
+      ORDER BY revision_no DESC
+    ) AS rn
+  FROM vw_eit_quarter_main
+  WHERE taxpayer_id = :taxpayer_id
+    AND period_year IN (:year1, :year2)
+    AND period_quarter = :quarter
+)
+SELECT taxpayer_id, taxpayer_name, period_year, period_quarter,
+       <需要查询的指标列>
+FROM latest WHERE rn = 1
+ORDER BY period_year
+LIMIT {max_rows}
 
 多季度查询（如"各季度"/"每个季度"）：
 WITH latest AS (
@@ -70,8 +97,8 @@ LIMIT {max_rows}
 - 年度视图维度列：taxpayer_id, taxpayer_name, period_year, revision_no
 - 季度视图维度列：taxpayer_id, taxpayer_name, period_year, period_quarter, revision_no
 - 从【允许的列】中选择需要的列，从【用户意图JSON】的select.metrics中确定具体指标
-- 汇总类问题：先列明细行，再 UNION ALL 合计行（禁止只返回合计数字）。注意：SQLite的UNION ALL不支持ORDER BY中使用CASE表达式，必须用子查询包裹并添加sort_key列排序
-- 比较类问题：展示各期原始值 + 变动额（禁止只返回差值）
+- 汇总类问题：先列明细行，再 UNION ALL 合计行（禁止只返回合计数字）
+- 比较类问题：展示各期原始值（禁止只返回差值）
 - 明细/列表默认 LIMIT {max_rows}
 - 趋势类按 period_year（年度）或 period_quarter（季度）排序
 

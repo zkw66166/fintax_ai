@@ -76,6 +76,20 @@ def detect_scenario(result: dict) -> dict:
     if dd.get('sub_tables'):
         return {'scenario': 'cross_domain'}
 
+    # NEW: 检测 financial_metrics 域的 EAV 结构（metric_name 作为维度）
+    domain = result.get('domain', '')
+    results = result.get('results', [])
+    if domain == 'financial_metrics' and results:
+        first_row = results[0]
+        if 'metric_name' in first_row:
+            # 检查是否有多个期间列（如 "2024年末", "2025年末"）
+            period_cols = [k for k in first_row.keys()
+                          if '年' in k and ('月' in k or '末' in k or '初' in k)]
+            if len(period_cols) >= 2:
+                return {'scenario': 'financial_metrics_multi_period'}
+            else:
+                return {'scenario': 'financial_metrics_single_period'}
+
     table = dd.get('table', {})
     headers = table.get('headers', [])
     rows = table.get('rows', [])
@@ -134,6 +148,26 @@ SCENARIO_INSTRUCTIONS = {
         "- 比率指标的跨期变动趋势和波动幅度\n"
         "- 分析不同类别指标跨期变动的同步性（如营收与税额是否同步变动）\n"
         "- 综合总结多指标组合呈现的财税特征和异常点"
+    ),
+    'financial_metrics_single_period': (
+        "本次查询返回多个财务指标、单一期间的数据（EAV结构，metric_name为维度）。请分析：\n"
+        "- 按指标类别分组解读（盈利能力、偿债能力、运营效率、税务负担等）\n"
+        "- 评价各指标的当前水平（优/良/中/差）\n"
+        "- 说明各指标的通用合理区间\n"
+        "- 分析不同类别指标间的关联性\n"
+        "- 指出异常指标"
+    ),
+    'financial_metrics_multi_period': (
+        "本次查询返回多个财务指标、多个期间的数据（EAV结构，metric_name为维度）。请分析：\n"
+        "- **重要**：数据结构为 metric_name（指标名称）+ 多个期间列（如2024年末、2025年末）\n"
+        "- **计算变动时**：必须**分别计算每个指标**的期间变动，不要跨指标计算\n"
+        "- 例如：净利率从2024年末的25.5%变为2025年末的25.5%，变动为0%\n"
+        "- 例如：增值税税负率从2024年末的3.7%变为2025年末的3.7%，变动为0%\n"
+        "- **不要**将第一行的期末值与第二行的期初值进行比较（这是错误的跨指标计算）\n"
+        "- 按指标类别分组，分析各指标的跨期变动趋势\n"
+        "- 评价各指标的变动幅度是否合理\n"
+        "- 分析不同类别指标变动的同步性\n"
+        "- 综合总结财务指标组合呈现的企业经营特征"
     ),
     'metric_computed': (
         "本次查询返回计算型财务指标。请分析：\n"

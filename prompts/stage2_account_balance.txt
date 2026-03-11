@@ -42,6 +42,32 @@ WITH latest AS (
 )
 SELECT <columns> FROM latest WHERE rn = 1
 
+【跨年季度比较查询】
+PHASE 2 FIX: 当【用户意图JSON】中出现 cross_year_compare 字段且 is_quarter_query=true 时，表示用户要比较两个不同年份的同一季度。
+例如 cross_year_compare.year1=2024, cross_year_compare.year2=2025, cross_year_compare.quarter=1, cross_year_compare.months_in_quarter=[1,2,3]
+
+此时必须使用以下模式：
+
+**模式1：季度末汇总比较（推荐）**
+只返回季度末月份（3/6/9/12月）的数据：
+WITH latest AS (
+  SELECT taxpayer_id, taxpayer_name, period_year, period_month, account_code, revision_no,
+         <需要查询的指标列>,
+    ROW_NUMBER() OVER (
+      PARTITION BY taxpayer_id, period_year, period_month, account_code
+      ORDER BY revision_no DESC
+    ) AS rn
+  FROM vw_account_balance
+  WHERE taxpayer_id = :taxpayer_id
+    AND period_year IN (:year1, :year2)
+    AND period_month = :month1  -- 季度末月份（如Q1=3月）
+)
+SELECT taxpayer_id, taxpayer_name, period_year, period_month,
+       <需要查询的指标列>
+FROM latest WHERE rn = 1
+ORDER BY period_year, period_month
+LIMIT {max_rows}
+
 【科目过滤】
 - 按科目名称过滤：account_name = '库存现金'
 - 按科目类别过滤：category = '资产'（可选值：资产/负债/权益/成本/损益）

@@ -1,0 +1,428 @@
+{
+  "经营活动现金流入": {
+    "domain": "cash_flow",
+    "view": "vw_cash_flow_eas",
+    "column": "operating_inflow_subtotal",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "经营活动现金流入小计",
+    "aliases": [
+      "经营现金流入",
+      "经营活动现金流入小计"
+    ]
+  },
+  "经营活动现金流出": {
+    "domain": "cash_flow",
+    "view": "vw_cash_flow_eas",
+    "column": "operating_outflow_subtotal",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "经营活动现金流出小计",
+    "aliases": [
+      "经营现金流出",
+      "经营活动现金支出",
+      "经营活动现金流出小计"
+    ]
+  },
+  "经营活动现金流量净额": {
+    "domain": "cash_flow",
+    "view": "vw_cash_flow_eas",
+    "column": "operating_net_cash",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "经营活动现金流量净额",
+    "aliases": [
+      "经营活动净现金",
+      "经营现金净额",
+      "经营现金流净额"
+    ]
+  },
+  "投资活动现金流入": {
+    "domain": "cash_flow",
+    "view": "vw_cash_flow_eas",
+    "column": "investing_inflow_subtotal",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "投资活动现金流入小计",
+    "aliases": [
+      "投资现金流入",
+      "投资活动现金流入小计"
+    ]
+  },
+  "投资活动现金流出": {
+    "domain": "cash_flow",
+    "view": "vw_cash_flow_eas",
+    "column": "investing_outflow_subtotal",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "投资活动现金流出小计",
+    "aliases": [
+      "投资现金流出",
+      "投资活动现金支出",
+      "投资活动现金流出小计"
+    ]
+  },
+  "投资活动现金流量净额": {
+    "domain": "cash_flow",
+    "view": "vw_cash_flow_eas",
+    "column": "investing_net_cash",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "投资活动现金流量净额",
+    "aliases": [
+      "投资活动净现金",
+      "投资现金净额",
+      "投资现金流净额"
+    ]
+  },
+  "筹资活动现金流入": {
+    "domain": "cash_flow",
+    "view": "vw_cash_flow_eas",
+    "column": "financing_inflow_subtotal",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "筹资活动现金流入小计",
+    "aliases": [
+      "筹资现金流入",
+      "筹资活动现金流入小计"
+    ]
+  },
+  "筹资活动现金流出": {
+    "domain": "cash_flow",
+    "view": "vw_cash_flow_eas",
+    "column": "financing_outflow_subtotal",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "筹资活动现金流出小计",
+    "aliases": [
+      "筹资现金流出",
+      "筹资活动现金支出",
+      "筹资活动现金流出小计"
+    ]
+  },
+  "筹资活动现金流量净额": {
+    "domain": "cash_flow",
+    "view": "vw_cash_flow_eas",
+    "column": "financing_net_cash",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "筹资活动现金流量净额",
+    "aliases": [
+      "筹资活动净现金",
+      "筹资现金净额",
+      "筹资现金流净额"
+    ]
+  },
+  "销售商品提供劳务收到的现金": {
+    "domain": "cash_flow",
+    "view": "vw_cash_flow_eas",
+    "column": "operating_inflow_sales",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "销售商品提供劳务收到的现金",
+    "aliases": [
+      "销售商品收到的现金",
+      "经营收到的现金"
+    ]
+  },
+  "收到的税费返还": {
+    "domain": "cash_flow",
+    "view": "vw_cash_flow_eas",
+    "column": "operating_inflow_tax_refund",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "收到的税费返还",
+    "aliases": [
+      "税费返还"
+    ]
+  },
+  "收到其他与经营活动有关的现金": {
+    "domain": "cash_flow",
+    "view": "vw_cash_flow_eas",
+    "column": "operating_inflow_other",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "收到其他与经营活动有关的现金",
+    "aliases": [
+      "经营活动其他现金流入"
+    ]
+  },
+  "购买商品接受劳务支付的现金": {
+    "domain": "cash_flow",
+    "view": "vw_cash_flow_eas",
+    "column": "operating_outflow_purchase",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "购买商品接受劳务支付的现金",
+    "aliases": [
+      "购买商品支付的现金"
+    ]
+  },
+  "支付给职工以及为职工支付的现金": {
+    "domain": "cash_flow",
+    "view": "vw_cash_flow_eas",
+    "column": "operating_outflow_labor",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "支付给职工以及为职工支付的现金",
+    "aliases": [
+      "支付给职工的现金",
+      "职工薪酬现金"
+    ]
+  },
+  "支付的各项税费": {
+    "domain": "cash_flow",
+    "view": "vw_cash_flow_eas",
+    "column": "operating_outflow_tax",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "支付的各项税费",
+    "aliases": []
+  },
+  "支付其他与经营活动有关的现金": {
+    "domain": "cash_flow",
+    "view": "vw_cash_flow_eas",
+    "column": "operating_outflow_other",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "支付其他与经营活动有关的现金",
+    "aliases": [
+      "经营活动其他现金流出"
+    ]
+  },
+  "收回投资收到的现金": {
+    "domain": "cash_flow",
+    "view": "vw_cash_flow_eas",
+    "column": "investing_inflow_sale_investment",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "收回投资收到的现金",
+    "aliases": []
+  },
+  "取得投资收益收到的现金": {
+    "domain": "cash_flow",
+    "view": "vw_cash_flow_eas",
+    "column": "investing_inflow_returns",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "取得投资收益收到的现金",
+    "aliases": [
+      "投资收益现金"
+    ]
+  },
+  "处置固定资产收回的现金净额": {
+    "domain": "cash_flow",
+    "view": "vw_cash_flow_eas",
+    "column": "investing_inflow_disposal_assets",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "处置固定资产收回的现金净额",
+    "aliases": [
+      "处置固定资产收回的现金"
+    ]
+  },
+  "处置子公司收到的现金净额": {
+    "domain": "cash_flow",
+    "view": "vw_cash_flow_eas",
+    "column": "investing_inflow_disposal_subsidiary",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "处置子公司收到的现金净额",
+    "aliases": [
+      "处置子公司收到的现金"
+    ]
+  },
+  "收到其他与投资活动有关的现金": {
+    "domain": "cash_flow",
+    "view": "vw_cash_flow_eas",
+    "column": "investing_inflow_other",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "收到其他与投资活动有关的现金",
+    "aliases": [
+      "投资活动其他现金流入"
+    ]
+  },
+  "投资支付的现金": {
+    "domain": "cash_flow",
+    "view": "vw_cash_flow_eas",
+    "column": "investing_outflow_purchase_investment",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "投资支付的现金",
+    "aliases": []
+  },
+  "购建固定资产支付的现金": {
+    "domain": "cash_flow",
+    "view": "vw_cash_flow_eas",
+    "column": "investing_outflow_purchase_assets",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "购建固定资产支付的现金",
+    "aliases": []
+  },
+  "取得子公司支付的现金净额": {
+    "domain": "cash_flow",
+    "view": "vw_cash_flow_eas",
+    "column": "investing_outflow_acquire_subsidiary",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "取得子公司支付的现金净额",
+    "aliases": []
+  },
+  "支付其他与投资活动有关的现金": {
+    "domain": "cash_flow",
+    "view": "vw_cash_flow_eas",
+    "column": "investing_outflow_other",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "支付其他与投资活动有关的现金",
+    "aliases": [
+      "投资活动其他现金流出"
+    ]
+  },
+  "吸收投资收到的现金": {
+    "domain": "cash_flow",
+    "view": "vw_cash_flow_eas",
+    "column": "financing_inflow_capital",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "吸收投资收到的现金",
+    "aliases": []
+  },
+  "取得借款收到的现金": {
+    "domain": "cash_flow",
+    "view": "vw_cash_flow_eas",
+    "column": "financing_inflow_borrowing",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "取得借款收到的现金",
+    "aliases": [
+      "借款收到的现金"
+    ]
+  },
+  "收到其他与筹资活动有关的现金": {
+    "domain": "cash_flow",
+    "view": "vw_cash_flow_eas",
+    "column": "financing_inflow_other",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "收到其他与筹资活动有关的现金",
+    "aliases": [
+      "筹资活动其他现金流入"
+    ]
+  },
+  "偿还债务支付的现金": {
+    "domain": "cash_flow",
+    "view": "vw_cash_flow_eas",
+    "column": "financing_outflow_debt_repayment",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "偿还债务支付的现金",
+    "aliases": []
+  },
+  "分配股利利润或偿付利息支付的现金": {
+    "domain": "cash_flow",
+    "view": "vw_cash_flow_eas",
+    "column": "financing_outflow_dividend_interest",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "分配股利利润或偿付利息支付的现金",
+    "aliases": [
+      "分配股利支付的现金"
+    ]
+  },
+  "支付其他与筹资活动有关的现金": {
+    "domain": "cash_flow",
+    "view": "vw_cash_flow_eas",
+    "column": "financing_outflow_other",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "支付其他与筹资活动有关的现金",
+    "aliases": [
+      "筹资活动其他现金流出"
+    ]
+  },
+  "现金及现金等价物净增加额": {
+    "domain": "cash_flow",
+    "view": "vw_cash_flow_eas",
+    "column": "net_increase_cash",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "现金及现金等价物净增加额",
+    "aliases": [
+      "现金净增加额",
+      "现金流净额"
+    ]
+  },
+  "期初现金及现金等价物余额": {
+    "domain": "cash_flow",
+    "view": "vw_cash_flow_eas",
+    "column": "beginning_cash",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "期初现金及现金等价物余额",
+    "aliases": [
+      "期初现金",
+      "期初现金余额"
+    ]
+  },
+  "期末现金及现金等价物余额": {
+    "domain": "cash_flow",
+    "view": "vw_cash_flow_eas",
+    "column": "ending_cash",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "期末现金及现金等价物余额",
+    "aliases": [
+      "期末现金",
+      "期末现金余额"
+    ]
+  },
+  "汇率变动对现金的影响": {
+    "domain": "cash_flow",
+    "view": "vw_cash_flow_eas",
+    "column": "fx_impact",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "汇率变动对现金的影响",
+    "aliases": [
+      "汇率变动影响"
+    ]
+  }
+}

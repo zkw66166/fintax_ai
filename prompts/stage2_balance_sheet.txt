@@ -16,6 +16,18 @@
    - 跨年枚举月份：必须使用 OR 连接，并用括号包裹整个条件，例如：
      WHERE taxpayer_id = :taxpayer_id
        AND ((period_year=2024 AND period_month=12) OR (period_year=2025 AND period_month=3))
+   - **多年年末查询**（如"2024和2025年末"、"2024-2025每年末"、"2024、2025年末"）：
+     ⚠️ "年末"特指12月，必须使用：
+     WHERE taxpayer_id = :taxpayer_id
+       AND ((period_year=2024 AND period_month=12) OR (period_year=2025 AND period_month=12))
+     或简化为：period_year IN (2024, 2025) AND period_month = 12
+
+     ⚠️ 关键判断依据：
+     - 如果 filters.period.period_years 存在且长度>1 → 多年查询
+     - 如果 filters.period.period_months=[12] → 每年12月（年末）
+     - 必须为每个年份生成独立的 (period_year=YYYY AND period_month=12) 条件
+     - 禁止使用 BETWEEN（会返回中间月份）
+     - 禁止只查询最后一年（必须包含所有年份）
    注意：当实体信息包含 period_months=[12, 3] 时，表示只查询这些特定月份，不是范围查询
    ⚠️ 重要：OR条件必须用括号包裹，避免与taxpayer_id条件混淆
 
@@ -63,6 +75,32 @@ SELECT <columns> FROM latest WHERE rn = 1
 - 判断依据：
   - 如果 filters.period.quarter 存在且 filters.period.end_month 为 null → 单个季度
   - 如果 filters.period.quarter 存在且 filters.period.end_month 存在 → 多季度
+
+【跨年季度比较查询】
+PHASE 2 FIX: 当【用户意图JSON】中出现 cross_year_compare 字段且 is_quarter_query=true 时，表示用户要比较两个不同年份的同一季度。
+例如 cross_year_compare.year1=2024, cross_year_compare.year2=2025, cross_year_compare.quarter=1, cross_year_compare.months_in_quarter=[1,2,3]
+
+此时必须使用以下模式：
+
+**模式1：季度末汇总比较（推荐）**
+只返回季度末月份（3/6/9/12月）的数据：
+WITH latest AS (
+  SELECT taxpayer_id, taxpayer_name, period_year, period_month, revision_no,
+         <需要查询的指标列>,
+    ROW_NUMBER() OVER (
+      PARTITION BY taxpayer_id, period_year, period_month
+      ORDER BY revision_no DESC
+    ) AS rn
+  FROM <view>
+  WHERE taxpayer_id = :taxpayer_id
+    AND period_year IN (:year1, :year2)
+    AND period_month = :month1  -- 季度末月份（如Q1=3月）
+)
+SELECT taxpayer_id, taxpayer_name, period_year, period_month,
+       <需要查询的指标列>
+FROM latest WHERE rn = 1
+ORDER BY period_year, period_month
+LIMIT {max_rows}
 
 【占比/比例计算模式】★ 当用户问"占比"/"比例"/"比重"/"百分比"时必须使用此模式 ★
 当用户问某项目占总计的比例时（如"应收账款占流动资产的比例"），

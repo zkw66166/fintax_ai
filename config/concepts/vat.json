@@ -1,0 +1,372 @@
+{
+  "销项税额": {
+    "domain": "vat",
+    "view": "vw_vat_return_general",
+    "column": "output_tax",
+    "agg": null,
+    "vat_item_type": "一般项目",
+    "vat_time_range": "本月",
+    "quarterly_strategy": "sum_months",
+    "label": "销项税额",
+    "aliases": [
+      "增值税销项税",
+      "增值税销项税额"
+    ]
+  },
+  "进项税额": {
+    "domain": "vat",
+    "view": "vw_vat_return_general",
+    "column": "input_tax",
+    "agg": null,
+    "vat_item_type": "一般项目",
+    "vat_time_range": "本月",
+    "quarterly_strategy": "sum_months",
+    "label": "进项税额",
+    "aliases": [
+      "增值税进项税",
+      "增值税进项税额"
+    ]
+  },
+  "增值税应纳税额": {
+    "domain": "vat",
+    "view": "vw_vat_return_general",
+    "column": "tax_payable",
+    "agg": null,
+    "vat_item_type": "一般项目",
+    "vat_time_range": "本月",
+    "quarterly_strategy": "sum_months",
+    "label": "增值税应纳税额",
+    "aliases": [
+      "应纳增值税",
+      "增值税税额"
+    ]
+  },
+  "留抵税额": {
+    "domain": "vat",
+    "view": "vw_vat_return_general",
+    "column": "end_credit",
+    "agg": null,
+    "vat_item_type": "一般项目",
+    "vat_time_range": "本月",
+    "quarterly_strategy": "quarter_end",
+    "label": "期末留抵税额",
+    "aliases": [
+      "期末留抵",
+      "留抵"
+    ]
+  },
+  "应税货物销售额": {
+    "domain": "vat",
+    "view": "vw_vat_return_general",
+    "column": "sales_goods",
+    "agg": null,
+    "vat_item_type": "一般项目",
+    "vat_time_range": "本月",
+    "quarterly_strategy": "sum_months",
+    "label": "应税货物销售额",
+    "aliases": [
+      "货物销售额"
+    ]
+  },
+  "应税劳务销售额": {
+    "domain": "vat",
+    "view": "vw_vat_return_general",
+    "column": "sales_services",
+    "agg": null,
+    "vat_item_type": "一般项目",
+    "vat_time_range": "本月",
+    "quarterly_strategy": "sum_months",
+    "label": "应税劳务销售额",
+    "aliases": [
+      "劳务销售额"
+    ]
+  },
+  "一般计税销售额": {
+    "domain": "vat",
+    "view": "vw_vat_return_general",
+    "column": "sales_taxable_rate",
+    "agg": null,
+    "vat_item_type": "一般项目",
+    "vat_time_range": "本月",
+    "quarterly_strategy": "sum_months",
+    "label": "一般计税销售额",
+    "aliases": [
+      "按适用税率计税销售额"
+    ]
+  },
+  "纳税检查调整销售额": {
+    "domain": "vat",
+    "view": "vw_vat_return_general",
+    "column": "sales_adjustment_check",
+    "agg": null,
+    "vat_item_type": "一般项目",
+    "vat_time_range": "本月",
+    "quarterly_strategy": "sum_months",
+    "label": "纳税检查调整销售额",
+    "aliases": []
+  },
+  "简易计税销售额": {
+    "domain": "vat",
+    "view": "vw_vat_return_general",
+    "column": "sales_simple_method",
+    "agg": null,
+    "vat_item_type": "一般项目",
+    "vat_time_range": "本月",
+    "quarterly_strategy": "sum_months",
+    "label": "简易计税销售额",
+    "aliases": [
+      "简易办法销售额"
+    ]
+  },
+  "免抵退办法出口销售额": {
+    "domain": "vat",
+    "view": "vw_vat_return_general",
+    "column": "sales_export_credit_refund",
+    "agg": null,
+    "vat_item_type": "一般项目",
+    "vat_time_range": "本月",
+    "quarterly_strategy": "sum_months",
+    "label": "免抵退办法出口销售额",
+    "aliases": [
+      "出口销售额"
+    ]
+  },
+  "免税销售额": {
+    "domain": "vat",
+    "view": "vw_vat_return_general",
+    "column": "sales_tax_free",
+    "agg": null,
+    "vat_item_type": "一般项目",
+    "vat_time_range": "本月",
+    "quarterly_strategy": "sum_months",
+    "label": "免税销售额",
+    "aliases": []
+  },
+  "免税货物销售额": {
+    "domain": "vat",
+    "view": "vw_vat_return_general",
+    "column": "sales_tax_free_goods",
+    "agg": null,
+    "vat_item_type": "一般项目",
+    "vat_time_range": "本月",
+    "quarterly_strategy": "sum_months",
+    "label": "免税货物销售额",
+    "aliases": []
+  },
+  "免税劳务销售额": {
+    "domain": "vat",
+    "view": "vw_vat_return_general",
+    "column": "sales_tax_free_services",
+    "agg": null,
+    "vat_item_type": "一般项目",
+    "vat_time_range": "本月",
+    "quarterly_strategy": "sum_months",
+    "label": "免税劳务销售额",
+    "aliases": []
+  },
+  "上期留抵税额": {
+    "domain": "vat",
+    "view": "vw_vat_return_general",
+    "column": "last_period_credit",
+    "agg": null,
+    "vat_item_type": "一般项目",
+    "vat_time_range": "本月",
+    "quarterly_strategy": "quarter_end",
+    "label": "上期留抵税额",
+    "aliases": [
+      "上期留抵"
+    ]
+  },
+  "免抵退应退税额": {
+    "domain": "vat",
+    "view": "vw_vat_return_general",
+    "column": "export_refund",
+    "agg": null,
+    "vat_item_type": "一般项目",
+    "vat_time_range": "本月",
+    "quarterly_strategy": "sum_months",
+    "label": "免抵退应退税额",
+    "aliases": [
+      "出口退税额"
+    ]
+  },
+  "纳税检查应补缴税额": {
+    "domain": "vat",
+    "view": "vw_vat_return_general",
+    "column": "tax_check_supplement",
+    "agg": null,
+    "vat_item_type": "一般项目",
+    "vat_time_range": "本月",
+    "quarterly_strategy": "sum_months",
+    "label": "纳税检查应补缴税额",
+    "aliases": []
+  },
+  "应抵扣税额合计": {
+    "domain": "vat",
+    "view": "vw_vat_return_general",
+    "column": "deductible_total",
+    "agg": null,
+    "vat_item_type": "一般项目",
+    "vat_time_range": "本月",
+    "quarterly_strategy": "sum_months",
+    "label": "应抵扣税额合计",
+    "aliases": []
+  },
+  "实际抵扣税额": {
+    "domain": "vat",
+    "view": "vw_vat_return_general",
+    "column": "actual_deduct",
+    "agg": null,
+    "vat_item_type": "一般项目",
+    "vat_time_range": "本月",
+    "quarterly_strategy": "sum_months",
+    "label": "实际抵扣税额",
+    "aliases": []
+  },
+  "简易计税应纳税额": {
+    "domain": "vat",
+    "view": "vw_vat_return_general",
+    "column": "simple_tax",
+    "agg": null,
+    "vat_item_type": "一般项目",
+    "vat_time_range": "本月",
+    "quarterly_strategy": "sum_months",
+    "label": "简易计税应纳税额",
+    "aliases": [
+      "简易办法应纳税额"
+    ]
+  },
+  "减免税额": {
+    "domain": "vat",
+    "view": "vw_vat_return_general",
+    "column": "tax_reduction",
+    "agg": null,
+    "vat_item_type": "一般项目",
+    "vat_time_range": "本月",
+    "quarterly_strategy": "sum_months",
+    "label": "减免税额",
+    "aliases": [
+      "税额减免"
+    ]
+  },
+  "应纳税额合计": {
+    "domain": "vat",
+    "view": "vw_vat_return_general",
+    "column": "total_tax_payable",
+    "agg": null,
+    "vat_item_type": "一般项目",
+    "vat_time_range": "本月",
+    "quarterly_strategy": "sum_months",
+    "label": "应纳税额合计",
+    "aliases": []
+  },
+  "期初未缴税额": {
+    "domain": "vat",
+    "view": "vw_vat_return_general",
+    "column": "unpaid_begin",
+    "agg": null,
+    "vat_item_type": "一般项目",
+    "vat_time_range": "本月",
+    "quarterly_strategy": "quarter_end",
+    "label": "期初未缴税额",
+    "aliases": []
+  },
+  "本期已缴税额": {
+    "domain": "vat",
+    "view": "vw_vat_return_general",
+    "column": "paid_current",
+    "agg": null,
+    "vat_item_type": "一般项目",
+    "vat_time_range": "本月",
+    "quarterly_strategy": "sum_months",
+    "label": "本期已缴税额",
+    "aliases": []
+  },
+  "期末未缴税额": {
+    "domain": "vat",
+    "view": "vw_vat_return_general",
+    "column": "unpaid_end",
+    "agg": null,
+    "vat_item_type": "一般项目",
+    "vat_time_range": "本月",
+    "quarterly_strategy": "quarter_end",
+    "label": "期末未缴税额",
+    "aliases": []
+  },
+  "欠缴税额": {
+    "domain": "vat",
+    "view": "vw_vat_return_general",
+    "column": "arrears",
+    "agg": null,
+    "vat_item_type": "一般项目",
+    "vat_time_range": "本月",
+    "quarterly_strategy": "quarter_end",
+    "label": "欠缴税额",
+    "aliases": []
+  },
+  "即征即退": {
+    "domain": "vat",
+    "view": "vw_vat_return_general",
+    "column": "immediate_refund",
+    "agg": null,
+    "vat_item_type": "一般项目",
+    "vat_time_range": "本月",
+    "quarterly_strategy": "sum_months",
+    "label": "即征即退",
+    "aliases": [
+      "即征即退税额"
+    ]
+  },
+  "增值税城建税": {
+    "domain": "vat",
+    "view": "vw_vat_return_general",
+    "column": "city_maintenance_tax",
+    "agg": null,
+    "vat_item_type": "一般项目",
+    "vat_time_range": "本月",
+    "quarterly_strategy": "sum_months",
+    "label": "增值税城建税",
+    "aliases": []
+  },
+  "增值税教育费附加": {
+    "domain": "vat",
+    "view": "vw_vat_return_general",
+    "column": "education_surcharge",
+    "agg": null,
+    "vat_item_type": "一般项目",
+    "vat_time_range": "本月",
+    "quarterly_strategy": "sum_months",
+    "label": "增值税教育费附加",
+    "aliases": []
+  },
+  "地方教育附加": {
+    "domain": "vat",
+    "view": "vw_vat_return_general",
+    "column": "local_education_surcharge",
+    "agg": null,
+    "vat_item_type": "一般项目",
+    "vat_time_range": "本月",
+    "quarterly_strategy": "sum_months",
+    "label": "地方教育附加",
+    "aliases": [
+      "地方教育费附加"
+    ]
+  },
+  "增值税纳税额": {
+    "domain": "vat",
+    "view": "vw_vat_return_general",
+    "column": "tax_payable",
+    "agg": null,
+    "vat_item_type": "一般项目",
+    "vat_time_range": "本月",
+    "quarterly_strategy": "sum_months",
+    "label": "增值税纳税额",
+    "aliases": [
+      "增值税应纳税额",
+      "实际缴纳的增值税",
+      "增值税税额",
+      "VAT纳税额",
+      "VAT应纳税额"
+    ]
+  }
+}

@@ -5,6 +5,8 @@
 """
 import re
 import sqlite3
+import json
+from pathlib import Path
 from modules.entity_preprocessor import get_scope_view
 
 # ── 概念注册表 ──────────────────────────────────────────────────
@@ -1817,16 +1819,97 @@ def build_single_point_sql(concept_def: dict, entities: dict) -> tuple:
     return sql, params
 
 
+# ── JSON配置加载 ──────────────────────────────────────────────
+
+def load_concepts_from_config(config_dir='config/concepts'):
+    """从JSON配置文件加载概念定义（简化版，无后缀）
+
+    Returns:
+        dict: 概念名 → 概念定义
+    """
+    concepts = {}
+    config_path = Path(config_dir)
+
+    if not config_path.exists():
+        return concepts
+
+    # 直接加载所有JSON文件，无后缀处理
+    for json_file in sorted(config_path.glob('*.json')):
+        try:
+            with open(json_file, 'r', encoding='utf-8') as f:
+                domain_concepts = json.load(f)
+            concepts.update(domain_concepts)  # 直接合并，无后缀处理
+        except Exception as e:
+            print(f"Warning: Error loading {json_file}: {e}")
+
+    return concepts
+
+
 # ── 反向别名索引（自动构建）──────────────────────────────────
 
 def _build_alias_index():
-    """从 CONCEPT_REGISTRY 构建 alias → canonical_name 映射"""
+    """从 CONCEPT_REGISTRY 构建 alias → canonical_name 映射（简化版）
+
+    Returns:
+        dict: alias → concept_name
+    """
     idx = {}
     for name, defn in CONCEPT_REGISTRY.items():
-        idx[name] = name  # 概念名本身也是索引
+        # 概念名映射到自己
+        idx[name] = name
+
+        # 别名映射到概念名
         for alias in defn.get('aliases', []):
-            idx[alias] = name
+            if alias not in idx:
+                idx[alias] = name
+            # 如果别名已存在，保持最长匹配优先（不覆盖）
+
     return idx
+
+
+def _rebuild_concept_indices():
+    """重建概念索引（用于热重载）"""
+    global _CONCEPT_ALIASES, _SORTED_CONCEPT_NAMES
+    _CONCEPT_ALIASES = _build_alias_index()
+    _SORTED_CONCEPT_NAMES = sorted(_CONCEPT_ALIASES.keys(), key=len, reverse=True)
+
+
+def reload_concepts():
+    """热重载概念配置（从JSON重新加载）
+
+    Returns:
+        int: 重新加载的概念数量
+    """
+    global CONCEPT_REGISTRY
+    try:
+        loaded_concepts = load_concepts_from_config()
+        if loaded_concepts:
+            CONCEPT_REGISTRY = loaded_concepts
+            _rebuild_concept_indices()
+            print(f"[concept_registry] Reloaded {len(loaded_concepts)} concepts from JSON config")
+            return len(loaded_concepts)
+        else:
+            print("[concept_registry] No JSON config found, keeping current concepts")
+            return len(CONCEPT_REGISTRY)
+    except Exception as e:
+        print(f"[concept_registry] Error reloading JSON config: {e}, keeping current concepts")
+        return len(CONCEPT_REGISTRY)
+
+
+# 模块初始化：优先从JSON加载，失败则使用硬编码
+_HARDCODED_CONCEPTS = CONCEPT_REGISTRY.copy()  # 保存硬编码概念作为fallback
+
+try:
+    loaded_concepts = load_concepts_from_config()
+    if loaded_concepts:
+        print(f"[concept_registry] Loaded {len(loaded_concepts)} concepts from JSON config")
+        CONCEPT_REGISTRY = loaded_concepts
+    else:
+        print("[concept_registry] No JSON config found, using hardcoded concepts")
+        CONCEPT_REGISTRY = _HARDCODED_CONCEPTS
+except Exception as e:
+    print(f"[concept_registry] Error loading JSON config: {e}, using hardcoded concepts")
+    CONCEPT_REGISTRY = _HARDCODED_CONCEPTS
 
 _CONCEPT_ALIASES = _build_alias_index()
 
@@ -1838,12 +1921,23 @@ _SORTED_CONCEPT_NAMES = sorted(_CONCEPT_ALIASES.keys(), key=len, reverse=True)
 
 _QUARTERLY_PATTERNS = re.compile(
     r'各季度?|每个?季度?|按季度?|分季度?|逐季度?|季度对比|季度趋势|季度变化'
+    r'|Q[1-4]|[一二三四]季度|第[1-4一二三四]季度'  # 新增：Q1-Q4, 季度表达
+    r'|季度走势|季度变动'  # 新增：季度分析关键词
+    r'|季度末|季末'  # 新增：季度末关键词
 )
 _MONTHLY_PATTERNS = re.compile(
     r'各月|每个?月|按月|分月|逐月|月度对比|月度趋势|月度变化'
+    r'|月度走势|月度变动|每月末|每月底|各月末|各月底'  # 新增：月度分析关键词
+    r'|过去\d+[个]?月|近\d+[个]?月|最近\d+[个]?月'  # 新增：过去N个月
+    r'|上半年|下半年'  # 新增：半年关键词
 )
 _YEARLY_PATTERNS = re.compile(
     r'各年|每年|按年|分年|逐年|年度对比|年度趋势|年度变化'
+    r'|过去\d+[个]?年|近\d+[个]?年|最近\d+[个]?年'  # 新增：过去N年
+    r'|过去\d+[个]?纳税年度'  # 新增：过去N个纳税年度
+    r'|\d{4}\s*年?\s*[-~到至和与]\s*\d{4}\s*年?'  # 新增：2024-2025, 2024年到2025年
+    r'|每年末|每年底|每年初|各年末|各年底|各年初'  # 新增：年末/年初
+    r'|年度趋势|年度走势|年度变动'  # 新增：年度分析关键词
 )
 
 
@@ -1870,6 +1964,30 @@ def detect_time_granularity(query: str, entities: dict = None) -> str:
                 and not entities.get('period_quarter')
                 and not re.search(r'\d{1,2}\s*月', query)):
             return 'yearly'
+
+        # ===== 新增推断规则（在返回None之前） =====
+
+        # 新增规则1：period_end_year != period_year → yearly
+        if entities.get('period_end_year') and entities.get('period_year'):
+            if entities['period_end_year'] != entities['period_year']:
+                return 'yearly'
+
+        # 新增规则2："年末"/"年底"/"年初"关键词 + 多年 → yearly
+        if re.search(r'年末|年底|年初', query):
+            if entities.get('period_years') and len(entities['period_years']) > 1:
+                return 'yearly'
+            if entities.get('period_end_year'):
+                return 'yearly'
+
+        # 新增规则3：period_months 多个 → monthly
+        if entities.get('period_months') and len(entities['period_months']) > 1:
+            return 'monthly'
+
+        # 新增规则4：period_end_month != period_month → monthly
+        if entities.get('period_end_month') and entities.get('period_month'):
+            if entities['period_end_month'] != entities['period_month']:
+                return 'monthly'
+
     return None
 
 
@@ -1892,29 +2010,46 @@ def _resolve_concepts_internal(query: str):
                 break
             end = idx + len(phrase)
             if not any(occupied[idx:end]):
-                canonical = _CONCEPT_ALIASES[phrase]
-                if not any(h[2] == canonical for h in hits):
-                    hits.append((idx, end, canonical))
-                    for i in range(idx, end):
-                        occupied[i] = True
+                canonical_list = _CONCEPT_ALIASES[phrase]
+                # canonical_list 可能是单个名称或列表
+                if not isinstance(canonical_list, list):
+                    canonical_list = [canonical_list]
+
+                # 添加所有变体（后续由 resolve_concepts 根据 standard/type 过滤）
+                for canonical in canonical_list:
+                    if not any(h[2] == canonical for h in hits):
+                        hits.append((idx, end, canonical))
+
+                # 标记为已占用
+                for i in range(idx, end):
+                    occupied[i] = True
             start = idx + 1
 
     hits.sort(key=lambda x: x[0])
     return hits, occupied
 
 
-def resolve_concepts(query: str, entities: dict) -> list:
-    """从查询文本提取匹配的概念列表（最长匹配优先，不重叠）。
+def resolve_concepts(query: str, entities: dict = None) -> list:
+    """从查询文本提取匹配的概念列表（简化版，无过滤）。
 
     Args:
         query: 日期解析后的查询文本
-        entities: detect_entities() 的输出
+        entities: detect_entities() 的输出（可选）
 
     Returns:
         [{'name': str, 'def': dict}, ...]  匹配到的概念列表
     """
     hits, _ = _resolve_concepts_internal(query)
-    return [{'name': h[2], 'def': CONCEPT_REGISTRY[h[2]]} for h in hits]
+
+    matched_concepts = []
+    for h in hits:
+        concept_name = h[2]
+        concept_def = CONCEPT_REGISTRY.get(concept_name)
+
+        if concept_def:
+            matched_concepts.append({'name': concept_name, 'def': concept_def})
+
+    return matched_concepts
 
 
 # ── 未匹配项提取 ──────────────────────────────────────────────
@@ -1944,10 +2079,37 @@ def resolve_concepts_with_remainder(query: str, entities: dict) -> tuple:
         unmatched_items: [str, ...]  未被任何概念匹配的有效查询项
     """
     hits, occupied = _resolve_concepts_internal(query)
-    concepts = [{'name': h[2], 'def': CONCEPT_REGISTRY[h[2]]} for h in hits]
+
+    # 获取纳税人类型和会计准则
+    taxpayer_type = entities.get('taxpayer_type')
+    accounting_standard = entities.get('accounting_standard')
+
+    matched_concepts = []
+    for h in hits:
+        concept_name = h[2]
+        concept_def = CONCEPT_REGISTRY.get(concept_name)
+
+        if not concept_def:
+            continue
+
+        # 过滤：如果概念有准则/类型限制，必须匹配
+        concept_standard = concept_def.get('accounting_standard')
+        concept_type = concept_def.get('taxpayer_type')
+
+        # 准则过滤
+        if concept_standard and accounting_standard:
+            if concept_standard != accounting_standard:
+                continue  # 跳过不匹配的准则
+
+        # 类型过滤
+        if concept_type and taxpayer_type:
+            if concept_type != taxpayer_type:
+                continue  # 跳过不匹配的类型
+
+        matched_concepts.append({'name': concept_name, 'def': concept_def})
 
     if not hits:
-        return concepts, []
+        return matched_concepts, []
 
     # 提取未占用的连续文本段
     segments = []
@@ -1990,7 +2152,7 @@ def resolve_concepts_with_remainder(query: str, entities: dict) -> tuple:
         if len(part) >= 2 and part not in _REMAINDER_NOISE:
             unmatched.append(part)
 
-    return concepts, unmatched
+    return matched_concepts, unmatched
 
 
 # ── 视图选择 ────────────────────────────────────────────────

@@ -1,0 +1,746 @@
+{
+  "营业收入": {
+    "domain": "profit",
+    "view": "vw_profit_eas",
+    "column": "operating_revenue",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "营业收入",
+    "aliases": [
+      "主营收入",
+      "收入"
+    ]
+  },
+  "营业成本": {
+    "domain": "profit",
+    "view": "vw_profit_eas",
+    "column": "operating_cost",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "营业成本",
+    "aliases": [
+      "主营成本",
+      "成本"
+    ]
+  },
+  "营业利润": {
+    "domain": "profit",
+    "view": "vw_profit_eas",
+    "column": "operating_profit",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "营业利润",
+    "aliases": []
+  },
+  "利润总额": {
+    "domain": "profit",
+    "view": "vw_profit_eas",
+    "column": "total_profit",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "利润总额",
+    "aliases": [
+      "税前利润"
+    ]
+  },
+  "净利润": {
+    "domain": "profit",
+    "view": "vw_profit_eas",
+    "column": "net_profit",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "净利润",
+    "aliases": [
+      "税后利润"
+    ]
+  },
+  "所得税费用": {
+    "domain": "profit",
+    "view": "vw_profit_eas",
+    "column": "income_tax_expense",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "所得税费用",
+    "aliases": []
+  },
+  "税金及附加": {
+    "domain": "profit",
+    "view": "vw_profit_eas",
+    "column": "taxes_and_surcharges",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "税金及附加",
+    "aliases": []
+  },
+  "管理费用": {
+    "domain": "profit",
+    "view": "vw_profit_eas",
+    "column": "administrative_expense",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "管理费用",
+    "aliases": [
+      "管理费"
+    ]
+  },
+  "销售费用": {
+    "domain": "profit",
+    "view": "vw_profit_eas",
+    "column": "selling_expense",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "销售费用",
+    "aliases": [
+      "销售费"
+    ]
+  },
+  "财务费用": {
+    "domain": "profit",
+    "view": "vw_profit_eas",
+    "column": "financial_expense",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "财务费用",
+    "aliases": []
+  },
+  "研发费用": {
+    "domain": "profit",
+    "view": "vw_profit_eas",
+    "column": "rd_expense",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "研发费用",
+    "aliases": [
+      "研发支出"
+    ]
+  },
+  "营业外收入": {
+    "domain": "profit",
+    "view": "vw_profit_eas",
+    "column": "non_operating_income",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "营业外收入",
+    "aliases": [
+      "营业外收益",
+      "非经营收入"
+    ]
+  },
+  "营业外支出": {
+    "domain": "profit",
+    "view": "vw_profit_eas",
+    "column": "non_operating_expense",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "营业外支出",
+    "aliases": [
+      "非经营支出",
+      "非营业支出"
+    ]
+  },
+  "利息费用": {
+    "domain": "profit",
+    "view": "vw_profit_eas",
+    "column": "interest_expense",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "利息费用",
+    "aliases": [
+      "利息支出",
+      "借款利息"
+    ]
+  },
+  "利息收入": {
+    "domain": "profit",
+    "view": "vw_profit_eas",
+    "column": "interest_income",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "利息收入",
+    "aliases": [
+      "存款利息",
+      "利息所得"
+    ]
+  },
+  "投资收益": {
+    "domain": "profit",
+    "view": "vw_profit_eas",
+    "column": "investment_income",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "投资收益",
+    "aliases": [
+      "投资回报",
+      "投资所得",
+      "理财收益"
+    ]
+  },
+  "其他收益": {
+    "domain": "profit",
+    "view": "vw_profit_eas",
+    "column": "other_gains",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "其他收益",
+    "aliases": [
+      "其他利得"
+    ]
+  },
+  "公允价值变动收益": {
+    "domain": "profit",
+    "view": "vw_profit_eas",
+    "column": "fair_value_change_income",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "公允价值变动收益",
+    "aliases": [
+      "公允价变动收益",
+      "市价变动收益"
+    ]
+  },
+  "信用减值损失": {
+    "domain": "profit",
+    "view": "vw_profit_eas",
+    "column": "credit_impairment_loss",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "信用减值损失",
+    "aliases": [
+      "信用损失"
+    ]
+  },
+  "资产减值损失": {
+    "domain": "profit",
+    "view": "vw_profit_eas",
+    "column": "asset_impairment_loss",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "资产减值损失",
+    "aliases": [
+      "资产减值",
+      "资产跌价损失"
+    ]
+  },
+  "资产处置收益": {
+    "domain": "profit",
+    "view": "vw_profit_eas",
+    "column": "asset_disposal_gains",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "资产处置收益",
+    "aliases": [
+      "处置资产收益",
+      "资产出售收益"
+    ]
+  },
+  "综合收益总额": {
+    "domain": "profit",
+    "view": "vw_profit_eas",
+    "column": "comprehensive_income_total",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "综合收益总额",
+    "aliases": [
+      "综合收益合计",
+      "总综合收益"
+    ]
+  },
+  "持续经营净利润": {
+    "domain": "profit",
+    "view": "vw_profit_eas",
+    "column": "continued_ops_net_profit",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "持续经营净利润",
+    "aliases": [
+      "持续经营净利"
+    ]
+  },
+  "终止经营净利润": {
+    "domain": "profit",
+    "view": "vw_profit_eas",
+    "column": "discontinued_ops_net_profit",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "终止经营净利润",
+    "aliases": [
+      "终止经营净利"
+    ]
+  },
+  "其他综合收益的税后净额": {
+    "domain": "profit",
+    "view": "vw_profit_eas",
+    "column": "other_comprehensive_income_net",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "其他综合收益的税后净额",
+    "aliases": [
+      "其他综合收益净额"
+    ]
+  },
+  "基本每股收益": {
+    "domain": "profit",
+    "view": "vw_profit_eas",
+    "column": "eps_basic",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "基本每股收益",
+    "aliases": [
+      "基本EPS",
+      "每股基本收益"
+    ]
+  },
+  "稀释每股收益": {
+    "domain": "profit",
+    "view": "vw_profit_eas",
+    "column": "eps_diluted",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "稀释每股收益",
+    "aliases": [
+      "稀释EPS",
+      "每股稀释收益"
+    ]
+  },
+  "净敞口套期收益": {
+    "domain": "profit",
+    "view": "vw_profit_eas",
+    "column": "net_exposure_hedge_income",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "净敞口套期收益",
+    "aliases": [
+      "套期收益",
+      "敞口套期收益"
+    ]
+  },
+  "以摊余成本计量的金融资产终止确认收益": {
+    "domain": "profit",
+    "view": "vw_profit_eas",
+    "column": "amortized_cost_termination_income",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "以摊余成本计量的金融资产终止确认收益",
+    "aliases": [
+      "金融资产终止确认收益",
+      "摊余成本资产终止收益"
+    ]
+  },
+  "对联营企业和合营企业的投资收益": {
+    "domain": "profit",
+    "view": "vw_profit_eas",
+    "column": "investment_income_associates",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "对联营企业和合营企业的投资收益",
+    "aliases": [
+      "联营合营企业投资收益",
+      "联营企业投资收益"
+    ]
+  },
+  "不能重分类进损益的其他综合收益": {
+    "domain": "profit",
+    "view": "vw_profit_eas",
+    "column": "oci_not_reclassifiable",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "不能重分类进损益的其他综合收益",
+    "aliases": [
+      "不可重分类其他综合收益"
+    ]
+  },
+  "将重分类进损益的其他综合收益": {
+    "domain": "profit",
+    "view": "vw_profit_eas",
+    "column": "oci_reclassifiable",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "将重分类进损益的其他综合收益",
+    "aliases": [
+      "可重分类其他综合收益"
+    ]
+  },
+  "重新计量设定受益计划变动额": {
+    "domain": "profit",
+    "view": "vw_profit_eas",
+    "column": "oci_remeasurement_pension",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "重新计量设定受益计划变动额",
+    "aliases": [
+      "设定受益计划变动额"
+    ]
+  },
+  "权益法下不能转损益的其他综合收益": {
+    "domain": "profit",
+    "view": "vw_profit_eas",
+    "column": "oci_equity_method_nonreclassifiable",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "权益法下不能转损益的其他综合收益",
+    "aliases": []
+  },
+  "其他权益工具投资公允价值变动": {
+    "domain": "profit",
+    "view": "vw_profit_eas",
+    "column": "oci_equity_investment_fv_change",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "其他权益工具投资公允价值变动",
+    "aliases": [
+      "权益工具投资公允价变动"
+    ]
+  },
+  "企业自身信用风险公允价值变动": {
+    "domain": "profit",
+    "view": "vw_profit_eas",
+    "column": "oci_credit_risk_change",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "企业自身信用风险公允价值变动",
+    "aliases": [
+      "信用风险公允价值变动"
+    ]
+  },
+  "权益法下可转损益的其他综合收益": {
+    "domain": "profit",
+    "view": "vw_profit_eas",
+    "column": "oci_equity_method_reclassifiable",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "权益法下可转损益的其他综合收益",
+    "aliases": []
+  },
+  "其他债权投资公允价值变动": {
+    "domain": "profit",
+    "view": "vw_profit_eas",
+    "column": "oci_debt_investment_fv_change",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "其他债权投资公允价值变动",
+    "aliases": [
+      "债权投资公允价变动"
+    ]
+  },
+  "金融资产重分类计入其他综合收益的金额": {
+    "domain": "profit",
+    "view": "vw_profit_eas",
+    "column": "oci_reclassify_to_pnl",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "金融资产重分类计入其他综合收益的金额",
+    "aliases": [
+      "资产重分类综合收益"
+    ]
+  },
+  "其他债权投资信用减值准备": {
+    "domain": "profit",
+    "view": "vw_profit_eas",
+    "column": "oci_debt_impairment",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "其他债权投资信用减值准备",
+    "aliases": [
+      "债权投资减值准备"
+    ]
+  },
+  "现金流量套期储备": {
+    "domain": "profit",
+    "view": "vw_profit_eas",
+    "column": "oci_cash_flow_hedge",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "现金流量套期储备",
+    "aliases": [
+      "现金流套期储备"
+    ]
+  },
+  "外币财务报表折算差额": {
+    "domain": "profit",
+    "view": "vw_profit_eas",
+    "column": "oci_foreign_currency_translation",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "外币财务报表折算差额",
+    "aliases": [
+      "外币折算差额"
+    ]
+  },
+  "消费税": {
+    "domain": "profit",
+    "view": "vw_profit_sas",
+    "column": "consumption_tax",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "消费税",
+    "aliases": [
+      "消费税金"
+    ]
+  },
+  "营业税": {
+    "domain": "profit",
+    "view": "vw_profit_sas",
+    "column": "business_tax",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "营业税",
+    "aliases": [
+      "营业税金"
+    ]
+  },
+  "城市维护建设税": {
+    "domain": "profit",
+    "view": "vw_profit_sas",
+    "column": "city_maintenance_tax",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "城市维护建设税",
+    "aliases": [
+      "城建税"
+    ]
+  },
+  "资源税": {
+    "domain": "profit",
+    "view": "vw_profit_sas",
+    "column": "resource_tax",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "资源税",
+    "aliases": [
+      "资源税金"
+    ]
+  },
+  "土地增值税": {
+    "domain": "profit",
+    "view": "vw_profit_sas",
+    "column": "land_appreciation_tax",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "土地增值税",
+    "aliases": [
+      "土增税"
+    ]
+  },
+  "城镇土地使用税房产税车船税印花税": {
+    "domain": "profit",
+    "view": "vw_profit_sas",
+    "column": "property_related_taxes",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "城镇土地使用税房产税车船税印花税",
+    "aliases": [
+      "小税种合计",
+      "财产税及其他税"
+    ]
+  },
+  "教育费附加": {
+    "domain": "profit",
+    "view": "vw_profit_sas",
+    "column": "education_surcharge",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "教育费附加",
+    "aliases": [
+      "教育附加费"
+    ]
+  },
+  "商品维修费": {
+    "domain": "profit",
+    "view": "vw_profit_sas",
+    "column": "goods_repair_expense",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "商品维修费",
+    "aliases": [
+      "产品维修费",
+      "维修费"
+    ]
+  },
+  "广告费和业务宣传费": {
+    "domain": "profit",
+    "view": "vw_profit_sas",
+    "column": "advertising_expense",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "广告费和业务宣传费",
+    "aliases": [
+      "宣传费",
+      "广告宣传费",
+      "广告费"
+    ]
+  },
+  "开办费": {
+    "domain": "profit",
+    "view": "vw_profit_sas",
+    "column": "organization_expense",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "开办费",
+    "aliases": [
+      "筹备费",
+      "设立费"
+    ]
+  },
+  "业务招待费": {
+    "domain": "profit",
+    "view": "vw_profit_sas",
+    "column": "business_entertainment_expense",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "业务招待费",
+    "aliases": [
+      "交际费",
+      "招待费"
+    ]
+  },
+  "研究费用": {
+    "domain": "profit",
+    "view": "vw_profit_sas",
+    "column": "research_expense",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "研究费用",
+    "aliases": [
+      "研究费"
+    ]
+  },
+  "利息费用净额": {
+    "domain": "profit",
+    "view": "vw_profit_sas",
+    "column": "interest_expense_net",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "利息费用净额",
+    "aliases": []
+  },
+  "政府补助": {
+    "domain": "profit",
+    "view": "vw_profit_sas",
+    "column": "government_grant",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "政府补助",
+    "aliases": [
+      "政府补贴",
+      "财政补助"
+    ]
+  },
+  "坏账损失": {
+    "domain": "profit",
+    "view": "vw_profit_sas",
+    "column": "bad_debt_loss",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "坏账损失",
+    "aliases": [
+      "坏账费用"
+    ]
+  },
+  "无法收回的长期债券投资损失": {
+    "domain": "profit",
+    "view": "vw_profit_sas",
+    "column": "long_term_bond_loss",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "无法收回的长期债券投资损失",
+    "aliases": [
+      "长期债券投资损失"
+    ]
+  },
+  "无法收回的长期股权投资损失": {
+    "domain": "profit",
+    "view": "vw_profit_sas",
+    "column": "long_term_equity_loss",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "无法收回的长期股权投资损失",
+    "aliases": [
+      "长期股权投资损失"
+    ]
+  },
+  "自然灾害等不可抗力因素造成的损失": {
+    "domain": "profit",
+    "view": "vw_profit_sas",
+    "column": "force_majeure_loss",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "自然灾害等不可抗力因素造成的损失",
+    "aliases": [
+      "不可抗力损失",
+      "自然灾害损失"
+    ]
+  },
+  "税收滞纳金": {
+    "domain": "profit",
+    "view": "vw_profit_sas",
+    "column": "tax_late_payment",
+    "agg": null,
+    "time_range": "本期",
+    "quarterly_strategy": "quarter_end",
+    "label": "税收滞纳金",
+    "aliases": [
+      "滞纳金",
+      "税务滞纳金"
+    ]
+  }
+}
