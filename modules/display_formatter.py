@@ -299,7 +299,23 @@ def _format_as_table(rows: list, domain: str, view: str) -> str:
         return ''
     # 过滤隐藏列
     filtered_rows = [_filter_columns(row) for row in rows]
-    all_cols = list(filtered_rows[0].keys())
+    # 收集所有行的列名（不只取第一行，因为跨域合并时不同行可能有不同列）
+    all_cols_ordered = {}
+    for row in filtered_rows:
+        for k in row.keys():
+            if k not in all_cols_ordered:
+                all_cols_ordered[k] = None
+    all_cols = list(all_cols_ordered.keys())
+
+    # 检测是否为跨域多指标查询（包含多个 domain_ 前缀的列）
+    domain_prefixed_cols = [c for c in all_cols if '_' in c and c.split('_')[0] in
+                            ['vat', 'eit', 'profit', 'balance_sheet', 'cash_flow',
+                             'account_balance', 'financial_metrics', 'invoice']]
+    is_cross_domain_multi_metric = (
+        domain == 'cross_domain' and
+        len(domain_prefixed_cols) >= 2 and
+        len(set(c.split('_')[0] for c in domain_prefixed_cols)) >= 2
+    )
 
     # 去除所有行中值均为 None/空字符串/0 的列（保留维度列）
     _DIM_COLS = {
@@ -313,6 +329,11 @@ def _format_as_table(rows: list, domain: str, view: str) -> str:
         if c in _DIM_COLS:
             cols.append(c)
             continue
+        # 跨域多指标查询：保留所有 domain_metric 列（即使全为0/NULL）
+        if is_cross_domain_multi_metric and c in domain_prefixed_cols:
+            cols.append(c)
+            continue
+        # 其他场景：过滤全空/全零列
         has_value = any(
             row.get(c) is not None and row.get(c) != '' and row.get(c) != 0
             for row in filtered_rows
@@ -509,8 +530,13 @@ def _period_sort_key(row: dict) -> tuple:
     return (y, q, m)
 
 
-def _extract_metric_cols(rows: list) -> list:
-    """提取数值指标列（排除维度列和隐藏列）"""
+def _extract_metric_cols(rows: list, preserve_zero_cols: bool = False) -> list:
+    """提取数值指标列（排除维度列和隐藏列）
+
+    Args:
+        rows: 数据行列表
+        preserve_zero_cols: 是否保留全零列（跨域查询时为True）
+    """
     if not rows:
         return []
     first = rows[0]
@@ -519,20 +545,62 @@ def _extract_metric_cols(rows: list) -> list:
         if k in HIDDEN_COLUMNS or k in _DIM_COLS_SET:
             continue
         if isinstance(v, (int, float)) or v is None:
-            has_val = any(
-                isinstance(r.get(k), (int, float)) and r.get(k) is not None and r.get(k) != 0
-                for r in rows
-            )
-            if has_val:
+            # PHASE 1 FIX: 跨域查询时保留所有指标列（包括全零列）
+            if preserve_zero_cols:
                 cols.append(k)
+            else:
+                has_val = any(
+                    isinstance(r.get(k), (int, float)) and r.get(k) is not None and r.get(k) != 0
+                    for r in rows
+                )
+                if has_val:
+                    cols.append(k)
     return cols
 
 
+def _is_cross_domain_multi_metric(rows: list) -> bool:
+    """检测是否为跨域多指标查询（多个域前缀的指标列）
+
+    PHASE 1 FIX: 用于判断是否需要保留全零列
+    """
+    if not rows:
+        return False
+    first = rows[0]
+    # 提取所有指标列的域前缀
+    domain_prefixes = set()
+    for k in first.keys():
+        if k in HIDDEN_COLUMNS or k in _DIM_COLS_SET:
+            continue
+        if isinstance(first[k], (int, float)) or first[k] is None:
+            # 检查是否有域前缀（如"利润表-", "增值税-", "企业所得税-"）
+            if '-' in k:
+                prefix = k.split('-')[0]
+                domain_prefixes.add(prefix)
+    # 如果有2个或以上不同的域前缀，认为是跨域查询
+    return len(domain_prefixes) >= 2
+
+
 def _compute_growth(rows: list, metric_cols: list, domain: str, view: str) -> list:
-    """计算多期间数据的环比增长率。返回增长分析列表。"""
+    """计算多期间数据的环比增长率。返回增长分析列表。
+
+    支持两种数据结构：
+    1. EAV结构（如financial_metrics）：metric_name为维度，期间为列（横向比较）
+    2. 时间序列结构：每行为一个期间（纵向比较）
+    """
     if len(rows) < 2 or not metric_cols:
         return []
 
+    # 检测EAV结构：有metric_name列 + 多个期间列
+    first_row = rows[0]
+    has_metric_name = 'metric_name' in first_row
+    period_cols = [k for k in first_row.keys()
+                   if '年' in k and ('月' in k or '末' in k or '初' in k)]
+
+    if has_metric_name and len(period_cols) >= 2:
+        # EAV结构：按metric_name分组，横向比较期间列
+        return _compute_growth_eav(rows, period_cols, domain, view)
+
+    # 时间序列结构：纵向比较行（原有逻辑）
     sorted_rows = sorted(rows, key=_period_sort_key)
     growth_rows = []
     for i in range(1, len(sorted_rows)):
@@ -563,6 +631,72 @@ def _compute_growth(rows: list, metric_cols: list, domain: str, view: str) -> li
                     'trend': 'unknown',
                 }
         growth_rows.append(entry)
+    return growth_rows
+
+
+def _compute_growth_eav(rows: list, period_cols: list, domain: str, view: str) -> list:
+    """计算EAV结构数据的环比增长率（按metric_name分组，横向比较期间列）。
+
+    Args:
+        rows: 数据行，每行包含 metric_name + 多个期间列
+        period_cols: 期间列名列表（如 ['2024年末', '2025年末']）
+        domain: 域名
+        view: 视图名
+
+    Returns:
+        增长分析列表，每个元素对应一个指标的跨期变动
+    """
+    # 按期间列排序（假设格式为 "YYYY年MM月" 或 "YYYY年末"）
+    def parse_period(col_name):
+        import re
+        match = re.search(r'(\d{4})年(\d{1,2})?月?', col_name)
+        if match:
+            year = int(match.group(1))
+            month = int(match.group(2)) if match.group(2) else 12  # "年末" 视为12月
+            return (year, month)
+        return (0, 0)
+
+    sorted_period_cols = sorted(period_cols, key=parse_period)
+
+    growth_rows = []
+    for row in rows:
+        metric_name = row.get('metric_name', '未知指标')
+
+        # 对每对相邻期间计算变动
+        for i in range(1, len(sorted_period_cols)):
+            prev_col = sorted_period_cols[i - 1]
+            curr_col = sorted_period_cols[i]
+
+            prev_val = row.get(prev_col)
+            curr_val = row.get(curr_col)
+
+            entry = {
+                'period': f"{metric_name}",  # 使用指标名称作为标识
+                'prev_period': prev_col,
+                'curr_period': curr_col,
+            }
+
+            if isinstance(prev_val, (int, float)) and isinstance(curr_val, (int, float)) and prev_val != 0:
+                change = curr_val - prev_val
+                change_pct = round(change / abs(prev_val) * 100, 2)
+                entry[metric_name] = {
+                    'current': curr_val,
+                    'previous': prev_val,
+                    'change': round(change, 2),
+                    'change_pct': change_pct,
+                    'trend': 'up' if change_pct > 1 else ('down' if change_pct < -1 else 'stable'),
+                }
+            else:
+                entry[metric_name] = {
+                    'current': curr_val,
+                    'previous': prev_val,
+                    'change': None,
+                    'change_pct': None,
+                    'trend': 'unknown',
+                }
+
+            growth_rows.append(entry)
+
     return growth_rows
 
 def _build_chart_data(rows: list, metric_cols: list, domain: str, view: str) -> Optional[dict]:
@@ -784,14 +918,38 @@ def _format_table_rows(rows: list, domain: str, view: str) -> dict:
         return {'headers': [], 'rows': [], 'columns': []}
 
     filtered_rows = [_filter_columns(row) for row in rows]
-    all_cols = list(filtered_rows[0].keys())
+    # 收集所有行的列名（不只取第一行，因为跨域合并时不同行可能有不同列）
+    all_cols_ordered = {}
+    for row in filtered_rows:
+        for k in row.keys():
+            if k not in all_cols_ordered:
+                all_cols_ordered[k] = None
+    all_cols = list(all_cols_ordered.keys())
 
-    # 去除全空列
+    # 检测是否为跨域多指标查询（包含多个 domain_ 前缀的列）
+    # 场景：用户查询"利润总额、增值税应纳税额、企业所得税应纳税额"
+    # 结果包含：profit_total_profit, vat_tax_payable, eit_actual_tax_payable
+    # 即使某列全为0/NULL，也应保留（用户明确请求了该指标）
+    domain_prefixed_cols = [c for c in all_cols if '_' in c and c.split('_')[0] in
+                            ['vat', 'eit', 'profit', 'balance_sheet', 'cash_flow',
+                             'account_balance', 'financial_metrics', 'invoice']]
+    is_cross_domain_multi_metric = (
+        domain == 'cross_domain' and
+        len(domain_prefixed_cols) >= 2 and
+        len(set(c.split('_')[0] for c in domain_prefixed_cols)) >= 2
+    )
+
+    # 去除全空列（但跨域多指标查询保留所有指标列）
     cols = []
     for c in all_cols:
         if c in _DIM_COLS_SET:
             cols.append(c)
             continue
+        # 跨域多指标查询：保留所有 domain_metric 列（即使全为0/NULL）
+        if is_cross_domain_multi_metric and c in domain_prefixed_cols:
+            cols.append(c)
+            continue
+        # 其他场景：过滤全空/全零列
         has_value = any(
             r.get(c) is not None and r.get(c) != '' and r.get(c) != 0
             for r in filtered_rows
@@ -916,6 +1074,9 @@ def build_display_data(result: dict, query: str = '') -> dict:
     domain, view = _infer_domain_and_view(result)
     visible_cols = [k for k in rows[0] if k not in HIDDEN_COLUMNS]
 
+    # PHASE 1 FIX: 检测是否为跨域多指标查询
+    is_cross_domain_multi_metric = _is_cross_domain_multi_metric(rows)
+
     # 单行少列 → KV
     if len(rows) == 1 and len(visible_cols) <= 8:
         table = _format_table_rows(rows, domain, view)
@@ -928,7 +1089,8 @@ def build_display_data(result: dict, query: str = '') -> dict:
 
     # 多行 → 表格 + 图表 + 增长
     table = _format_table_rows(rows, domain, view)
-    metric_cols = _extract_metric_cols(rows)
+    # PHASE 1 FIX: 跨域查询时保留全零列
+    metric_cols = _extract_metric_cols(rows, preserve_zero_cols=is_cross_domain_multi_metric)
 
     # 饼图检测：结构/占比分析结果
     if _detect_pie_chart(rows, query):
@@ -970,9 +1132,13 @@ def _build_cross_domain_display(result: dict) -> dict:
     operation = result.get('cross_domain_operation', 'list')
     summary = result.get('cross_domain_summary', '')
 
+    # PHASE 1 FIX: 检测是否为跨域多指标查询（在分组前检测）
+    is_cross_domain_multi_metric = _is_cross_domain_multi_metric(rows)
+
     if operation in ('compare', 'ratio', 'reconcile'):
         table = _format_table_rows(rows, 'cross_domain', '')
-        metric_cols = _extract_metric_cols(rows)
+        # PHASE 1 FIX: 跨域查询时保留全零列
+        metric_cols = _extract_metric_cols(rows, preserve_zero_cols=is_cross_domain_multi_metric)
         chart_data = _build_chart_data(rows, metric_cols, 'cross_domain', '')
         growth = _compute_growth(rows, metric_cols, 'cross_domain', '')
         return {
@@ -1003,7 +1169,8 @@ def _build_cross_domain_display(result: dict) -> dict:
         domain_cn = DOMAIN_CN_DISPLAY.get(d, d)
         view = domain_view_map.get(d, '')
         table = _format_table_rows(group_rows, d, view)
-        metric_cols = _extract_metric_cols(group_rows)
+        # PHASE 1 FIX: list操作也保留全零列（传递跨域标志）
+        metric_cols = _extract_metric_cols(group_rows, preserve_zero_cols=is_cross_domain_multi_metric)
         chart_data = _build_chart_data(group_rows, metric_cols, d, view)
         growth = _compute_growth(group_rows, metric_cols, d, view)
         sub_tables.append({

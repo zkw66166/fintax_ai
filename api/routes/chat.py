@@ -84,28 +84,62 @@ def _sse_generator(
             try:
                 taxpayer_type, accounting_standard = get_taxpayer_info(company_id)
 
-                # 检测查询的域类别（用于域感知缓存键）
-                query_domain = ""
-                entities_for_cache = {}
-                try:
-                    from modules.entity_preprocessor import detect_entities
-                    from modules.db_utils import get_connection
-                    conn = get_connection()
-                    try:
-                        entities_for_cache = detect_entities(original_query, conn)
-                        query_domain = entities_for_cache.get("domain_hint", "")
-                    finally:
-                        conn.close()
-                except Exception as e:
-                    print(f"[L2 Cache] Domain detection failed: {e}")
-                    pass  # 域检测失败不影响缓存查找
+                # 多域试探策略：由于多期间查询的域检测不稳定，尝试所有可能的域缓存键
+                # 优先级：financial_statement > vat > eit > unknown
+                print(f"[L2 Cache] Trying all domain cache keys for company_id={company_id}, type={taxpayer_type}, standard={accounting_standard}")
 
-                print(f"[L2 Cache] Checking for company_id={company_id}, type={taxpayer_type}, standard={accounting_standard}, domain={query_domain}")
-                l2_cached = get_template_cache(original_query, response_mode, taxpayer_type, accounting_standard, domain=query_domain)
+                l2_cached = None
+                tried_domains = []
+
+                # 1. 尝试财务报表域（最常见）
+                l2_cached = get_template_cache(original_query, response_mode, taxpayer_type, accounting_standard, domain="profit")
+                tried_domains.append("profit")
+                if not l2_cached:
+                    l2_cached = get_template_cache(original_query, response_mode, taxpayer_type, accounting_standard, domain="balance_sheet")
+                    tried_domains.append("balance_sheet")
+                if not l2_cached:
+                    l2_cached = get_template_cache(original_query, response_mode, taxpayer_type, accounting_standard, domain="cash_flow")
+                    tried_domains.append("cash_flow")
+                if not l2_cached:
+                    l2_cached = get_template_cache(original_query, response_mode, taxpayer_type, accounting_standard, domain="account_balance")
+                    tried_domains.append("account_balance")
+
+                # 2. 尝试VAT域
+                if not l2_cached:
+                    l2_cached = get_template_cache(original_query, response_mode, taxpayer_type, accounting_standard, domain="vat")
+                    tried_domains.append("vat")
+
+                # 3. 尝试EIT域
+                if not l2_cached:
+                    l2_cached = get_template_cache(original_query, response_mode, taxpayer_type, accounting_standard, domain="eit")
+                    tried_domains.append("eit")
+
+                # 4. 尝试未知域（向后兼容）
+                if not l2_cached:
+                    l2_cached = get_template_cache(original_query, response_mode, taxpayer_type, accounting_standard, domain="")
+                    tried_domains.append("unknown")
+
+                # 如果命中，需要获取 entities_for_cache 用于概念管线参数重建
+                entities_for_cache = {}
+                if l2_cached:
+                    hit_domain = l2_cached.get('domain', 'unknown')
+                    print(f"[L2 Cache] Hit: query={original_query[:50]}, domain={hit_domain}, type={taxpayer_type}")
+
+                    # 获取 entities 用于概念管线参数重建
+                    try:
+                        from modules.entity_preprocessor import detect_entities
+                        from modules.db_utils import get_connection
+                        conn = get_connection()
+                        try:
+                            entities_for_cache = detect_entities(original_query, conn)
+                        finally:
+                            conn.close()
+                    except Exception as e:
+                        print(f"[L2 Cache] Entity detection failed: {e}")
+                else:
+                    print(f"[L2 Cache] Miss after trying domains: {', '.join(tried_domains)}")
 
                 if l2_cached:
-                    print(f"[L2 Cache] Hit: query={original_query[:50]}, type={taxpayer_type}")
-
                     # 跨域模板：实例化所有子域SQL并执行
                     if l2_cached.get('cache_domain') == 'cross_domain':
                         sub_templates = l2_cached.get('sub_templates', [])
@@ -345,8 +379,7 @@ def _sse_generator(
                     log_query_path(original_query, company_id, "l2", time.time() - start_time, thinking_mode, response_mode, True)
                     return
 
-                # 精确匹配未命中，直接走pipeline（不再尝试智能适配）
-                print(f"[L2 Cache] Miss: query={original_query[:50]}, type={taxpayer_type}, standard={accounting_standard}")
+                # 所有域都未命中，走完整pipeline
 
             except Exception as e:
                 print(f"[L2 Cache] Error: {e}")

@@ -1,0 +1,342 @@
+{
+  "企业所得税税负率": {
+    "domain": "financial_metrics",
+    "view": "vw_financial_metrics",
+    "column": "metric_value",
+    "agg": null,
+    "filter": {
+      "metric_name": "企业所得税税负率"
+    },
+    "quarterly_strategy": "quarter_end",
+    "label": "企业所得税税负率",
+    "aliases": [
+      "所得税税负率",
+      "所得税税负"
+    ]
+  },
+  "增值税税负率": {
+    "domain": "financial_metrics",
+    "view": "vw_financial_metrics",
+    "column": "metric_value",
+    "agg": null,
+    "filter": {
+      "metric_name": "增值税税负率"
+    },
+    "quarterly_strategy": "quarter_end",
+    "label": "增值税税负率",
+    "aliases": [
+      "VAT税负率",
+      "增值税负担率"
+    ]
+  },
+  "综合税负率": {
+    "domain": "financial_metrics",
+    "view": "vw_financial_metrics",
+    "column": "metric_value",
+    "agg": null,
+    "filter": {
+      "metric_name": "综合税负率"
+    },
+    "quarterly_strategy": "quarter_end",
+    "label": "综合税负率",
+    "aliases": [
+      "综合税负"
+    ]
+  },
+  "毛利率": {
+    "domain": "financial_metrics",
+    "view": "vw_financial_metrics",
+    "column": "metric_value",
+    "agg": null,
+    "filter": {
+      "metric_name": "毛利率"
+    },
+    "quarterly_strategy": "quarter_end",
+    "label": "毛利率",
+    "aliases": [
+      "销售毛利率"
+    ]
+  },
+  "净利率": {
+    "domain": "financial_metrics",
+    "view": "vw_financial_metrics",
+    "column": "metric_value",
+    "agg": null,
+    "filter": {
+      "metric_name": "净利率"
+    },
+    "quarterly_strategy": "quarter_end",
+    "label": "净利率",
+    "aliases": [
+      "净利润率",
+      "销售净利率",
+      "利润率"
+    ]
+  },
+  "净资产收益率": {
+    "domain": "financial_metrics",
+    "view": "vw_financial_metrics",
+    "column": "metric_value",
+    "agg": null,
+    "filter": {
+      "metric_name": "净资产收益率(ROE)"
+    },
+    "quarterly_strategy": "quarter_end",
+    "label": "净资产收益率",
+    "aliases": [
+      "ROE"
+    ]
+  },
+  "净利润增长率": {
+    "domain": "financial_metrics",
+    "view": "vw_financial_metrics",
+    "column": "metric_value",
+    "agg": null,
+    "filter": {
+      "metric_name": "净利润增长率"
+    },
+    "quarterly_strategy": "quarter_end",
+    "label": "净利润增长率",
+    "aliases": [
+      "利润增长率"
+    ]
+  },
+  "资产负债率": {
+    "domain": "financial_metrics",
+    "view": "vw_financial_metrics",
+    "column": "metric_value",
+    "agg": null,
+    "filter": {
+      "metric_name": "资产负债率"
+    },
+    "quarterly_strategy": "quarter_end",
+    "label": "资产负债率",
+    "aliases": []
+  },
+  "流动比率": {
+    "domain": "financial_metrics",
+    "view": "vw_financial_metrics",
+    "column": "metric_value",
+    "agg": null,
+    "filter": {
+      "metric_name": "流动比率"
+    },
+    "quarterly_strategy": "quarter_end",
+    "label": "流动比率",
+    "aliases": []
+  },
+  "速动比率": {
+    "domain": "financial_metrics",
+    "view": "vw_financial_metrics",
+    "column": "metric_value",
+    "agg": null,
+    "filter": {
+      "metric_name": "速动比率"
+    },
+    "quarterly_strategy": "quarter_end",
+    "label": "速动比率",
+    "aliases": []
+  },
+  "现金债务保障比率": {
+    "domain": "financial_metrics",
+    "view": "vw_financial_metrics",
+    "column": "metric_value",
+    "agg": null,
+    "filter": {
+      "metric_name": "现金债务保障比率"
+    },
+    "quarterly_strategy": "quarter_end",
+    "label": "现金债务保障比率",
+    "aliases": []
+  },
+  "总资产周转率": {
+    "domain": "financial_metrics",
+    "view": "vw_financial_metrics",
+    "column": "metric_value",
+    "agg": null,
+    "filter": {
+      "metric_name": "总资产周转率"
+    },
+    "quarterly_strategy": "quarter_end",
+    "label": "总资产周转率",
+    "aliases": []
+  },
+  "应收账款周转率": {
+    "domain": "financial_metrics",
+    "view": "vw_financial_metrics",
+    "column": "metric_value",
+    "agg": null,
+    "filter": {
+      "metric_name": "应收账款周转率"
+    },
+    "quarterly_strategy": "quarter_end",
+    "label": "应收账款周转率",
+    "aliases": []
+  },
+  "存货周转率": {
+    "domain": "financial_metrics",
+    "view": "vw_financial_metrics",
+    "column": "metric_value",
+    "agg": null,
+    "filter": {
+      "metric_name": "存货周转率"
+    },
+    "quarterly_strategy": "quarter_end",
+    "label": "存货周转率",
+    "aliases": []
+  },
+  "应收款周转天数": {
+    "domain": "financial_metrics",
+    "view": "vw_financial_metrics",
+    "column": "metric_value",
+    "agg": null,
+    "filter": {
+      "metric_name": "应收款周转天数"
+    },
+    "quarterly_strategy": "quarter_end",
+    "label": "应收款周转天数",
+    "aliases": [
+      "应收账款周转天数"
+    ]
+  },
+  "营业收入增长率": {
+    "domain": "financial_metrics",
+    "view": "vw_financial_metrics",
+    "column": "metric_value",
+    "agg": null,
+    "filter": {
+      "metric_name": "营业收入增长率"
+    },
+    "quarterly_strategy": "quarter_end",
+    "label": "营业收入增长率",
+    "aliases": [
+      "收入增长率"
+    ]
+  },
+  "资产增长率": {
+    "domain": "financial_metrics",
+    "view": "vw_financial_metrics",
+    "column": "metric_value",
+    "agg": null,
+    "filter": {
+      "metric_name": "资产增长率"
+    },
+    "quarterly_strategy": "quarter_end",
+    "label": "资产增长率",
+    "aliases": [
+      "总资产增长率"
+    ]
+  },
+  "销售费用率": {
+    "domain": "financial_metrics",
+    "view": "vw_financial_metrics",
+    "column": "metric_value",
+    "agg": null,
+    "filter": {
+      "metric_name": "销售费用率"
+    },
+    "quarterly_strategy": "quarter_end",
+    "label": "销售费用率",
+    "aliases": []
+  },
+  "管理费用率": {
+    "domain": "financial_metrics",
+    "view": "vw_financial_metrics",
+    "column": "metric_value",
+    "agg": null,
+    "filter": {
+      "metric_name": "管理费用率"
+    },
+    "quarterly_strategy": "quarter_end",
+    "label": "管理费用率",
+    "aliases": []
+  },
+  "销售收现比": {
+    "domain": "financial_metrics",
+    "view": "vw_financial_metrics",
+    "column": "metric_value",
+    "agg": null,
+    "filter": {
+      "metric_name": "销售收现比"
+    },
+    "quarterly_strategy": "quarter_end",
+    "label": "销售收现比",
+    "aliases": []
+  },
+  "销项进项配比率": {
+    "domain": "financial_metrics",
+    "view": "vw_financial_metrics",
+    "column": "metric_value",
+    "agg": null,
+    "filter": {
+      "metric_name": "销项进项配比率"
+    },
+    "quarterly_strategy": "quarter_end",
+    "label": "销项进项配比率",
+    "aliases": []
+  },
+  "进项税额转出占比": {
+    "domain": "financial_metrics",
+    "view": "vw_financial_metrics",
+    "column": "metric_value",
+    "agg": null,
+    "filter": {
+      "metric_name": "进项税额转出占比"
+    },
+    "quarterly_strategy": "quarter_end",
+    "label": "进项税额转出占比",
+    "aliases": []
+  },
+  "应税所得率": {
+    "domain": "financial_metrics",
+    "view": "vw_financial_metrics",
+    "column": "metric_value",
+    "agg": null,
+    "filter": {
+      "metric_name": "应税所得率"
+    },
+    "quarterly_strategy": "quarter_end",
+    "label": "应税所得率",
+    "aliases": []
+  },
+  "发票开具异常率": {
+    "domain": "financial_metrics",
+    "view": "vw_financial_metrics",
+    "column": "metric_value",
+    "agg": null,
+    "filter": {
+      "metric_name": "发票开具异常率"
+    },
+    "quarterly_strategy": "quarter_end",
+    "label": "发票开具异常率",
+    "aliases": []
+  },
+  "零申报率": {
+    "domain": "financial_metrics",
+    "view": "vw_financial_metrics",
+    "column": "metric_value",
+    "agg": null,
+    "filter": {
+      "metric_name": "零申报率"
+    },
+    "quarterly_strategy": "quarter_end",
+    "label": "零申报率",
+    "aliases": []
+  },
+  "所得税税负率": {
+    "domain": "financial_metrics",
+    "view": "vw_financial_metrics",
+    "column": "metric_value",
+    "agg": null,
+    "filter": {
+      "metric_name": "企业所得税税负率"
+    },
+    "quarterly_strategy": "quarter_end",
+    "label": "所得税税负率",
+    "aliases": [
+      "EIT税负率",
+      "企业所得税税负率",
+      "企业所得税负担率"
+    ]
+  }
+}

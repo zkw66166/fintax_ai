@@ -27,10 +27,12 @@
    - 月：period_year = :year AND period_month = :month
    - 范围（月）：(period_year*100+period_month) BETWEEN :start_yyyymm AND :end_yyyymm
    - 多年比较：period_year IN (:year1, :year2)
-3. 财务指标粒度过滤（重要）：
-   - 单月查询（如"2025年12月"）：不过滤 period_type
-   - 跨月/跨季/跨年范围查询（如"2025年12月至2026年3月"）：必须添加 AND period_type IN ('quarterly', 'annual')
-   - 原因：月度数据(period_type='monthly')通常为NULL，仅季度和年度数据有值
+3. 财务指标粒度过滤（智能选择）：
+   - 季末月份（3,6,9,12）查询：优先使用 period_type IN ('quarterly', 'annual')
+   - 非季末月份（1,2,4,5,7,8,10,11）查询：使用 period_type = 'monthly'
+   - 跨期比较查询：每个CTE根据其月份独立选择 period_type
+   - 范围查询（"X至Y"）：统一使用 period_type IN ('quarterly', 'annual')
+   - 原因：季度和年度数据更完整，月度数据(period_type='monthly')通常为NULL
 
 【财务指标数据结构说明】
 - 财务指标表按月存储，每个纳税人每月有多条记录，每条记录对应一个指标
@@ -55,36 +57,72 @@
 注意：此模式仅用于明确的"比较"/"对比"查询（如"比较2024与2025年末资产负债率"）。
 如果用户问"从X到Y"/"X至Y月"等范围查询，应使用【趋势查询模式】，不要用此模式。
 
-当用户比较同一指标在不同期间的数据时（如"比较2024与2025年末资产负债率"），
-使用两个CTE分别查询两个期间，JOIN输出对比列+变动额。禁止使用BETWEEN返回中间月份。
-WITH t1 AS (
-  SELECT metric_name, metric_value, metric_unit, evaluation_level
+当用户比较同一指标在不同期间的数据时，使用UNION ALL模式返回所有有数据的期间。
+重要：使用UNION ALL而不是JOIN，这样即使某个期间数据缺失，其他期间的数据仍会返回。
+
+WITH base AS (
+  SELECT
+    period_year,
+    period_month,
+    metric_name,
+    metric_value,
+    metric_unit,
+    evaluation_level
   FROM vw_financial_metrics
-  WHERE taxpayer_id = :taxpayer_id AND period_year = 2024 AND period_month = 12
-    AND period_type = 'annual'
-    AND metric_name IN ('资产负债率', '净利率')
-),
-t2 AS (
-  SELECT metric_name, metric_value, metric_unit, evaluation_level
-  FROM vw_financial_metrics
-  WHERE taxpayer_id = :taxpayer_id AND period_year = 2025 AND period_month = 12
+  WHERE taxpayer_id = :taxpayer_id
+    AND ((period_year = 2024 AND period_month = 12) OR (period_year = 2025 AND period_month = 12))
     AND period_type = 'annual'
     AND metric_name IN ('资产负债率', '净利率')
 )
-SELECT t1.metric_name,
-       t1.metric_value AS "2024年末",
-       t2.metric_value AS "2025年末",
-       ROUND(t2.metric_value - t1.metric_value, 2) AS "变动",
-       t1.metric_unit
-FROM t1 JOIN t2 ON t1.metric_name = t2.metric_name
+SELECT
+  metric_name,
+  MAX(CASE WHEN period_year = 2024 AND period_month = 12 THEN metric_value END) AS "2024年末",
+  MAX(CASE WHEN period_year = 2025 AND period_month = 12 THEN metric_value END) AS "2025年末",
+  ROUND(
+    MAX(CASE WHEN period_year = 2025 AND period_month = 12 THEN metric_value END) -
+    MAX(CASE WHEN period_year = 2024 AND period_month = 12 THEN metric_value END),
+    2
+  ) AS "变动",
+  MAX(metric_unit) AS metric_unit
+FROM base
+GROUP BY metric_name
 LIMIT {max_rows}
 
 要点：
-- 每个期间一列，列别名用中文标注期间（如 "2024年末"）
-- 最后一列为变动额（后期 - 前期）
-- 如果比较多个指标，每个指标一行
+- 使用CASE WHEN透视，每个期间一列，列别名用中文标注期间（如 "2024年末"）
+- 变动额列：后期 - 前期（如果某期数据缺失，变动额为NULL）
+- 即使某个期间数据不存在，其他期间的数据仍会显示（NULL表示数据缺失）
 - 禁止用 BETWEEN 返回中间所有月份，只取起止两个期间
 - "年末"对应 period_month = 12, period_type = 'annual'
+
+【跨期比较 - 不同月份类型示例】
+当比较季末月与非季末月时，每个CTE独立选择period_type：
+WITH base AS (
+  SELECT
+    period_year,
+    period_month,
+    metric_name,
+    metric_value,
+    metric_unit
+  FROM vw_financial_metrics
+  WHERE taxpayer_id = :taxpayer_id
+    AND ((period_year = 2025 AND period_month = 12 AND period_type IN ('quarterly', 'annual'))
+         OR (period_year = 2026 AND period_month = 3 AND period_type IN ('quarterly', 'annual')))
+    AND metric_name IN ('净利率', '增值税税负率', '企业所得税税负率')
+)
+SELECT
+  metric_name,
+  MAX(CASE WHEN period_year = 2025 AND period_month = 12 THEN metric_value END) AS "2025年12月",
+  MAX(CASE WHEN period_year = 2026 AND period_month = 3 THEN metric_value END) AS "2026年3月",
+  ROUND(
+    MAX(CASE WHEN period_year = 2026 AND period_month = 3 THEN metric_value END) -
+    MAX(CASE WHEN period_year = 2025 AND period_month = 12 THEN metric_value END),
+    2
+  ) AS "变动",
+  MAX(metric_unit) AS metric_unit
+FROM base
+GROUP BY metric_name
+LIMIT {max_rows}
 
 【分类汇总明细查询模式】★ 当用户问"总和"/"合计"/"列出所有"时必须使用此模式 ★
 注意：SQLite的UNION ALL不支持ORDER BY中使用CASE表达式，必须用sort_key列排序。
@@ -128,6 +166,7 @@ LIMIT {max_rows}
 - 必须加 metric_value IS NOT NULL 过滤，避免返回空值行
 - 必须加 period_type IN ('quarterly', 'annual') 过滤，避免月度空值
 - 返回范围内所有有数据的期间，不要只返回起止两个端点
+- 对于企业所得税税负率等可能为NULL的指标，JOIN时会自动过滤
 
 【常见查询模式】
 1. 查询某个指标：WHERE metric_name = '毛利率' 或 WHERE metric_code = 'gross_margin'

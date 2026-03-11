@@ -104,8 +104,9 @@ def audit_sql(sql: str, allowed_views: list, max_rows: int = 1000, domain: str =
                 violations.append("缺少季度过滤(period_quarter)")
 
     # 科目余额需要period_month过滤（月度数据）
+    # PHASE 3 FIX: 添加VAT到月度域列表（一致性）
     _month_domains = ['account_balance', 'balance_sheet', 'profit', 'cash_flow',
-                      'financial_metrics', 'invoice']
+                      'financial_metrics', 'invoice', 'vat']
     if domain in _month_domains:
         has_month = (
             re.search(r'period_month\s*=', sql_stripped, re.I) or

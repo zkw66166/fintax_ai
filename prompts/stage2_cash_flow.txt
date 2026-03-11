@@ -28,6 +28,33 @@ WITH latest AS (
 )
 SELECT <columns> FROM latest WHERE rn = 1
 
+【跨年季度比较查询】
+PHASE 2 FIX: 当【用户意图JSON】中出现 cross_year_compare 字段且 is_quarter_query=true 时，表示用户要比较两个不同年份的同一季度。
+例如 cross_year_compare.year1=2024, cross_year_compare.year2=2025, cross_year_compare.quarter=1, cross_year_compare.months_in_quarter=[1,2,3]
+
+此时必须使用以下模式：
+
+**模式1：季度末汇总比较（推荐）**
+只返回季度末月份（3/6/9/12月）的数据：
+WITH latest AS (
+  SELECT taxpayer_id, taxpayer_name, period_year, period_month, time_range, revision_no,
+         <需要查询的指标列>,
+    ROW_NUMBER() OVER (
+      PARTITION BY taxpayer_id, period_year, period_month, time_range
+      ORDER BY revision_no DESC
+    ) AS rn
+  FROM <view>
+  WHERE taxpayer_id = :taxpayer_id
+    AND period_year IN (:year1, :year2)
+    AND period_month = :month1  -- 季度末月份（如Q1=3月）
+    AND time_range = '本年累计'  -- 季度累计数据
+)
+SELECT taxpayer_id, taxpayer_name, period_year, period_month, time_range,
+       <需要查询的指标列>
+FROM latest WHERE rn = 1
+ORDER BY period_year, period_month
+LIMIT {max_rows}
+
 【现金流量表数据结构说明】
 - 现金流量表按月存储，每月有两行数据：time_range='本期'（当月金额）和 time_range='本年累计'（年初至本月累计金额）
 - 企业会计准则视图 vw_cash_flow_eas：包含完整的三大活动现金流量（经营/投资/筹资）+ 汇率变动影响

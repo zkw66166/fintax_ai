@@ -29,6 +29,69 @@ WITH latest AS (
 )
 SELECT <columns> FROM latest WHERE rn = 1
 
+【跨年季度比较查询】
+当【用户意图JSON】中出现 cross_year_compare 字段且 is_quarter_query=true 时，表示用户要比较两个不同年份的同一季度。
+例如 cross_year_compare.year1=2024, cross_year_compare.year2=2025, cross_year_compare.quarter=1, cross_year_compare.months_in_quarter=[1,2,3]
+
+此时必须：
+1. 使用 period_year IN (:year1, :year2) 过滤两年
+2. 使用季度末月份过滤：period_month = :month1（如Q1用 period_month=3）
+3. 使用 item_type = 'total' 获取合计行（如需汇总）
+4. 示例（Q1比较，只取季度末月份）：
+WITH latest AS (
+  SELECT taxpayer_id, taxpayer_name, period_year, period_month,
+         item_type, time_range, taxpayer_type, revision_no,
+         <需要查询的指标列>,
+    ROW_NUMBER() OVER (
+      PARTITION BY taxpayer_id, period_year, period_month, item_type, time_range
+      ORDER BY revision_no DESC
+    ) AS rn
+  FROM <view>
+  WHERE taxpayer_id = :taxpayer_id
+    AND period_year IN (:year1, :year2)
+    AND period_month = :month1  -- 季度末月份（如Q1=3月）
+)
+SELECT taxpayer_id, taxpayer_name, period_year, period_month,
+       item_type, time_range,
+       <需要查询的指标列>
+FROM latest WHERE rn = 1
+ORDER BY period_year, period_month
+LIMIT {max_rows}
+
+注意：VAT按月申报，"季度比较"取季度末月份（如Q1取3月）的累计申报数据。
+
+【item_type 选择策略】
+PHASE 3 FIX: 增值税数据的 item_type 字段选择规则：
+- 优先使用 item_type = 'total' 获取合计数据（最常用）
+- 如果查询需要明细项目，使用 item_type = '一般项目'
+- 如果用户未明确指定类型，默认使用 'total'
+- 注意：不同纳税人的数据可能只有部分 item_type 值，SQL应该能处理空结果
+
+【跨年同月比较查询】
+当【用户意图JSON】中出现 cross_year_compare 字段且 is_quarter_query=false 时，表示用户要比较两个不同年份的同一月份。
+例如 cross_year_compare.year1=2024, cross_year_compare.year2=2025, cross_year_compare.month1=3, cross_year_compare.month2=3
+
+此时必须使用 period_year IN (:year1, :year2) AND period_month = :month1 过滤两年同月数据。
+
+WITH latest AS (
+  SELECT taxpayer_id, taxpayer_name, period_year, period_month,
+         item_type, time_range, taxpayer_type, revision_no,
+         <需要查询的指标列>,
+    ROW_NUMBER() OVER (
+      PARTITION BY taxpayer_id, period_year, period_month, item_type, time_range
+      ORDER BY revision_no DESC
+    ) AS rn
+  FROM <view>
+  WHERE taxpayer_id = :taxpayer_id
+    AND period_year IN (:year1, :year2)
+    AND period_month = :month1
+)
+SELECT taxpayer_id, taxpayer_name, period_year, period_month,
+       <需要查询的指标列>
+FROM latest WHERE rn = 1
+ORDER BY period_year
+LIMIT {max_rows}
+
 【核心原则：始终返回明细行】
 - 禁止只返回单个聚合数字。任何查询都必须包含维度列（期间、项目类型等），让用户看到数据来源。
 - 即使用户问"总和"/"合计"，也必须先列出明细行，再用 UNION ALL 追加合计行。

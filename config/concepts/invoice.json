@@ -1,0 +1,72 @@
+{
+  "采购金额": {
+    "domain": "invoice",
+    "view": "vw_inv_spec_purchase",
+    "column": "amount",
+    "agg": "SUM",
+    "quarterly_strategy": "sum_months",
+    "label": "采购金额",
+    "aliases": [
+      "采购额",
+      "进项金额",
+      "采购不含税金额"
+    ]
+  },
+  "销售金额": {
+    "domain": "invoice",
+    "view": "vw_inv_spec_sales",
+    "column": "amount",
+    "agg": "SUM",
+    "quarterly_strategy": "sum_months",
+    "label": "销售金额",
+    "aliases": [
+      "销售额",
+      "销项金额",
+      "销售不含税金额"
+    ]
+  },
+  "采购税额": {
+    "domain": "invoice",
+    "view": "vw_inv_spec_purchase",
+    "column": "tax_amount",
+    "agg": "SUM",
+    "quarterly_strategy": "sum_months",
+    "label": "采购税额",
+    "aliases": [
+      "进项发票税额"
+    ]
+  },
+  "销售税额": {
+    "domain": "invoice",
+    "view": "vw_inv_spec_sales",
+    "column": "tax_amount",
+    "agg": "SUM",
+    "quarterly_strategy": "sum_months",
+    "label": "销售税额",
+    "aliases": [
+      "销项发票税额"
+    ]
+  },
+  "采购价税合计": {
+    "domain": "invoice",
+    "view": "vw_inv_spec_purchase",
+    "column": "total_amount",
+    "agg": "SUM",
+    "quarterly_strategy": "sum_months",
+    "label": "采购价税合计",
+    "aliases": [
+      "采购含税金额"
+    ]
+  },
+  "销售价税合计": {
+    "domain": "invoice",
+    "view": "vw_inv_spec_sales",
+    "column": "total_amount",
+    "agg": "SUM",
+    "quarterly_strategy": "sum_months",
+    "label": "销售价税合计",
+    "aliases": [
+      "销售含税金额"
+    ]
+  }
+}

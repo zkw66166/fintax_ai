@@ -54,6 +54,64 @@ SELECT <columns> FROM latest WHERE rn = 1
   - 使用 (period_year*100+period_month) BETWEEN :start_yyyymm AND :end_yyyymm
   - 示例：WHERE (period_year*100+period_month) BETWEEN 202510 AND 202512
 
+【跨年季度比较查询】
+当【用户意图JSON】中出现 cross_year_compare 字段且 is_quarter_query=true 时，表示用户要比较两个不同年份的同一季度。
+例如 cross_year_compare.year1=2024, cross_year_compare.year2=2025, cross_year_compare.quarter=1, cross_year_compare.months_in_quarter=[1,2,3]
+
+此时必须使用以下模式之一：
+
+**模式1：季度末汇总比较（推荐）**
+只返回季度末月份（3/6/9/12月）的累计数据，适合与EIT季报对齐：
+```sql
+WITH latest AS (
+  SELECT taxpayer_id, taxpayer_name, period_year, period_month,
+         time_range, accounting_standard_name, revision_no,
+         <需要查询的指标列>,
+    ROW_NUMBER() OVER (
+      PARTITION BY taxpayer_id, period_year, period_month, time_range
+      ORDER BY revision_no DESC
+    ) AS rn
+  FROM <view>
+  WHERE taxpayer_id = :taxpayer_id
+    AND period_year IN (:year1, :year2)
+    AND period_month = :month1  -- 季度末月份（如3月代表Q1）
+    AND time_range = '本年累计'
+)
+SELECT taxpayer_id, taxpayer_name, period_year, period_month, time_range,
+       <需要查询的指标列>
+FROM latest WHERE rn = 1
+ORDER BY period_year, period_month
+LIMIT {max_rows}
+```
+
+**模式2：季度内各月明细比较**
+返回季度内所有月份的明细数据（如Q1的1/2/3月）：
+```sql
+WITH latest AS (
+  SELECT taxpayer_id, taxpayer_name, period_year, period_month,
+         time_range, accounting_standard_name, revision_no,
+         <需要查询的指标列>,
+    ROW_NUMBER() OVER (
+      PARTITION BY taxpayer_id, period_year, period_month, time_range
+      ORDER BY revision_no DESC
+    ) AS rn
+  FROM <view>
+  WHERE taxpayer_id = :taxpayer_id
+    AND period_year IN (:year1, :year2)
+    AND period_month IN (1, 2, 3)  -- 从 months_in_quarter 字段获取
+    AND time_range = '本期'  -- 月度明细用"本期"
+)
+SELECT taxpayer_id, taxpayer_name, period_year, period_month, time_range,
+       <需要查询的指标列>
+FROM latest WHERE rn = 1
+ORDER BY period_year, period_month
+LIMIT {max_rows}
+```
+
+**选择原则**：
+- 默认使用模式1（季度末汇总），与EIT季报数据对齐
+- 仅当用户明确要求"各月明细"/"月度数据"时使用模式2
+
 【利润表计算逻辑（用于理解数据关系，不需要在SQL中计算）】
 - 营业利润 = 营业收入 - 营业成本 - 税金及附加 - 销售费用 - 管理费用 - 研发费用 - 财务费用 + 其他收益 + 投资收益 + 公允价值变动收益 - 信用减值损失 - 资产减值损失 + 资产处置收益
 - 利润总额 = 营业利润 + 营业外收入 - 营业外支出

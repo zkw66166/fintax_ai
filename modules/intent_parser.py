@@ -161,10 +161,17 @@ def parse_intent(user_query: str, entities: dict, synonym_hits: list, conversati
         if 'aggregation' not in intent:
             intent['aggregation'] = {'group_by': [], 'order_by': [], 'limit': 1000}
 
-        # EIT域默认值
-        if intent['domain'] == 'eit' and not intent.get('eit_scope'):
-            # 根据是否有季度信息判断报表类型
-            if entities.get('period_quarter'):
+        # EIT域：根据期间强制选择正确的报表类型（不依赖LLM判断，总是覆盖）
+        # 原因：LLM可能错误地为3/6/9/12月选择年报，但这些月份应使用季报
+        if intent['domain'] == 'eit':
+            _eit_quarter_end_months = {3, 6, 9, 12}
+            _eit_month = entities.get('period_month')
+            _eit_end_month = entities.get('period_end_month')
+            _eit_is_quarter_end = (
+                (_eit_month and int(_eit_month) in _eit_quarter_end_months) or
+                (_eit_end_month and int(_eit_end_month) in _eit_quarter_end_months)
+            )
+            if entities.get('period_quarter') or _eit_is_quarter_end:
                 intent['eit_scope'] = {
                     'report_type': 'quarter',
                     'views': ['vw_eit_quarter_main'],
@@ -252,7 +259,28 @@ def parse_intent(user_query: str, entities: dict, synonym_hits: list, conversati
             taxpayer_type = entities.get('taxpayer_type')
             for sd in cross_list:
                 scope_key = f'{sd}_scope'
-                # 确保每个子域的scope中有正确的views
+                # EIT域：强制覆盖（不检查existing_scope），确保季末月份使用季报
+                if sd == 'eit':
+                    _cd_quarter_end_months = {3, 6, 9, 12}
+                    _cd_period_month = entities.get('period_month')
+                    _cd_period_end_month = entities.get('period_end_month')
+                    _cd_is_quarter_end = (
+                        (_cd_period_month and int(_cd_period_month) in _cd_quarter_end_months) or
+                        (_cd_period_end_month and int(_cd_period_end_month) in _cd_quarter_end_months)
+                    )
+                    if entities.get('period_quarter') or _cd_is_quarter_end:
+                        intent[scope_key] = {
+                            'report_type': 'quarter',
+                            'views': ['vw_eit_quarter_main'],
+                        }
+                    else:
+                        intent[scope_key] = {
+                            'report_type': 'annual',
+                            'views': ['vw_eit_annual_main'],
+                        }
+                    continue  # EIT已处理，跳过后续逻辑
+
+                # 其他域：仅在未设置时填充默认值
                 existing_scope = intent.get(scope_key)
                 if not existing_scope or not existing_scope.get('views'):
                     if sd == 'vat':
@@ -265,17 +293,6 @@ def parse_intent(user_query: str, entities: dict, synonym_hits: list, conversati
                             intent[scope_key] = {
                                 'taxpayer_type_hint': '一般纳税人',
                                 'views': ['vw_vat_return_general'],
-                            }
-                    elif sd == 'eit':
-                        if entities.get('period_quarter'):
-                            intent[scope_key] = {
-                                'report_type': 'quarter',
-                                'views': ['vw_eit_quarter_main'],
-                            }
-                        else:
-                            intent[scope_key] = {
-                                'report_type': 'annual',
-                                'views': ['vw_eit_annual_main'],
                             }
                     elif sd == 'balance_sheet':
                         # 使用entities中的accounting_standard（已从数据库查询）
