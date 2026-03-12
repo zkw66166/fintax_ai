@@ -4,13 +4,8 @@ import ResultTable from '../ResultTable/ResultTable'
 import ChartRenderer from '../ChartRenderer/ChartRenderer'
 import GrowthTable from '../GrowthTable/GrowthTable'
 import PipelineDetail from '../PipelineDetail/PipelineDetail'
+import { ROUTE_CONFIG } from '../../config/routeConfig'
 import s from './ChatMessage.module.css'
-
-const ROUTE_CONFIG = {
-  financial_data: { label: '📊 财务数据查询', cls: s.routeFinancial },
-  tax_incentive: { label: '📋 本地知识库查询结果', cls: s.routeTax },
-  regulation: { label: '🤖 法规知识库', cls: s.routeRegulation },
-}
 
 export default function ChatMessage({ msg, interpretation, isSelectionMode, isSelected, onToggleSelect, questionText }) {
   const [copied, setCopied] = useState(false)
@@ -95,7 +90,7 @@ export default function ChatMessage({ msg, interpretation, isSelectionMode, isSe
       {checkbox}
       <div style={{ flex: 1, minWidth: 0 }}>
         <div className={s.aiLabel}>智能体:</div>
-        <span className={`${s.routeBadge} ${rc.cls}`}>{rc.label}</span>
+        <span className={`${s.routeBadge} ${s[rc.cls]}`}>{rc.label}</span>
         {msg.cacheHit && <span className={s.cacheBadge}>缓存结果</span>}
 
         {/* Loading state */}

@@ -154,7 +154,9 @@ export function useChatHistory(limit = 5) {
       }
 
       const result = await response.json()
-      setData(result)
+      // 适配新的返回格式：{items: [], total: ...} 或旧格式：[]
+      const historyItems = Array.isArray(result) ? result : (result.items || [])
+      setData(historyItems)
     } catch (err) {
       setError(err.message)
     } finally {

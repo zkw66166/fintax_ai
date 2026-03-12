@@ -15,7 +15,9 @@ export async function fetchCompanies() {
 
 export async function fetchHistory(limit = 100) {
   const res = await fetch(`${BASE}/chat/history?limit=${limit}`, { headers: authHeaders() })
-  return res.json()
+  const data = await res.json()
+  // Normalize response: handle both array format and paginated object format
+  return Array.isArray(data) ? data : (data.items || [])
 }
 
 export async function saveHistoryEntry(entry) {

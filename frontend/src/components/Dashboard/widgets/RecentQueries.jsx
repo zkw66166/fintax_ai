@@ -1,19 +1,11 @@
 import { Clock } from 'lucide-react'
 import WidgetCard from '../shared/WidgetCard'
 import { useChatHistory } from '../hooks/useDashboardData'
+import { getRouteBadge } from '../../../config/routeConfig'
 import s from './RecentQueries.module.css'
 
 export default function RecentQueries({ onQueryClick }) {
   const { data, loading, error, refetch } = useChatHistory(5)
-
-  const getRouteBadge = (route) => {
-    const badges = {
-      financial_data: { label: '财务数据', color: '#3b82f6' },
-      tax_incentive: { label: '税收优惠', color: '#10b981' },
-      regulation: { label: '法规知识', color: '#f59e0b' }
-    }
-    return badges[route] || { label: '未知', color: '#6b7280' }
-  }
 
   const formatTime = (timestamp) => {
     const date = new Date(timestamp)

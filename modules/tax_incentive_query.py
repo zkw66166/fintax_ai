@@ -175,27 +175,106 @@ class TaxIncentiveQuery:
         return intent
 
     # ------------------------------------------------------------------
+    # 多样性采样（Diversity Sampling）
+    # ------------------------------------------------------------------
+
+    def _apply_diversity_sampling(self, rows: list, limit: int = 20, min_per_group: int = 1) -> list:
+        """
+        Apply diversity sampling to ensure broad coverage across policy categories.
+        Groups by incentive_category and incentive_subcategory fields and samples evenly.
+
+        Args:
+            rows: List of policy dicts from database query
+            limit: Maximum number of policies to return (default 20)
+            min_per_group: Minimum policies per group (default 1)
+
+        Returns:
+            List of diverse policies sampled across categories
+        """
+        if not rows or len(rows) <= limit:
+            return rows
+
+        # Group by (incentive_category, incentive_subcategory) tuple for finer granularity
+        from collections import defaultdict
+        categories = defaultdict(list)
+        for row in rows:
+            category = row.get("incentive_category", "未分类")
+            subcategory = row.get("incentive_subcategory", "未分类")
+            # Use tuple as key for two-level grouping
+            key = (category, subcategory)
+            categories[key].append(row)
+
+        # Calculate samples per category
+        num_categories = len(categories)
+        samples_per_category = max(min_per_group, limit // num_categories)
+
+        # If samples_per_category is too small, increase it to ensure we use the full limit
+        if samples_per_category * num_categories < limit:
+            samples_per_category += 1
+
+        # Sample evenly across categories (collect from ALL groups first)
+        diverse_results = []
+        for category_rows in categories.values():
+            diverse_results.extend(category_rows[:samples_per_category])
+
+        # If we still haven't reached the limit, add more from larger groups
+        if len(diverse_results) < limit:
+            # Sort groups by size (descending)
+            sorted_groups = sorted(categories.values(), key=len, reverse=True)
+            for category_rows in sorted_groups:
+                # Add more policies from this group (beyond samples_per_category)
+                already_added = min(len(category_rows), samples_per_category)
+                remaining_in_group = category_rows[already_added:]
+                for row in remaining_in_group:
+                    if len(diverse_results) >= limit:
+                        break
+                    diverse_results.append(row)
+                if len(diverse_results) >= limit:
+                    break
+
+        return diverse_results[:limit]
+
+    # ------------------------------------------------------------------
     # 四级搜索实现
     # ------------------------------------------------------------------
 
     def _structured_search(self, conn, tax_type, entity_kws, limit) -> list:
         like_clauses = []
         params = [tax_type]
+
+        # Determine if this is a broad query (no entity keywords)
+        is_broad_query = not entity_kws
+
         if entity_kws:
             for ek in entity_kws:
                 like_clauses.append(
-                    "(incentive_items LIKE ? OR keywords LIKE ? OR qualification LIKE ?)"
+                    "(incentive_items LIKE ? OR keywords LIKE ? OR qualification LIKE ? OR incentive_subcategory LIKE ?)"
                 )
-                params.extend([f"%{ek}%"] * 3)
+                params.extend([f"%{ek}%"] * 4)
+
         where_extra = " AND " + " AND ".join(like_clauses) if like_clauses else ""
+
+        # For broad queries, fetch more rows for diversity sampling
+        # For entity queries, also fetch more to enable diversity if needed
+        fetch_limit = limit * 10 if (is_broad_query or entity_kws) else limit
+
         sql = f"""
             SELECT * FROM tax_incentives
             WHERE tax_type = ?{where_extra}
             LIMIT ?
         """
-        params.append(limit)
+        params.append(fetch_limit)
         rows = conn.execute(sql, params).fetchall()
-        return [dict(r) for r in rows]
+        result_rows = [dict(r) for r in rows]
+
+        # Apply diversity sampling for broad queries OR entity queries with many results
+        if is_broad_query and len(result_rows) > limit:
+            result_rows = self._apply_diversity_sampling(result_rows, limit)
+        elif entity_kws and len(result_rows) > limit:
+            # Entity queries with >limit results also get diversity sampling
+            result_rows = self._apply_diversity_sampling(result_rows, limit)
+
+        return result_rows
 
     def _entity_search(self, conn, entity_kws, limit) -> list:
         if not entity_kws:
@@ -204,17 +283,32 @@ class TaxIncentiveQuery:
         params = []
         for ek in entity_kws:
             clauses.append(
-                "(incentive_items LIKE ? OR keywords LIKE ? OR qualification LIKE ? OR enterprise_type LIKE ?)"
+                "(incentive_items LIKE ? OR keywords LIKE ? OR qualification LIKE ? OR enterprise_type LIKE ? OR incentive_subcategory LIKE ?)"
             )
-            params.extend([f"%{ek}%"] * 4)
+            params.extend([f"%{ek}%"] * 5)
+
+        # Fetch more rows to enable diversity sampling if needed
+        # For entity queries, fetch up to 50 rows (more than broad queries)
+        fetch_limit = min(limit * 15, 50)
+
         sql = f"""
             SELECT * FROM tax_incentives
             WHERE {" AND ".join(clauses)}
             LIMIT ?
         """
-        params.append(limit)
+        params.append(fetch_limit)
         rows = conn.execute(sql, params).fetchall()
-        return [dict(r) for r in rows]
+        result_rows = [dict(r) for r in rows]
+
+        # Apply diversity sampling only if result count significantly exceeds limit
+        # Use a higher threshold (1.5x) for entity queries to preserve more results
+        if len(result_rows) > limit * 1.5:
+            result_rows = self._apply_diversity_sampling(result_rows, limit)
+        elif len(result_rows) > limit:
+            # If only slightly over limit, just truncate (no diversity needed)
+            result_rows = result_rows[:limit]
+
+        return result_rows
 
     def _keyword_search(self, conn, keywords, limit) -> list:
         if not keywords:
