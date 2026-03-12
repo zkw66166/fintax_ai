@@ -94,7 +94,7 @@ export default function App() {
               pendingInputText={pendingInputText}
               onPendingInputTextConsumed={() => setPendingInputText('')}
             />
-            <HistoryPanel items={historyItems} setItems={setHistoryItems} onSelect={handleHistoryClick} onReinvoke={handleReinvoke} />
+            <HistoryPanel items={historyItems} setItems={setHistoryItems} onSelect={handleHistoryClick} onReinvoke={handleReinvoke} currentUser={user} />
           </>
         )
       case 'profile':
