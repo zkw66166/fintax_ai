@@ -3,7 +3,8 @@ import json
 import threading
 from pathlib import Path
 from typing import Optional
-from fastapi import APIRouter, Depends
+from datetime import datetime
+from fastapi import APIRouter, Depends, HTTPException, Body
 from fastapi.responses import StreamingResponse
 from api.auth import get_current_user
 from pydantic import BaseModel, Field
@@ -19,6 +20,45 @@ class ReinvokeRequest(BaseModel):
     """Request model for re-invoking a query from history."""
     history_index: int = Field(..., ge=0, description="Index in history array")
     thinking_mode: str = Field(default="quick", description="Override thinking mode: quick|think|deep")
+
+
+def _normalize_timestamp(ts_str: str) -> str:
+    """规范化timestamp为ISO格式，用于排序
+
+    支持格式：
+    - ISO: "2024-03-12T15:30:00.000Z" (新格式，优先排序)
+    - 中文: "下午3:30:00" (旧格式，视为历史数据，排在后面)
+
+    返回可排序的字符串（ISO格式）
+    """
+    if not ts_str:
+        return ""
+
+    # 已经是ISO格式（新数据）
+    if "T" in ts_str or "-" in ts_str[:10]:
+        return ts_str
+
+    # 中文格式：视为旧数据，使用1970-01-01的日期确保排在新数据后面
+    try:
+        # 解析"下午3:30:00"或"上午10:15:30"
+        if "下午" in ts_str:
+            time_part = ts_str.replace("下午", "").strip()
+            hour, minute, second = map(int, time_part.split(":"))
+            if hour != 12:
+                hour += 12
+        elif "上午" in ts_str:
+            time_part = ts_str.replace("上午", "").strip()
+            hour, minute, second = map(int, time_part.split(":"))
+            if hour == 12:
+                hour = 0
+        else:
+            return ts_str
+
+        # 使用1970-01-01作为旧数据的日期
+        dt = datetime(1970, 1, 1, hour, minute, second)
+        return dt.isoformat()
+    except:
+        return ts_str
 
 
 def _load() -> list:
@@ -62,6 +102,31 @@ def _derive_domain(entry: dict) -> str:
     return domain_hint
 
 
+def _require_admin(user: dict):
+    """检查用户是否为 sys/admin，否则抛出 403"""
+    role = user.get("role", "")
+    if role not in ("sys", "admin"):
+        raise HTTPException(status_code=403, detail="仅管理员可执行此操作")
+
+
+def _resolve_usernames(user_ids: set) -> dict:
+    """批量解析 user_id → username 映射"""
+    if not user_ids:
+        return {}
+    try:
+        from modules.db_utils import get_connection
+        conn = get_connection()
+        placeholders = ",".join("?" for _ in user_ids)
+        rows = conn.execute(
+            f"SELECT id, username FROM users WHERE id IN ({placeholders})",
+            list(user_ids),
+        ).fetchall()
+        conn.close()
+        return {r[0]: r[1] for r in rows}
+    except Exception:
+        return {}
+
+
 @router.get("/chat/history/counts")
 async def get_history_counts(
     deduplicate: bool = True,
@@ -76,6 +141,8 @@ async def get_history_counts(
     注意：统计逻辑与 /chat/history 端点一致，先按分类过滤再去重
     """
     history = _load()
+    # 过滤已删除的记录
+    history = [h for h in history if not h.get("deleted", False)]
     known_routes = {"financial_data", "tax_incentive", "regulation"}
 
     def dedup_with_priority(items):
@@ -129,6 +196,46 @@ async def get_history_counts(
     return counts
 
 
+@router.get("/chat/history/deleted")
+async def get_deleted_history(user: dict = Depends(get_current_user)):
+    """获取已删除的历史记录列表（仅 sys/admin）
+
+    返回所有 deleted=True 的记录，附带创建者/删除者用户名
+    """
+    _require_admin(user)
+    history = _load()
+    deleted = [h for h in history if h.get("deleted", False)]
+
+    # 收集需要解析的 user_id
+    uid_set = set()
+    for h in deleted:
+        if h.get("user_id"):
+            uid_set.add(h["user_id"])
+        if h.get("deleted_by"):
+            uid_set.add(h["deleted_by"])
+    username_map = _resolve_usernames(uid_set)
+
+    # 构建返回数据
+    items = []
+    for h in deleted:
+        items.append({
+            "timestamp": h.get("timestamp", ""),
+            "query": h.get("query", ""),
+            "route": h.get("route", ""),
+            "user_id": h.get("user_id"),
+            "creator_name": username_map.get(h.get("user_id"), "unknown"),
+            "deleted_by": h.get("deleted_by"),
+            "deleter_name": username_map.get(h.get("deleted_by"), "unknown"),
+            "deleted_at": h.get("deleted_at", ""),
+            "protected": h.get("protected", False),
+            "cache_key": h.get("cache_key", ""),
+        })
+
+    # 按删除时间降序
+    items.sort(key=lambda x: x.get("deleted_at", ""), reverse=True)
+    return {"items": items, "total": len(items)}
+
+
 @router.get("/chat/history")
 async def get_history(
     limit: int = 100,
@@ -152,6 +259,8 @@ async def get_history(
         page_size: 每页条数
     """
     history = _load()
+    # 过滤已删除的记录
+    history = [h for h in history if not h.get("deleted", False)]
     user_id = user.get("id", 0)
 
     # 过滤：仅当前用户
@@ -170,6 +279,14 @@ async def get_history(
     # 过滤：关键词搜索
     if search:
         history = [h for h in history if search in h.get("query", "")]
+
+    # 为每条记录添加原始索引（文件中的位置，越小越新）
+    for idx, item in enumerate(history):
+        item['_original_index'] = idx
+
+    # 先按原始索引排序（确保所有分类都是最新在前）
+    # 文件中的顺序已经是最新在前，直接使用索引即可
+    history.sort(key=lambda x: x.get('_original_index', 999999))
 
     # 去重：按 query 分组，优先保留有明确 route 的记录
     if deduplicate:
@@ -197,8 +314,8 @@ async def get_history(
                     seen[query] = item
 
         history = list(seen.values())
-        # 按 timestamp 降序排序
-        history.sort(key=lambda x: x.get("timestamp", ""), reverse=True)
+        # 去重后再次排序，确保顺序正确（按原始索引，越小越新）
+        history.sort(key=lambda x: x.get('_original_index', 999999))
 
     # 应用 limit（去重后）
     history = history[:limit]
@@ -217,6 +334,43 @@ async def get_history(
         "page_size": page_size,
         "total_pages": total_pages
     }
+
+
+@router.post("/chat/history/restore")
+async def restore_history(body: dict = Body(...), user: dict = Depends(get_current_user)):
+    """恢复已删除的历史记录（仅 sys/admin）
+
+    请求: { "timestamps": [...] } 或 { "restore_all": true }
+    恢复后标记 protected=True，普通用户无法再次删除
+    """
+    _require_admin(user)
+    history = _load()
+    timestamps = body.get("timestamps", [])
+    restore_all = body.get("restore_all", False)
+    user_id = user.get("id", 0)
+    now = datetime.now().isoformat()
+    restored = 0
+
+    if restore_all:
+        for h in history:
+            if h.get("deleted", False):
+                h["deleted"] = False
+                h["protected"] = True
+                h["restored_by"] = user_id
+                h["restored_at"] = now
+                restored += 1
+    else:
+        ts_set = set(timestamps)
+        for h in history:
+            if h.get("timestamp") in ts_set and h.get("deleted", False):
+                h["deleted"] = False
+                h["protected"] = True
+                h["restored_by"] = user_id
+                h["restored_at"] = now
+                restored += 1
+
+    _save(history)
+    return {"ok": True, "restored": restored}
 
 
 @router.post("/chat/history")
@@ -256,58 +410,112 @@ async def save_history_entry(entry: dict, user: dict = Depends(get_current_user)
     entry.setdefault("result", {})
     entry.setdefault("company_id", "")
 
-    # 移除调试字段（精简 JSON）
-    entry.pop("main_output", None)
-    entry.pop("entity_text", None)
-    entry.pop("intent_text", None)
-    entry.pop("sql_text", None)
+    # 保留调试字段以便后端日志可见
+    # 注意：这会增加 JSON 文件大小，但对调试很有用
 
     history = [entry] + history
     _save(history[:HISTORY_MAX])
     return {"ok": True}
 
 
+@router.delete("/chat/history/permanent")
+async def permanent_delete_history(body: dict = Body(...), user: dict = Depends(get_current_user)):
+    """彻底删除历史记录（仅 sys/admin）
+
+    从 query_history.json 中物理移除记录，同步删除 L1/L2 缓存文件
+    此操作不可恢复
+    """
+    _require_admin(user)
+    from api.services.query_cache import delete_query_caches
+    from api.services.template_cache import delete_template_cache, find_l2_keys_for_entry
+
+    timestamps = body.get("timestamps", [])
+    if not timestamps:
+        return {"ok": False, "error": "timestamps 不能为空"}
+
+    history = _load()
+    ts_set = set(timestamps)
+
+    # 找到要删除的记录，收集缓存键
+    l1_keys = []
+    l2_keys = []
+    to_remove = []
+
+    for h in history:
+        if h.get("timestamp") in ts_set:
+            to_remove.append(h)
+            ck = h.get("cache_key", "")
+            if ck:
+                l1_keys.append(ck)
+            l2_keys.extend(find_l2_keys_for_entry(h))
+
+    # 物理移除记录
+    history = [h for h in history if h.get("timestamp") not in ts_set]
+    _save(history)
+
+    # 删除 L1 缓存
+    if l1_keys:
+        try:
+            delete_query_caches(l1_keys)
+        except Exception as e:
+            print(f"[permanent_delete] L1 cache delete error: {e}")
+
+    # 删除 L2 缓存
+    for k in l2_keys:
+        try:
+            delete_template_cache(k)
+        except Exception as e:
+            print(f"[permanent_delete] L2 cache delete error: {e}")
+
+    return {
+        "ok": True,
+        "removed": len(to_remove),
+        "l1_deleted": len(l1_keys),
+        "l2_deleted": len(l2_keys),
+    }
+
+
 @router.delete("/chat/history")
-async def delete_history(body: dict, user: dict = Depends(get_current_user)):
-    """删除历史记录，带权限控制
+async def delete_history(body: dict = Body(...), user: dict = Depends(get_current_user)):
+    """软删除历史记录，带权限控制
 
     权限规则：
     - sys/admin 用户：可以删除所有记录
-    - 其他用户：只能删除自己创建的记录
+    - 其他用户：只能删除自己创建的记录（protected 记录除外）
 
-    Note: 缓存文件保留，以便其他用户或未来查询可以复用
+    软删除：标记为已删除，不实际移除记录，保留缓存文件
     """
-    ids = body.get("ids", [])
+    timestamps = body.get("timestamps")
     history = _load()
 
     user_role = user.get("role", "")
     user_id = user.get("id", 0)
+    now = datetime.now().isoformat()
 
-    if not ids:
-        # 删除全部：仅 sys/admin 可以删除所有，其他用户只删除自己的
-        if user_role in ("sys", "admin"):
-            _save([])
-        else:
-            history = [h for h in history if h.get("user_id") != user_id]
-            _save(history)
-    else:
-        # 删除指定记录
-        id_set = set(ids)
+    # 安全检查：必须提供 timestamps 且不能为空
+    if not timestamps or not isinstance(timestamps, list) or len(timestamps) == 0:
+        return {"ok": False, "error": "必须提供要删除的记录 timestamps"}
 
-        if user_role in ("sys", "admin"):
-            # sys/admin 可以删除任何记录
-            history = [h for i, h in enumerate(history) if i not in id_set]
-        else:
-            # 其他用户只能删除自己的记录
-            history = [
-                h for i, h in enumerate(history)
-                if i not in id_set or h.get("user_id") != user_id
-            ]
+    # 删除指定记录：按 timestamp 查找并标记
+    ts_set = set(timestamps)
+    marked = 0
+    for h in history:
+        if h.get("timestamp") in ts_set:
+            if h.get("deleted", False):
+                continue
+            if user_role in ("sys", "admin"):
+                h["deleted"] = True
+                h["deleted_by"] = user_id
+                h["deleted_at"] = now
+                marked += 1
+            elif not h.get("protected", False) and h.get("user_id") == user_id:
+                h["deleted"] = True
+                h["deleted_by"] = user_id
+                h["deleted_at"] = now
+                marked += 1
 
-        _save(history)
-
-    return {"ok": True}
-
+    _save(history)
+    return {"ok": True, "marked": marked}
 
 
 @router.post("/chat/history/reinvoke")

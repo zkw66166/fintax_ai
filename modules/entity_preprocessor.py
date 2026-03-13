@@ -1016,12 +1016,13 @@ def detect_entities(user_query: str, db_conn: sqlite3.Connection) -> dict:
                 second_month = result['period_end_month']
                 result['period_months'] = [first_month, second_month]
             elif result['domain_hint'] != 'eit':
-                # 非"季度末"模式：展开为月份范围
-                # 第一个季度的结束月
-                result['period_end_month'] = result['period_quarter'] * 3
-                # 第二个季度的结束月（跨年情况）
-                # 注意：这里不修改period_end_month，因为跨年跨季度需要特殊处理
-                # 让后续管线识别为多期间查询
+                # 非"季度末"模式：对于"与/和"枚举，设置为两个季度末月份的离散列表
+                first_month = result['period_quarter'] * 3
+                second_month = second_quarter * 3
+                result['period_month'] = first_month
+                result['period_end_month'] = second_month
+                # 标记为枚举模式（离散的两个季度末月份）
+                result['period_months'] = [first_month, second_month]
 
     # 2b. "各季度"/"每个季度"/"每季度"/"所有季度"/"每季" → 全部4个季度
     if not result['period_quarter']:
@@ -1055,9 +1056,14 @@ def detect_entities(user_query: str, db_conn: sqlite3.Connection) -> dict:
             result['domain_hint'] = 'eit'  # "年度"查询默认EIT
 
     # 3a. 多年范围检测（优先级高，必须在单年月份提取之前）
-    # "2024年到2026年" / "2024年与2026年" / "2024与2025年末" / "2024-2025" / "2024、2025"
-    m_year_range = re.search(r'(\d{4})\s*年?\s*[到至与和跟及、\-]\s*(\d{4})\s*年?', resolved_query)
-    if m_year_range:
+    # 拆分：连续范围 "2024年到2026年" vs 枚举 "2024年与2026年"
+    # 连续范围: "2024年到2026年" / "2024-2025"
+    m_year_range_cont = re.search(r'(\d{4})\s*年?\s*[到至\-]\s*(\d{4})\s*年?', resolved_query)
+    # 枚举: "2024年与2026年" / "2024年和2025年"
+    m_year_range_enum = re.search(r'(\d{4})\s*年?\s*[与和跟及、]\s*(\d{4})\s*年?', resolved_query)
+
+    if m_year_range_cont or m_year_range_enum:
+        m_year_range = m_year_range_cont if m_year_range_cont else m_year_range_enum
         start_y = int(m_year_range.group(1))
         end_y = int(m_year_range.group(2))
         # 只有在不是跨年月份范围的情况下才设置多年范围
@@ -1068,7 +1074,11 @@ def detect_entities(user_query: str, db_conn: sqlite3.Connection) -> dict:
         )
         if not m_cross_year_check:
             result['period_year'] = start_y
-            result['period_years'] = list(range(start_y, end_y + 1))
+            # 连续范围: 生成完整序列; 枚举: 只取两个端点
+            if m_year_range_cont:
+                result['period_years'] = list(range(start_y, end_y + 1))
+            else:
+                result['period_years'] = [start_y, end_y]
 
     # 4. 提取期次（月份）— 使用resolved_query
     if not result['period_year']:
@@ -1084,17 +1094,30 @@ def detect_entities(user_query: str, db_conn: sqlite3.Connection) -> dict:
             result['period_year'] = int(m.group(1))
             result['period_month'] = int(m.group(2))
 
-    # 范围: "2025年1月到3月" / "2025年1月与3月"
-    m_range = re.search(r'(\d{4})\s*年\s*(\d{1,2})\s*月\s*[到至与和跟及\-]\s*(\d{1,2})\s*月', resolved_query)
-    if m_range:
-        result['period_year'] = int(m_range.group(1))
-        result['period_month'] = int(m_range.group(2))
-        result['period_end_month'] = int(m_range.group(3))
+    # 范围: 拆分连续范围 "2025年1月到3月" vs 枚举 "2025年1月与3月"
+    # 连续范围: "2025年1月到3月"
+    m_range_cont = re.search(r'(\d{4})\s*年\s*(\d{1,2})\s*月\s*[到至\-]\s*(\d{1,2})\s*月', resolved_query)
+    # 枚举: "2025年1月与3月"
+    m_range_enum = re.search(r'(\d{4})\s*年\s*(\d{1,2})\s*月\s*[与和跟及]\s*(\d{1,2})\s*月', resolved_query)
 
-    # 跨年比较/范围: "2023年12月与2024年12月" / "2024年1月到2025年3月"
-    # 支持分隔符：到、至、-、与、和、跟、及
-    # PHASE 0 FIX: Extract BOTH year-month pairs using findall instead of single search
-    if re.search(r'(\d{4})\s*年\s*(\d{1,2})\s*月\s*[到至与和跟及\-]\s*(\d{4})\s*年\s*(\d{1,2})\s*月', resolved_query):
+    if m_range_cont:
+        result['period_year'] = int(m_range_cont.group(1))
+        result['period_month'] = int(m_range_cont.group(2))
+        result['period_end_month'] = int(m_range_cont.group(3))
+    elif m_range_enum:
+        result['period_year'] = int(m_range_enum.group(1))
+        start_m = int(m_range_enum.group(2))
+        end_m = int(m_range_enum.group(3))
+        result['period_month'] = start_m
+        result['period_months'] = [start_m, end_m]
+
+    # 跨年比较/范围: 拆分连续范围 vs 枚举
+    # 连续范围: "2024年1月到2025年3月"
+    cross_year_cont = re.search(r'(\d{4})\s*年\s*(\d{1,2})\s*月\s*[到至\-]\s*(\d{4})\s*年\s*(\d{1,2})\s*月', resolved_query)
+    # 枚举: "2023年12月与2024年12月"
+    cross_year_enum = re.search(r'(\d{4})\s*年\s*(\d{1,2})\s*月\s*[与和跟及]\s*(\d{4})\s*年\s*(\d{1,2})\s*月', resolved_query)
+
+    if cross_year_cont or cross_year_enum:
         all_year_months = re.findall(r'(\d{4})\s*年\s*(\d{1,2})\s*月', resolved_query)
         if len(all_year_months) >= 2:
             start_y = int(all_year_months[0][0])
@@ -1103,12 +1126,22 @@ def detect_entities(user_query: str, db_conn: sqlite3.Connection) -> dict:
             end_m = int(all_year_months[1][1])
             result['period_year'] = start_y
             result['period_month'] = start_m
-            if start_y == end_y:
-                result['period_end_month'] = end_m
+
+            if cross_year_cont:
+                # 连续范围: 设置 period_end_year/period_end_month
+                if start_y == end_y:
+                    result['period_end_month'] = end_m
+                else:
+                    result['period_end_year'] = end_y
+                    result['period_end_month'] = end_m
             else:
-                # 跨年：记录结束年月，pipeline需要特殊处理
+                # 枚举: 设置 period_months 为离散列表（需要配合 period_years）
+                # 对于跨年枚举，使用 period_end_year 标记第二个年份
                 result['period_end_year'] = end_y
                 result['period_end_month'] = end_m
+                # 标记为枚举模式（通过设置 period_months，即使跨年也表示离散期间）
+                if start_y == end_y:
+                    result['period_months'] = [start_m, end_m]
 
     # "年末" → period_month=12, "年初" → period_month=1（仅在无月份时生效）
     if not result.get('period_month'):

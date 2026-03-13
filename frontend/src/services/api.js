@@ -28,12 +28,36 @@ export async function saveHistoryEntry(entry) {
   })
 }
 
-export async function deleteHistory(ids) {
+export async function deleteHistory(timestamps) {
   return fetch(`${BASE}/chat/history`, {
     method: 'DELETE',
     headers: authHeaders({ 'Content-Type': 'application/json' }),
-    body: JSON.stringify({ ids }),
+    body: JSON.stringify({ timestamps }),
   })
+}
+
+export async function fetchDeletedHistory() {
+  const res = await fetch(`${BASE}/chat/history/deleted`, { headers: authHeaders() })
+  if (!res.ok) throw new Error(`Fetch deleted history failed: ${res.status}`)
+  return res.json()
+}
+
+export async function restoreHistory(timestamps, restoreAll = false) {
+  const res = await fetch(`${BASE}/chat/history/restore`, {
+    method: 'POST',
+    headers: authHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify(restoreAll ? { restore_all: true } : { timestamps }),
+  })
+  return res.json()
+}
+
+export async function permanentDeleteHistory(timestamps) {
+  const res = await fetch(`${BASE}/chat/history/permanent`, {
+    method: 'DELETE',
+    headers: authHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ timestamps }),
+  })
+  return res.json()
 }
 
 /**

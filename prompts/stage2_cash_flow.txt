@@ -12,6 +12,27 @@
 2. 期间过滤（按用户问题选择）：
    - 月：period_year = :year AND period_month = :month
    - 范围（月）：(period_year*100+period_month) BETWEEN :start_yyyymm AND :end_yyyymm
+   - 枚举月份（如"12月和3月"）：period_month IN (12, 3) 或 ((period_year=2024 AND period_month=12) OR (period_year=2025 AND period_month=3))
+   - 跨年枚举月份：必须使用 OR 连接，并用括号包裹整个条件，例如：
+     WHERE taxpayer_id = :taxpayer_id
+       AND ((period_year=2024 AND period_month=12) OR (period_year=2025 AND period_month=3))
+       AND time_range = '本年累计'
+   - **多年全年查询**（如"2024年和2025年的全年现金流"、"对比2024年和2025年的全年"）：
+     ⚠️ "全年"特指12月的本年累计数据，必须使用：
+     WHERE taxpayer_id = :taxpayer_id
+       AND ((period_year=2024 AND period_month=12) OR (period_year=2025 AND period_month=12))
+       AND time_range = '本年累计'
+     或简化为：period_year IN (2024, 2025) AND period_month = 12 AND time_range = '本年累计'
+
+     ⚠️ 关键判断依据：
+     - 如果 filters.period.period_years 存在且长度>1 → 多年查询
+     - 如果用户问"全年"/"年度"/"整年" → 查询12月的本年累计数据
+     - 必须为每个年份生成独立的 (period_year=YYYY AND period_month=12) 条件
+     - 禁止使用 BETWEEN（会返回中间月份的所有数据）
+     - 禁止只查询最后一年（必须包含所有年份）
+     - 必须添加 time_range = '本年累计' 过滤条件
+   注意：当实体信息包含 period_months=[12, 3] 时，表示只查询这些特定月份，不是范围查询
+   ⚠️ 重要：OR条件必须用括号包裹，避免与taxpayer_id条件混淆
 
 【修订版本处理】
 若需取最新修订版本，使用窗口函数：
@@ -72,6 +93,114 @@ LIMIT {max_rows}
 - 筹资活动现金流量净额 = 筹资活动现金流入小计 - 筹资活动现金流出小计
 - 现金净增加额 = 经营净额 + 投资净额 + 筹资净额 + 汇率变动影响
 - 期末现金 = 期初现金 + 现金净增加额
+
+【占比/比例计算模式】★ 当用户问"占比"/"比例"/"比重"/"百分比"时必须使用此模式 ★
+当用户问某项目占总计的比例时（如"销售商品收到的现金占经营活动现金流入的比例"），
+使用 ROUND(component * 100.0 / NULLIF(total, 0), 2) AS "占比(%)" 计算百分比。
+必须同时返回原始值列和占比列，让用户看到数据来源。
+
+示例SQL（单期间占比查询）：
+WITH latest AS (
+  SELECT taxpayer_id, taxpayer_name, period_year, period_month, time_range, revision_no,
+         operating_inflow_sales, operating_inflow_subtotal,
+    ROW_NUMBER() OVER (PARTITION BY taxpayer_id, period_year, period_month, time_range ORDER BY revision_no DESC) AS rn
+  FROM vw_cash_flow_eas
+  WHERE taxpayer_id = :taxpayer_id AND period_year = :year AND period_month = :month AND time_range = '本年累计'
+)
+SELECT period_year, period_month,
+       operating_inflow_sales AS "销售商品收到的现金",
+       operating_inflow_subtotal AS "经营活动现金流入小计",
+       ROUND(operating_inflow_sales * 100.0 / NULLIF(operating_inflow_subtotal, 0), 2) AS "占比(%)"
+FROM latest WHERE rn = 1
+LIMIT {max_rows}
+
+要点：
+- 用 NULLIF(total, 0) 防止除零
+- 占比列别名必须包含"占比(%)"
+- 同时保留原始值列（分子和分母）
+- 默认查询 time_range = '本年累计'
+
+【结构分析/构成分析模式（UNPIVOT）】★ 当用户问"结构"/"构成"/"组成"/"各项占比"时必须使用此模式 ★
+当用户问现金流量的结构组成时（如"经营活动现金流出构成"/"投资活动现金流入结构"），
+需将宽表的多个组件列拆为行，每行一个组件，包含金额和占比。
+使用 UNION ALL 将各组件列拆为 (项目名称, 金额, "占比(%)") 行。
+
+⚠️ 重要：构成分析查询必须返回以下列：
+- period_year, period_month（如果有多个期间）
+- "项目名称"（字符串列，如"销售商品收到的现金"等）
+- "金额"（数值列）
+- "占比(%)"（百分比列）
+
+示例SQL（单期间经营活动现金流出构成分析）：
+WITH latest AS (
+  SELECT taxpayer_id, period_year, period_month, time_range, revision_no,
+         operating_outflow_subtotal, operating_outflow_purchase, operating_outflow_labor,
+         operating_outflow_tax, operating_outflow_other,
+         ROW_NUMBER() OVER (PARTITION BY taxpayer_id, period_year, period_month, time_range ORDER BY revision_no DESC) AS rn
+  FROM vw_cash_flow_eas
+  WHERE taxpayer_id = :taxpayer_id AND period_year = :year AND period_month = :month AND time_range = '本年累计'
+),
+base AS (SELECT * FROM latest WHERE rn = 1),
+items AS (
+  SELECT '购买商品、接受劳务支付的现金' AS "项目名称", operating_outflow_purchase AS "金额",
+         ROUND(operating_outflow_purchase * 100.0 / NULLIF(operating_outflow_subtotal, 0), 2) AS "占比(%)" FROM base
+  UNION ALL
+  SELECT '支付给职工以及为职工支付的现金', operating_outflow_labor,
+         ROUND(operating_outflow_labor * 100.0 / NULLIF(operating_outflow_subtotal, 0), 2) FROM base
+  UNION ALL
+  SELECT '支付的各项税费', operating_outflow_tax,
+         ROUND(operating_outflow_tax * 100.0 / NULLIF(operating_outflow_subtotal, 0), 2) FROM base
+  UNION ALL
+  SELECT '支付其他与经营活动有关的现金', operating_outflow_other,
+         ROUND(operating_outflow_other * 100.0 / NULLIF(operating_outflow_subtotal, 0), 2) FROM base
+)
+SELECT "项目名称", "金额", "占比(%)" FROM items WHERE "金额" > 0
+ORDER BY "金额" DESC
+LIMIT {max_rows}
+
+示例SQL（多期间经营活动现金流出构成分析，如"2024年12月与2025年3月"）：
+WITH latest AS (
+  SELECT taxpayer_id, period_year, period_month, time_range, revision_no,
+         operating_outflow_subtotal, operating_outflow_purchase, operating_outflow_labor,
+         operating_outflow_tax, operating_outflow_other,
+         ROW_NUMBER() OVER (PARTITION BY taxpayer_id, period_year, period_month, time_range ORDER BY revision_no DESC) AS rn
+  FROM vw_cash_flow_eas
+  WHERE taxpayer_id = :taxpayer_id
+    AND ((period_year=2024 AND period_month=12) OR (period_year=2025 AND period_month=3))
+    AND time_range = '本年累计'
+),
+base AS (SELECT * FROM latest WHERE rn = 1),
+items AS (
+  SELECT period_year, period_month, '购买商品、接受劳务支付的现金' AS "项目名称", operating_outflow_purchase AS "金额",
+         ROUND(operating_outflow_purchase * 100.0 / NULLIF(operating_outflow_subtotal, 0), 2) AS "占比(%)" FROM base
+  UNION ALL
+  SELECT period_year, period_month, '支付给职工以及为职工支付的现金', operating_outflow_labor,
+         ROUND(operating_outflow_labor * 100.0 / NULLIF(operating_outflow_subtotal, 0), 2) FROM base
+  UNION ALL
+  SELECT period_year, period_month, '支付的各项税费', operating_outflow_tax,
+         ROUND(operating_outflow_tax * 100.0 / NULLIF(operating_outflow_subtotal, 0), 2) FROM base
+  UNION ALL
+  SELECT period_year, period_month, '支付其他与经营活动有关的现金', operating_outflow_other,
+         ROUND(operating_outflow_other * 100.0 / NULLIF(operating_outflow_subtotal, 0), 2) FROM base
+)
+SELECT period_year, period_month, "项目名称", "金额", "占比(%)" FROM items WHERE "金额" > 0
+ORDER BY period_year, period_month, "金额" DESC
+LIMIT {max_rows}
+
+其他构成层级（参照上述模式）：
+- 经营活动现金流入构成：operating_inflow_subtotal = operating_inflow_sales + operating_inflow_tax_refund + operating_inflow_other
+- 投资活动现金流入构成：investing_inflow_subtotal = investing_inflow_sale_investment + investing_inflow_returns + investing_inflow_disposal_assets + investing_inflow_disposal_subsidiary + investing_inflow_other
+- 投资活动现金流出构成：investing_outflow_subtotal = investing_outflow_purchase_assets + investing_outflow_purchase_investment + investing_outflow_acquire_subsidiary + investing_outflow_other
+- 筹资活动现金流入构成：financing_inflow_subtotal = financing_inflow_capital + financing_inflow_borrowing + financing_inflow_other
+- 筹资活动现金流出构成：financing_outflow_subtotal = financing_outflow_debt_repayment + financing_outflow_dividend_interest + financing_outflow_other
+- 现金净增加额构成：net_increase_cash = operating_net_cash + investing_net_cash + financing_net_cash + fx_impact（注意：此层级允许负值，使用 WHERE "金额" != 0）
+
+要点：
+- CTE中 SELECT * FROM latest / SELECT * FROM base 是允许的（latest和base是CTE名称）
+- 每个 UNION ALL SELECT 对应一个组件，用字符串字面量标注项目名称
+- WHERE "金额" > 0 过滤零值组件（现金净增加额构成除外）
+- 按金额降序排列
+- 必须包含 time_range = '本年累计' 过滤条件
 
 【核心原则：始终返回明细行】
 - 禁止只返回单个聚合数字。任何查询都必须包含维度列（期间、时间范围等），让用户看到数据来源。

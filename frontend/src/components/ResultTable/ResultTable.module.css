@@ -3,7 +3,7 @@
   max-width: 100%;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  overflow: hidden;
+  overflow-y: hidden;
 }
 .table {
   width: 100%;
