@@ -21,9 +21,14 @@ export default function useChatHistory(items, setItems) {
   )
 
   const removeEntries = useCallback(
-    (indices) => {
-      deleteHistory(indices).catch(() => {})
-      setItems((prev) => prev.filter((_, i) => !indices.includes(i)))
+    async (timestamps) => {
+      try {
+        const res = await deleteHistory(timestamps)
+        const data = await res.json()
+        if (data.ok && data.marked > 0) {
+          setItems((prev) => prev.filter((item) => !timestamps.includes(item.timestamp)))
+        }
+      } catch { /* ignore */ }
     },
     [setItems],
   )

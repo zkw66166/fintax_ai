@@ -1,12 +1,14 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import s from './SystemSettingsPage.module.css'
 import UserManagement from './UserManagement'
 import BasicSettings from './BasicSettings'
 import ServiceSettings from './ServiceSettings'
-import { Users, Settings, Wrench } from 'lucide-react'
+import SessionManagement from './SessionManagement'
+import { Users, Settings, Wrench, History } from 'lucide-react'
 
 const TABS = [
   { key: 'user-management', label: '用户管理', icon: Users },
+  { key: 'session', label: '会话管理', icon: History, adminOnly: true },
   { key: 'basic', label: '基础设置', icon: Settings },
   { key: 'service', label: '服务设置', icon: Wrench },
 ]
@@ -14,10 +16,16 @@ const TABS = [
 export default function SystemSettingsPage({ currentUser }) {
   const [activeTab, setActiveTab] = useState('user-management')
 
+  const visibleTabs = useMemo(() => {
+    const role = currentUser?.role || currentUser?.user_role
+    const isAdmin = role === 'sys' || role === 'admin'
+    return TABS.filter(tab => !tab.adminOnly || isAdmin)
+  }, [currentUser])
+
   return (
     <div className={s.page}>
       <div className={s.tabBar}>
-        {TABS.map((tab) => {
+        {visibleTabs.map((tab) => {
           const Icon = tab.icon
           const isActive = activeTab === tab.key
           return (
@@ -36,6 +44,9 @@ export default function SystemSettingsPage({ currentUser }) {
       <div className={s.tabContent}>
         {activeTab === 'user-management' && (
           <UserManagement currentUser={currentUser} />
+        )}
+        {activeTab === 'session' && (
+          <SessionManagement currentUser={currentUser} />
         )}
         {activeTab === 'basic' && <BasicSettings currentUser={currentUser} />}
         {activeTab === 'service' && <ServiceSettings currentUser={currentUser} />}

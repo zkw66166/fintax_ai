@@ -393,6 +393,75 @@ def get_template_cache(query: str, response_mode: str, taxpayer_type: str,
         return None
 
 
+def delete_template_cache(cache_key: str) -> bool:
+    """删除指定 L2 缓存文件
+
+    Args:
+        cache_key: L2 缓存键（不含 prefix）
+
+    Returns:
+        是否成功删除
+    """
+    _ensure_dir()
+    fp = _cache_path(cache_key)
+    if fp.exists():
+        with _lock:
+            try:
+                fp.unlink(missing_ok=True)
+                _index.pop(cache_key, None)
+                return True
+            except Exception as e:
+                print(f"[L2 Cache] Delete failed: {e}")
+                return False
+    return False
+
+
+def find_l2_keys_for_entry(entry: dict) -> list:
+    """根据 history entry 信息查找可能的 L2 cache keys
+
+    由于 L2 缓存键依赖 domain + taxpayer_type/accounting_standard，
+    需要从 entry 中提取这些信息并重新计算所有可能的 key。
+
+    Args:
+        entry: 历史记录条目
+
+    Returns:
+        可能的 L2 cache key 列表
+    """
+    query = entry.get("query", "")
+    response_mode = entry.get("response_mode", "detailed")
+    result = entry.get("result", {})
+    entities = result.get("entities", {})
+    domain = entry.get("domain", "") or entities.get("domain_hint", "")
+    route = entry.get("route", "")
+
+    if not query or route != "financial_data":
+        return []
+
+    keys = []
+    cache_domain = detect_cache_domain(domain=domain)
+
+    if cache_domain == "financial_statement":
+        for std in ("企业会计准则", "小企业会计准则"):
+            k = _build_cache_key_v2(query, response_mode, cache_domain, accounting_standard=std)
+            keys.append(k)
+    elif cache_domain == "vat":
+        for tp in ("一般纳税人", "小规模纳税人"):
+            k = _build_cache_key_v2(query, response_mode, cache_domain, taxpayer_type=tp)
+            keys.append(k)
+    elif cache_domain == "eit":
+        k = _build_cache_key_v2(query, response_mode, cache_domain)
+        keys.append(k)
+    else:
+        tp = entities.get("taxpayer_type", "")
+        std = entities.get("accounting_standard", "")
+        if tp and std:
+            k = _build_cache_key_v2(query, response_mode, cache_domain, taxpayer_type=tp, accounting_standard=std)
+            keys.append(k)
+
+    return keys
+
+
 def cleanup_l2_cache(max_files: int = QUERY_CACHE_MAX_FILES_L2) -> int:
     """清理 L2 缓存（LRU 淘汰）
 

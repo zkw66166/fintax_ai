@@ -53,6 +53,22 @@ def is_multi_period_query(entities: dict) -> bool:
     return False
 
 
+def is_composition_query(query: str) -> bool:
+    """检测是否为构成/结构分析查询。
+
+    构成查询特征：包含"构成"、"组成"、"结构"、"分布"、"占比"等关键词。
+    这类查询需要拆解目标项为多个子项，不应该走概念管线的单值查询。
+
+    Args:
+        query: 用户查询文本
+
+    Returns:
+        True if composition query, False otherwise
+    """
+    composition_keywords = ['构成', '组成', '结构', '分布', '占比', '比例', '明细']
+    return any(keyword in query for keyword in composition_keywords)
+
+
 def _extract_requested_metrics(query: str, entities: dict) -> list:
     """从用户查询中提取所有请求的指标名称（中文）。
 
@@ -540,11 +556,14 @@ def run_pipeline(user_query: str, db_path: str = None, progress_callback=None, c
 
         # Step 3b2: 概念时序查询（单概念+时间粒度即可触发，非跨域也走概念管线）
         # 注意：多期间比较查询（如"2024Q4与2025Q1"）应走标准管线，不走概念管线
+        # 注意：构成/结构查询（如"总资产构成分析"）应走标准管线，不走概念管线
         if domain != 'cross_domain':
             concepts = resolve_concepts(resolved_query, entities)
             time_gran = entities.get('time_granularity') or detect_time_granularity(resolved_query, entities)
             is_multi_period = is_multi_period_query(entities)
-            if len(concepts) >= 1 and time_gran and not is_multi_period:
+            is_composition = is_composition_query(user_query)  # Check original query for composition keywords
+
+            if len(concepts) >= 1 and time_gran and not is_multi_period and not is_composition:
                 # NEW: Extract all requested metrics
                 requested_metrics = _extract_requested_metrics(resolved_query, entities)
                 print(f"[3b2] 单概念时序管线: {[c['name'] for c in concepts]}, 粒度={time_gran}")
@@ -594,6 +613,8 @@ def run_pipeline(user_query: str, db_path: str = None, progress_callback=None, c
                     print(f"    概念管线失败，回退标准NL2SQL管线")
             elif is_multi_period:
                 print(f"[3b2] 检测到多期间查询，跳过概念管线，走标准NL2SQL管线")
+            elif is_composition:
+                print(f"[3b2] 检测到构成/结构查询，跳过概念管线，走标准NL2SQL管线")
 
         # Step 3c: 跨域查询分支（G2）- 统一使用 LLM 跨域管线
         if domain == 'cross_domain':

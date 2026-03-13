@@ -1,0 +1,222 @@
+INFO:     Will watch for changes in these directories: ['D:\\fintax_ai']
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [30872] using StatReload
+D:\fintax_ai\api\routes\data_management.py:194: FastAPIDeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+  version: str = Query("both", regex="^(v1|v2|both)$", description="指标版本"),
+D:\fintax_ai\api\routes\data_management.py:268: FastAPIDeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+  version: str = Query("both", regex="^(v1|v2|both)$", description="指标版本"),
+INFO:     Started server process [11952]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+[concept_registry] Loaded 244 concepts from JSON config
+INFO:     127.0.0.1:50684 - "GET /api/chat/history/counts HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:50697 - "GET /api/chat/history?page=1 HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:49677 - "GET /api/auth/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49679 - "GET /api/auth/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49683 - "GET /api/companies HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49684 - "GET /api/data-management/companies-overview HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49685 - "GET /api/chat/history?limit=5 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51616 - "POST /api/data-management/quality-check?company_id=91310115MA2KZZZZZZ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58854 - "GET /api/data-management/companies-overview HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49688 - "GET /api/companies HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54702 - "GET /api/profile/91310115MA2KZZZZZZ?year=2025 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54701 - "POST /api/data-management/quality-check?company_id=91310115MA2KZZZZZZ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53843 - "POST /api/data-management/quality-check?company_id=91320200MA02BBBBB2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53871 - "POST /api/data-management/quality-check?company_id=91330200MA2KYYYYYY HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61186 - "POST /api/data-management/quality-check?company_id=91110108MA01AAAAA1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52775 - "POST /api/data-management/quality-check?company_id=91310000MA1FL8XQ30 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53413 - "POST /api/data-management/quality-check?company_id=91330200MA2KXXXXXX HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56154 - "GET /api/profile/91310000MA1FL8XQ30?year=2025 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52515 - "GET /api/profile/91330200MA2KXXXXXX?year=2025 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65327 - "GET /api/profile/91110108MA01AAAAA1?year=2025 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61838 - "POST /api/data-management/quality-check?company_id=92440300MA5EQXL17P HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64941 - "POST /api/data-management/quality-check?company_id=91330100MA2KWWWWWW HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58302 - "GET /api/profile/92440300MA5EQXL17P?year=2025 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51452 - "GET /api/profile/91330200MA2KYYYYYY?year=2025 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63002 - "GET /api/chat/history?limit=5 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62270 - "GET /api/profile/91330100MA2KWWWWWW?year=2025 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60390 - "GET /api/profile/91320200MA02BBBBB2?year=2025 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63375 - "POST /api/data-management/quality-check?company_id=91330200MA2KYYYYYY HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52264 - "POST /api/data-management/quality-check?company_id=91110108MA01AAAAA1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50453 - "POST /api/data-management/quality-check?company_id=91310000MA1FL8XQ30 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49670 - "POST /api/data-management/quality-check?company_id=91330200MA2KXXXXXX HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59388 - "POST /api/data-management/quality-check?company_id=91310115MA2KZZZZZZ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54293 - "POST /api/data-management/quality-check?company_id=91330100MA2KWWWWWW HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60614 - "POST /api/data-management/quality-check?company_id=91320200MA02BBBBB2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65427 - "POST /api/data-management/quality-check?company_id=92440300MA5EQXL17P HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54908 - "GET /api/companies HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52092 - "GET /api/profile/91310115MA2KZZZZZZ?year=2025 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51523 - "GET /api/chat/history?deduplicate=true&page=1&page_size=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51897 - "GET /api/chat/history?limit=100 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57985 - "GET /api/profile/91110108MA01AAAAA1?year=2025 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55631 - "GET /api/profile/91330200MA2KXXXXXX?year=2025 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58940 - "GET /api/profile/91310000MA1FL8XQ30?year=2025 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53407 - "GET /api/profile/91320200MA02BBBBB2?year=2025 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54988 - "GET /api/profile/91330100MA2KWWWWWW?year=2025 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59044 - "GET /api/profile/91330200MA2KYYYYYY?year=2025 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56398 - "GET /api/profile/92440300MA5EQXL17P?year=2025 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49327 - "GET /api/chat/history/counts?deduplicate=true HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51383 - "GET /api/chat/history?deduplicate=true&page=1&page_size=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63814 - "GET /api/profile/91310115MA2KZZZZZZ?year=2025 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57819 - "GET /api/companies HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49381 - "GET /api/chat/history?limit=100 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63421 - "GET /api/chat/history/counts?deduplicate=true HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61982 - "GET /api/profile/91310115MA2KZZZZZZ?year=2025 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64852 - "GET /api/chat/history?deduplicate=true&page=1&page_size=20&category=financial_data HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64853 - "GET /api/chat/history/counts?deduplicate=true HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52921 - "GET /api/chat/history?deduplicate=true&page=1&page_size=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52923 - "GET /api/chat/history/counts?deduplicate=true HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62881 - "GET /api/chat/history?deduplicate=true&page=1&page_size=20&category=financial_data HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62882 - "GET /api/chat/history/counts?deduplicate=true HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60812 - "GET /api/chat/history?deduplicate=true&page=1&page_size=20&category=tax_incentive HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60813 - "GET /api/chat/history/counts?deduplicate=true HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51697 - "GET /api/chat/history?deduplicate=true&page=1&page_size=20&category=regulation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51698 - "GET /api/chat/history/counts?deduplicate=true HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58517 - "GET /api/chat/history?deduplicate=true&page=1&page_size=20&category=mixed_analysis HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58518 - "GET /api/chat/history/counts?deduplicate=true HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50305 - "GET /api/chat/history?deduplicate=true&page=1&page_size=20&category=regulation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50306 - "GET /api/chat/history/counts?deduplicate=true HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60028 - "GET /api/chat/history?deduplicate=true&page=1&page_size=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60029 - "GET /api/chat/history/counts?deduplicate=true HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63861 - "GET /api/chat/history/counts?deduplicate=true HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63862 - "GET /api/chat/history?deduplicate=true&page=1&page_size=20&category=financial_data HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63986 - "GET /api/chat/history?deduplicate=true&page=1&page_size=20&category=tax_incentive HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63987 - "GET /api/chat/history/counts?deduplicate=true HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62291 - "GET /api/chat/history?deduplicate=true&page=1&page_size=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62293 - "GET /api/chat/history/counts?deduplicate=true HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65197 - "GET /api/chat/history?deduplicate=true&page=1&page_size=20&category=mixed_analysis HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65198 - "GET /api/chat/history/counts?deduplicate=true HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55843 - "GET /api/chat/history?deduplicate=true&page=1&page_size=20&category=regulation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55844 - "GET /api/chat/history/counts?deduplicate=true HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50272 - "GET /api/chat/history?deduplicate=true&page=1&page_size=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50273 - "GET /api/chat/history/counts?deduplicate=true HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60934 - "GET /api/chat/history?deduplicate=true&page=1&page_size=20&category=financial_data HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60935 - "GET /api/chat/history/counts?deduplicate=true HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55803 - "GET /api/chat/history?deduplicate=true&page=1&page_size=20&category=tax_incentive HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55804 - "GET /api/chat/history/counts?deduplicate=true HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60374 - "GET /api/chat/history/counts?deduplicate=true HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60375 - "GET /api/chat/history?deduplicate=true&page=1&page_size=20&category=financial_data HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57362 - "GET /api/chat/history/counts?deduplicate=true HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57363 - "GET /api/chat/history?deduplicate=true&page=1&page_size=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50453 - "GET /api/chat/history?deduplicate=true&page=1&page_size=20&category=mixed_analysis HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50454 - "GET /api/chat/history/counts?deduplicate=true HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56432 - "GET /api/chat/history?deduplicate=true&page=1&page_size=20&category=tax_incentive HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56433 - "GET /api/chat/history/counts?deduplicate=true HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62956 - "POST /api/auth/captcha/verify HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53813 - "POST /api/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63231 - "GET /api/companies HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63233 - "GET /api/chat/history/counts?deduplicate=true HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63232 - "GET /api/chat/history?limit=100 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63234 - "GET /api/chat/history?deduplicate=true&page=1&page_size=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62748 - "GET /api/chat/history/counts?deduplicate=true HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61944 - "GET /api/companies HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54831 - "GET /api/chat/history?limit=100 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62781 - "GET /api/chat/history?deduplicate=true&page=1&page_size=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62631 - "GET /api/chat/history?deduplicate=true&page=1&page_size=20&category=financial_data HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62632 - "GET /api/chat/history/counts?deduplicate=true HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50631 - "GET /api/chat/history?deduplicate=true&page=1&page_size=20&category=tax_incentive HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50632 - "GET /api/chat/history/counts?deduplicate=true HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51670 - "GET /api/chat/history/counts?deduplicate=true HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51671 - "GET /api/chat/history?deduplicate=true&page=1&page_size=20&category=regulation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61283 - "GET /api/chat/history/counts?deduplicate=true HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61284 - "GET /api/chat/history?deduplicate=true&page=1&page_size=20&category=mixed_analysis HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49671 - "GET /api/chat/history/counts?deduplicate=true HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49674 - "GET /api/chat/history?deduplicate=true&page=1&page_size=20&category=regulation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52604 - "POST /api/chat/history/reinvoke HTTP/1.1" 422 Unprocessable Content
+[chat endpoint] raw thinking_mode='think', resolved='think'
+INFO:     127.0.0.1:61120 - "POST /api/chat HTTP/1.1" 200 OK
+[chat] thinking_mode=think, response_mode=detailed, company_id=91310115MA2KZZZZZZ, multi_turn=False, query=小微企业贷款政策有哪些
+INFO:     127.0.0.1:53243 - "POST /api/chat/history HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49670 - "POST /api/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56112 - "GET /api/chat/history?deduplicate=true&page=1&page_size=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56111 - "GET /api/chat/history?limit=100 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56110 - "GET /api/companies HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56113 - "GET /api/chat/history/counts?deduplicate=true HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49670 - "GET /api/chat/history?limit=100 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50295 - "GET /api/chat/history?deduplicate=true&page=1&page_size=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60812 - "GET /api/companies HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63111 - "GET /api/chat/history/counts?deduplicate=true HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55270 - "POST /api/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54752 - "GET /api/chat/history?deduplicate=true&page=1&page_size=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54753 - "GET /api/companies HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54755 - "GET /api/chat/history/counts?deduplicate=true HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54754 - "GET /api/chat/history?limit=100 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58625 - "GET /api/chat/history/counts?deduplicate=true HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61885 - "GET /api/companies HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62402 - "GET /api/chat/history?deduplicate=true&page=1&page_size=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50972 - "GET /api/chat/history?limit=100 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59591 - "GET /api/chat/history?deduplicate=true&page=1&page_size=20&category=financial_data HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59592 - "GET /api/chat/history/counts?deduplicate=true HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56897 - "GET /api/chat/history?deduplicate=true&page=1&page_size=20&category=tax_incentive HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56898 - "GET /api/chat/history/counts?deduplicate=true HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52512 - "GET /api/chat/history?deduplicate=true&page=1&page_size=20&category=mixed_analysis HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52513 - "GET /api/chat/history/counts?deduplicate=true HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57659 - "GET /api/chat/history?deduplicate=true&page=1&page_size=20&category=regulation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57660 - "GET /api/chat/history/counts?deduplicate=true HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57561 - "GET /api/chat/history?deduplicate=true&page=1&page_size=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57562 - "GET /api/chat/history/counts?deduplicate=true HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60523 - "GET /api/chat/history?deduplicate=true&page=1&page_size=20&category=mixed_analysis HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60524 - "GET /api/chat/history/counts?deduplicate=true HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56256 - "GET /api/chat/history?deduplicate=true&page=1&page_size=20&category=financial_data HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56257 - "GET /api/chat/history/counts?deduplicate=true HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50821 - "GET /api/chat/history?deduplicate=true&page=1&page_size=20&category=regulation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50822 - "GET /api/chat/history/counts?deduplicate=true HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57183 - "GET /api/chat/history?deduplicate=true&page=1&page_size=20&category=mixed_analysis HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57184 - "GET /api/chat/history/counts?deduplicate=true HTTP/1.1" 200 OK
+[chat endpoint] raw thinking_mode='quick', resolved='quick'
+INFO:     127.0.0.1:62968 - "POST /api/chat HTTP/1.1" 200 OK
+[chat] thinking_mode=quick, response_mode=detailed, company_id=91310115MA2KZZZZZZ, multi_turn=False, query=2024和2025年末的总资产和总负债构成分析
+INFO:     127.0.0.1:56764 - "POST /api/chat/history HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64171 - "GET /api/companies HTTP/1.1" 200 OK
+[chat endpoint] raw thinking_mode='quick', resolved='quick'
+INFO:     127.0.0.1:59827 - "POST /api/chat HTTP/1.1" 200 OK
+[chat] thinking_mode=quick, response_mode=detailed, company_id=91330200MA2KXXXXXX, multi_turn=False, query=2024和2025年末的总资产和总负债构成分析
+[L2 Cache] Trying all domain cache keys for company_id=91330200MA2KXXXXXX, type=一般纳税人, standard=企业会计准则
+[L2 Cache] Hit: query=2024和2025年末的总资产和总负债构成分析, domain=balance_sheet, type=一般纳税人
+[L2 Cache] Instantiated SQL for company_id=91330200MA2KXXXXXX:
+  SQL preview: WITH latest AS (
+  SELECT taxpayer_id, taxpayer_name, period_year, period_month, revision_no,
+         assets_end, liabilities_end,
+         ROW_NUMBER() OVER (
+           PARTITION BY taxpayer_id, pe...
+[L2 Cache] SQL executed, returned 2 rows
+[L2 Cache] First row: {'taxpayer_name': '创智软件股份有限公司', 'period_year': 2024, 'period_month': 12, 'assets_end': 8348572, 'liabilities_end': 820274}
+INFO:     127.0.0.1:59860 - "POST /api/chat/interpret HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59861 - "POST /api/chat/history HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58335 - "GET /api/companies HTTP/1.1" 200 OK
+[chat endpoint] raw thinking_mode='quick', resolved='quick'
+INFO:     127.0.0.1:56724 - "POST /api/chat HTTP/1.1" 200 OK
+[chat] thinking_mode=quick, response_mode=detailed, company_id=91310000MA1FL8XQ30, multi_turn=False, query=2024和2025年末的总资产和总负债构成分析
+[L2 Cache] Trying all domain cache keys for company_id=91310000MA1FL8XQ30, type=一般纳税人, standard=企业会计准则
+[L2 Cache] Hit: query=2024和2025年末的总资产和总负债构成分析, domain=balance_sheet, type=一般纳税人
+[L2 Cache] Instantiated SQL for company_id=91310000MA1FL8XQ30:
+  SQL preview: WITH latest AS (
+  SELECT taxpayer_id, taxpayer_name, period_year, period_month, revision_no,
+         assets_end, liabilities_end,
+         ROW_NUMBER() OVER (
+           PARTITION BY taxpayer_id, pe...
+[L2 Cache] SQL executed, returned 2 rows
+[L2 Cache] First row: {'taxpayer_name': '华兴科技有限公司', 'period_year': 2024, 'period_month': 12, 'assets_end': 7552059, 'liabilities_end': 701323}
+INFO:     127.0.0.1:52236 - "POST /api/chat/interpret HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52237 - "POST /api/chat/history HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61382 - "GET /api/companies HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54104 - "GET /api/chat/history/counts?deduplicate=true HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54105 - "GET /api/chat/history?deduplicate=true&page=1&page_size=20&category=tax_incentive HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57068 - "GET /api/chat/history?deduplicate=true&page=1&page_size=20&category=financial_data HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57069 - "GET /api/chat/history/counts?deduplicate=true HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52620 - "GET /api/chat/history/counts?deduplicate=true HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52622 - "GET /api/chat/history?deduplicate=true&page=1&page_size=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65504 - "GET /api/chat/history?deduplicate=true&page=1&page_size=20&category=financial_data HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65505 - "GET /api/chat/history/counts?deduplicate=true HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51750 - "GET /api/chat/history?deduplicate=true&page=1&page_size=20&category=regulation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51751 - "GET /api/chat/history/counts?deduplicate=true HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61008 - "GET /api/chat/history?deduplicate=true&page=1&page_size=20&category=financial_data HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61010 - "GET /api/chat/history/counts?deduplicate=true HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65356 - "GET /api/chat/history/counts?deduplicate=true HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65357 - "GET /api/chat/history?deduplicate=true&page=1&page_size=20&category=tax_incentive HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55717 - "GET /api/chat/history?deduplicate=true&page=1&page_size=20&category=mixed_analysis HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55718 - "GET /api/chat/history/counts?deduplicate=true HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57998 - "GET /api/chat/history?deduplicate=true&page=1&page_size=20&category=financial_data HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57999 - "GET /api/chat/history/counts?deduplicate=true HTTP/1.1" 200 OK
+WARNING:  StatReload detected changes in 'api\routes\history.py'. Reloading...
+ 

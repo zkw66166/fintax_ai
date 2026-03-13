@@ -289,7 +289,7 @@ const ChatArea = forwardRef(function ChatArea(
             entity_text: entities,
             intent_text: intent,
             sql_text: sql || '无',
-            route: result.route,
+            route: result.route || 'financial_data',
             result_count: result.result_count,
             timestamp: ts,
             cache_key: cacheKey,

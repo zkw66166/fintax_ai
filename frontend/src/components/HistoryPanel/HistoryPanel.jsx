@@ -21,18 +21,32 @@ export default function HistoryPanel({ items, setItems, onSelect, onReinvoke, cu
     { id: 'mixed_analysis', label: '综合分析' }
   ]
 
-  // 检查是否可以删除（权限控制）
+  // 检查是否可以删除（权限控制 + protected 检查）
   const canDelete = useCallback((item) => {
     if (!currentUser) return false
     const userRole = currentUser.role || currentUser.user_role
+    // protected 记录只有 sys/admin 可删除
+    if (item.protected) {
+      return userRole === 'sys' || userRole === 'admin'
+    }
     if (userRole === 'sys' || userRole === 'admin') return true
-    return item.user_id === currentUser.id || item.user_id === currentUser.user_id
+    // 无 user_id 的记录（旧数据）非管理员不可删除
+    if (item.user_id == null) return false
+    return item.user_id === currentUser.id
   }, [currentUser])
 
   // 从后端获取去重+分页数据
   const [filtered, setFiltered] = useState([])
   const [loading, setLoading] = useState(false)
   const [categoryCounts, setCategoryCounts] = useState({})
+  const [refreshTrigger, setRefreshTrigger] = useState(0)
+
+  // 监听items变化，触发刷新
+  useEffect(() => {
+    if (items.length > 0) {
+      setRefreshTrigger(prev => prev + 1)
+    }
+  }, [items.length])
 
   useEffect(() => {
     const fetchHistory = async () => {
@@ -103,7 +117,7 @@ export default function HistoryPanel({ items, setItems, onSelect, onReinvoke, cu
     }
 
     fetchHistory()
-  }, [activeTab, currentPage, searchText, setItems])
+  }, [activeTab, currentPage, searchText, setItems, refreshTrigger])
 
   // 获取各分类的记录数
   useEffect(() => {
@@ -118,7 +132,7 @@ export default function HistoryPanel({ items, setItems, onSelect, onReinvoke, cu
       } catch (_) { /* ignore */ }
     }
     fetchCounts()
-  }, [activeTab, currentPage, searchText])
+  }, [activeTab, currentPage, searchText, refreshTrigger])
 
   // Tab切换时重置页码
   const handleTabChange = (tabId) => {
@@ -136,8 +150,13 @@ export default function HistoryPanel({ items, setItems, onSelect, onReinvoke, cu
   const selectableForDelete = useCallback((item) => {
     if (!currentUser) return false
     const userRole = currentUser.role || currentUser.user_role
+    if (item.protected) {
+      return userRole === 'sys' || userRole === 'admin'
+    }
     if (userRole === 'sys' || userRole === 'admin') return true
-    return item.user_id === currentUser.id || item.user_id === currentUser.user_id
+    // 无 user_id 的记录（旧数据）非管理员不可勾选
+    if (item.user_id == null) return false
+    return item.user_id === currentUser.id
   }, [currentUser])
 
   useEffect(() => {
@@ -155,15 +174,12 @@ export default function HistoryPanel({ items, setItems, onSelect, onReinvoke, cu
     })
   }, [])
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (selected.size === 0) return
-    if (!items || items.length === 0) return
 
-    // Map selected timestamps back to indices in the original items array
-    const indices = items
-      .map((item, i) => (selected.has(item.timestamp) ? i : -1))
-      .filter((i) => i !== -1)
-    removeEntries(indices)
+    // Collect timestamps of selected records
+    const timestamps = Array.from(selected)
+    await removeEntries(timestamps)
     setSelected(new Set())
   }
 

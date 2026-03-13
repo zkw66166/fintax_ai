@@ -12,6 +12,27 @@
 2. 期间过滤（按用户问题选择）：
    - 月：period_year = :year AND period_month = :month
    - 范围（月）：(period_year*100+period_month) BETWEEN :start_yyyymm AND :end_yyyymm
+   - 枚举月份（如"12月和3月"）：period_month IN (12, 3) 或 ((period_year=2024 AND period_month=12) OR (period_year=2025 AND period_month=3))
+   - 跨年枚举月份：必须使用 OR 连接，并用括号包裹整个条件，例如：
+     WHERE taxpayer_id = :taxpayer_id
+       AND ((period_year=2024 AND period_month=12) OR (period_year=2025 AND period_month=3))
+       AND time_range = '本年累计'
+   - **多年全年查询**（如"2024年和2025年的全年营业收入"、"对比2024年和2025年的全年"）：
+     ⚠️ "全年"特指12月的本年累计数据，必须使用：
+     WHERE taxpayer_id = :taxpayer_id
+       AND ((period_year=2024 AND period_month=12) OR (period_year=2025 AND period_month=12))
+       AND time_range = '本年累计'
+     或简化为：period_year IN (2024, 2025) AND period_month = 12 AND time_range = '本年累计'
+
+     ⚠️ 关键判断依据：
+     - 如果 filters.period.period_years 存在且长度>1 → 多年查询
+     - 如果用户问"全年"/"年度"/"整年" → 查询12月的本年累计数据
+     - 必须为每个年份生成独立的 (period_year=YYYY AND period_month=12) 条件
+     - 禁止使用 BETWEEN（会返回中间月份的所有数据）
+     - 禁止只查询最后一年（必须包含所有年份）
+     - 必须添加 time_range = '本年累计' 过滤条件
+   注意：当实体信息包含 period_months=[12, 3] 时，表示只查询这些特定月份，不是范围查询
+   ⚠️ 重要：OR条件必须用括号包裹，避免与taxpayer_id条件混淆
 
 【修订版本处理】
 若需取最新修订版本，使用窗口函数：
@@ -117,6 +138,53 @@ LIMIT {max_rows}
 - 利润总额 = 营业利润 + 营业外收入 - 营业外支出
 - 净利润 = 利润总额 - 所得税费用
 - 综合收益总额 = 净利润 + 其他综合收益的税后净额
+
+【结构分析/构成分析模式（UNPIVOT）】★ 当用户问"结构"/"构成"/"组成"/"各项占比"时必须使用此模式 ★
+当用户问利润表项目的结构组成时（如"期间费用构成"/"利润总额构成"），
+需将宽表的多个组件列拆为行，每行一个组件，包含金额和占比。
+使用 UNION ALL 将各组件列拆为 (项目名称, 金额, "占比(%)") 行。
+
+⚠️ 重要：构成分析查询必须返回以下列：
+- period_year, period_month（如果有多个期间）
+- "项目名称"（字符串列）
+- "金额"（数值列）
+- "占比(%)"（百分比列）
+
+示例SQL（单期间期间费用构成分析）：
+WITH latest AS (
+  SELECT taxpayer_id, period_year, period_month, time_range, revision_no,
+         selling_expense, administrative_expense, rd_expense, financial_expense,
+         ROW_NUMBER() OVER (PARTITION BY taxpayer_id, period_year, period_month, time_range ORDER BY revision_no DESC) AS rn
+  FROM vw_profit_eas
+  WHERE taxpayer_id = :taxpayer_id AND period_year = :year AND period_month = :month AND time_range = '本年累计'
+),
+base AS (SELECT * FROM latest WHERE rn = 1),
+total AS (SELECT (selling_expense + administrative_expense + rd_expense + financial_expense) AS period_expense_total FROM base),
+items AS (
+  SELECT '销售费用' AS "项目名称", selling_expense AS "金额",
+         ROUND(selling_expense * 100.0 / NULLIF((SELECT period_expense_total FROM total), 0), 2) AS "占比(%)" FROM base
+  UNION ALL
+  SELECT '管理费用', administrative_expense,
+         ROUND(administrative_expense * 100.0 / NULLIF((SELECT period_expense_total FROM total), 0), 2) FROM base
+  UNION ALL
+  SELECT '研发费用', rd_expense,
+         ROUND(rd_expense * 100.0 / NULLIF((SELECT period_expense_total FROM total), 0), 2) FROM base
+  UNION ALL
+  SELECT '财务费用', financial_expense,
+         ROUND(financial_expense * 100.0 / NULLIF((SELECT period_expense_total FROM total), 0), 2) FROM base
+)
+SELECT "项目名称", "金额", "占比(%)" FROM items WHERE "金额" > 0
+ORDER BY "金额" DESC
+LIMIT {max_rows}
+
+其他构成层级（参照上述模式）：
+- 利润总额构成：total_profit = operating_profit + non_operating_income - non_operating_expense
+- 净利润构成：net_profit = total_profit - income_tax_expense
+
+要点：
+- 期间费用构成需要计算总和作为分母
+- 必须包含 time_range = '本年累计' 过滤条件
+- WHERE "金额" > 0 过滤零值组件
 
 【核心原则：始终返回明细行】
 - 禁止只返回单个聚合数字。任何查询都必须包含维度列（期间、时间范围等），让用户看到数据来源。

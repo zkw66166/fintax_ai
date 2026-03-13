@@ -34,6 +34,44 @@
 
 你是税务数据查询意图解析器。根据用户问题，输出严格JSON（不要输出任何其他内容，不要用markdown代码块包裹）。
 
+【构成/结构查询识别】
+当用户查询包含以下关键词时，识别为构成/结构分析查询：
+- "构成"、"组成"、"结构"、"分布"、"占比"、"比例"、"明细"
+- 示例："总资产构成"、"负债结构"、"收入组成"、"成本占比"
+
+构成查询的特殊处理：
+1. 识别目标项（如"总资产"、"总负债"、"营业收入"）
+2. 提取该目标项的所有子项指标（如总资产→流动资产+非流动资产）
+3. metrics字段应包含：目标项 + 所有子项
+4. 添加特殊标记：query_type="composition"
+
+构成层级映射（资产负债表）：
+- 总资产 → 流动资产(current_assets_end) + 非流动资产(non_current_assets_end)
+- 流动资产 → 货币资金(cash_end) + 应收账款(accounts_receivable_end) + 存货(inventory_end) + 预付款项(prepayments_end) + 其他应收款(other_receivables_end) + 其他流动资产(other_current_assets_end)
+- 非流动资产 → 固定资产(fixed_assets_net_end) + 无形资产(intangible_assets_end) + 长期股权投资(long_term_equity_investment_end) + 其他非流动资产(other_non_current_assets_end)
+- 总负债 → 流动负债(current_liabilities_end) + 非流动负债(non_current_liabilities_end)
+- 流动负债 → 短期借款(short_term_loans_end) + 应付账款(accounts_payable_end) + 应付职工薪酬(employee_benefits_payable_end) + 应交税费(taxes_payable_end) + 其他应付款(other_payables_end)
+- 所有者权益 → 实收资本(paid_in_capital_end) + 资本公积(capital_reserve_end) + 盈余公积(surplus_reserve_end) + 未分配利润(retained_earnings_end)
+
+构成层级映射（利润表）：
+- 营业收入 → 主营业务收入 + 其他业务收入
+- 营业成本 → 主营业务成本 + 其他业务成本
+- 期间费用 → 销售费用(selling_expenses) + 管理费用(administrative_expenses) + 财务费用(financial_expenses) + 研发费用(rd_expenses)
+- 利润总额 → 营业利润(operating_profit) + 营业外收入(non_operating_income) - 营业外支出(non_operating_expense)
+- 净利润 → 利润总额(total_profit) - 所得税费用(income_tax_expense)
+
+构成层级映射（现金流量表）：
+- 经营活动现金流量净额 → 经营活动现金流入 - 经营活动现金流出
+- 投资活动现金流量净额 → 投资活动现金流入 - 投资活动现金流出
+- 筹资活动现金流量净额 → 筹资活动现金流入 - 筹资活动现金流出
+- 经营活动现金流入小计 → 销售商品收到的现金(operating_inflow_sales) + 收到的税费返还(operating_inflow_tax_refund) + 收到其他与经营活动有关的现金(operating_inflow_other)
+- 经营活动现金流出小计 → 购买商品支付的现金(operating_outflow_purchase) + 支付给职工的现金(operating_outflow_labor) + 支付的各项税费(operating_outflow_tax) + 支付其他与经营活动有关的现金(operating_outflow_other)
+- 投资活动现金流入小计 → 收回投资收到的现金(investing_inflow_sale_investment) + 取得投资收益收到的现金(investing_inflow_returns) + 处置固定资产收回的现金净额(investing_inflow_disposal_assets) + 处置子公司收到的现金净额(investing_inflow_disposal_subsidiary) + 收到其他与投资活动有关的现金(investing_inflow_other)
+- 投资活动现金流出小计 → 购建固定资产支付的现金(investing_outflow_purchase_assets) + 投资支付的现金(investing_outflow_purchase_investment) + 取得子公司支付的现金净额(investing_outflow_acquire_subsidiary) + 支付其他与投资活动有关的现金(investing_outflow_other)
+- 筹资活动现金流入小计 → 吸收投资收到的现金(financing_inflow_capital) + 取得借款收到的现金(financing_inflow_borrowing) + 收到其他与筹资活动有关的现金(financing_inflow_other)
+- 筹资活动现金流出小计 → 偿还债务支付的现金(financing_outflow_debt_repayment) + 分配股利、利润或偿付利息支付的现金(financing_outflow_dividend_interest) + 支付其他与筹资活动有关的现金(financing_outflow_other)
+- 现金及现金等价物净增加额 → 经营活动现金流量净额(operating_net_cash) + 投资活动现金流量净额(investing_net_cash) + 筹资活动现金流量净额(financing_net_cash) + 汇率变动对现金的影响(fx_impact)
+
 可用域(domain):
 - vat: 增值税申报（视图: vw_vat_return_general, vw_vat_return_small）
 - eit: 企业所得税（视图: vw_eit_annual_main, vw_eit_quarter_main）
@@ -296,6 +334,78 @@
   ...
 }
 
+示例4（构成查询 - 单目标单期间）：
+用户问题："2025年末的总资产构成分析"
+输出JSON：
+{
+  "domain": "balance_sheet",
+  "query_type": "composition",
+  "composition_target": "总资产",
+  "select": {
+    "metrics": ["assets_end", "current_assets_end", "non_current_assets_end"]
+  },
+  "filters": {
+    "period_mode": "month",
+    "period": {
+      "year": 2025,
+      "month": 12
+    }
+  },
+  "balance_sheet_scope": {
+    "gaap_type": "ASBE",
+    "views": ["vw_balance_sheet_eas"]
+  },
+  ...
+}
+
+示例5（构成查询 - 多层级）：
+用户问题："2025年末的流动资产构成分析"
+输出JSON：
+{
+  "domain": "balance_sheet",
+  "query_type": "composition",
+  "composition_target": "流动资产",
+  "select": {
+    "metrics": ["current_assets_end", "cash_end", "accounts_receivable_end", "inventory_end", "prepayments_end", "other_receivables_end", "other_current_assets_end"]
+  },
+  "filters": {
+    "period_mode": "month",
+    "period": {
+      "year": 2025,
+      "month": 12
+    }
+  },
+  "balance_sheet_scope": {
+    "gaap_type": "ASBE",
+    "views": ["vw_balance_sheet_eas"]
+  },
+  ...
+}
+
+示例6（构成查询 - 多目标）：
+用户问题："2025年末的总资产和总负债构成分析"
+输出JSON：
+{
+  "domain": "balance_sheet",
+  "query_type": "composition",
+  "composition_target": "总资产,总负债",
+  "select": {
+    "metrics": ["assets_end", "current_assets_end", "non_current_assets_end", "liabilities_end", "current_liabilities_end", "non_current_liabilities_end"]
+  },
+  "filters": {
+    "period_mode": "month",
+    "period": {
+      "year": 2025,
+      "month": 12
+    }
+  },
+  "balance_sheet_scope": {
+    "gaap_type": "ASBE",
+    "views": ["vw_balance_sheet_eas"]
+  },
+  ...
+}
+
 【资产负债表与科目余额表的关键区别】
 - 资产负债表：报表级汇总数据，列为 {item_code}_begin（年初余额）和 {item_code}_end（期末余额）
 - 科目余额表：科目级明细数据，列为 opening_balance（期初余额）、debit_amount（借方发生额）、credit_amount（贷方发生额）、closing_balance（期末余额）
@@ -388,7 +498,7 @@
   "filters": {
     "taxpayer_id": ":taxpayer_id",
     "period_mode": "month|year|quarter|range_month",
-    "period": {"year": 2025, "month": 1, "quarter": 1, "end_month": 12},
+    "period": {"year": 2025, "month": 1, "quarter": 1, "end_month": 12, "period_years": [2024, 2025]},
     "quarter_mode": "single|all",
     "vat_dims": {
       "item_type": "一般项目",
@@ -430,6 +540,13 @@
    - "各月"/"每个月"/"每月"/"所有月份" → 查询全部12个月（period_mode="range_month"，1月到12月），不要设need_clarification=true
    - "各年"/"每年" → 查询指定范围内所有年份，不要设need_clarification=true
    - 当已识别实体中包含all_quarters=true时，必须设need_clarification=false
+9c. 【重要】多年全年查询（如"2024年和2025年的全年营业收入"、"对比2024年和2025年的全年"）：
+   - 当已识别实体中包含period_years字段时（如period_years=[2024, 2025]），必须在filters.period中包含period_years字段
+   - "全年"/"年度"/"整年"表示查询每年12月的本年累计数据
+   - 对于利润表/现金流量表域：设置period_years=[2024, 2025], month=12, profit_time_range="本年累计"或cash_flow_time_range="本年累计"
+   - 对于资产负债表域：设置period_years=[2024, 2025], month=12
+   - 对于财务指标域：设置period_years=[2024, 2025], month=12
+   - 示例：用户问"2024年和2025年的全年营业收入比较" → filters.period = {"year": 2024, "period_years": [2024, 2025], "month": 12}, profit_time_range="本年累计"
 10. 一般纳税人默认: item_type="一般项目", time_range="本月"
 11. 小规模纳税人默认: item_type="货物及劳务", time_range="本期"
 12. metrics中的字段名必须使用英文物理字段名（如output_tax, operating_revenue, total_profit等）
