@@ -7,6 +7,291 @@
     "intent_text": "{\n  \"domain\": \"eit\",\n  \"vat_scope\": {\n    \"taxpayer_type_hint\": \"unknown\",\n    \"views\": [\n      \"vw_vat_return_general\"\n    ],\n    \"cross_type_union\": false\n  },\n  \"eit_scope\": {\n    \"report_type\": \"annual\",\n    \"views\": [\n      \"vw_eit_annual_main\"\n    ]\n  },\n  \"account_balance_scope\": {\n    \"views\": [\n      \"vw_account_balance\"\n    ],\n    \"account_filter\": null\n  },\n  \"balance_sheet_scope\": {\n    \"gaap_type\": \"ASBE\",\n    \"views\": [\n      \"vw_balance_sheet_eas\"\n    ]\n  },\n  \"profit_scope\": {\n    \"accounting_standard\": \"ASBE\",\n    \"views\": [\n      \"vw_profit_eas\"\n    ]\n  },\n  \"cash_flow_scope\": {\n    \"accounting_standard\": \"企业会计准则\",\n    \"views\": [\n      \"vw_cash_flow_eas\"\n    ]\n  },\n  \"financial_metrics_scope\": {\n    \"views\": [\n      \"vw_financial_metrics\"\n    ]\n  },\n  \"invoice_scope\": {\n    \"direction\": \"both\",\n    \"views\": [\n      \"vw_inv_spec_purchase\",\n      \"vw_inv_spec_sales\"\n    ]\n  },\n  \"select\": {\n    \"metrics\": [\n      \"taxable_income\"\n    ],\n    \"dimensions\": [\n      \"taxpayer_name\"\n    ]\n  },\n  \"filters\": {\n    \"taxpayer_id\": \"91310115MA2KZZZZZZ\",\n    \"period_mode\": \"year\",\n    \"period\": {\n      \"year\": 2023,\n      \"period_years\": [\n        2023,\n        2024,\n        2025\n      ]\n    },\n    \"quarter_mode\": \"single\",\n    \"vat_dims\": {\n      \"item_type\": \"一般项目\",\n      \"time_range\": \"本月\"\n    },\n    \"profit_time_range\": \"本年累计\",\n    \"account_name\": null,\n    \"category\": null,\n    \"revision_strategy\": \"latest\"\n  },\n  \"aggregation\": {\n    \"group_by\": [],\n    \"order_by\": [],\n    \"limit\": 1000\n  },\n  \"need_clarification\": false,\n  \"clarifying_questions\": []\n}",
     "sql_text": "WITH latest AS (\n  SELECT taxpayer_id, taxpayer_name, period_year, revision_no,\n         taxable_income,\n    ROW_NUMBER() OVER (\n      PARTITION BY taxpayer_id, period_year\n      ORDER BY revision_no DESC\n    ) AS rn\n  FROM vw_eit_annual_main\n  WHERE taxpayer_id = '91310115MA2KZZZZZZ'\n    AND period_year IN (2023, 2024, 2025)\n)\nSELECT taxpayer_id, taxpayer_name, period_year, taxable_income\nFROM latest\nWHERE rn = 1\nORDER BY period_year\nLIMIT 1000;",
     "route": "financial_data",
+    "timestamp": "下午7:56:20",
+    "cache_key": "98a139e92b93ec8abe6dddad1e52bec3",
+    "conversation_history": [],
+    "conversation_enabled": false,
+    "conversation_depth": 3,
+    "response_mode": "detailed",
+    "thinking_mode": "quick",
+    "result": {
+      "success": true,
+      "user_query": "TSE科技有限公司 过去三个纳税年度，公司每年的应纳税所得额是多少",
+      "clarification": null,
+      "sql": "WITH latest AS (\n  SELECT taxpayer_id, taxpayer_name, period_year, revision_no,\n         taxable_income,\n    ROW_NUMBER() OVER (\n      PARTITION BY taxpayer_id, period_year\n      ORDER BY revision_no DESC\n    ) AS rn\n  FROM vw_eit_annual_main\n  WHERE taxpayer_id = '91310115MA2KZZZZZZ'\n    AND period_year IN (2023, 2024, 2025)\n)\nSELECT taxpayer_id, taxpayer_name, period_year, taxable_income\nFROM latest\nWHERE rn = 1\nORDER BY period_year\nLIMIT 1000;",
+      "results": [
+        {
+          "taxpayer_id": "91310115MA2KZZZZZZ",
+          "taxpayer_name": "TSE科技有限公司",
+          "period_year": 2023,
+          "taxable_income": 3676971
+        },
+        {
+          "taxpayer_id": "91310115MA2KZZZZZZ",
+          "taxpayer_name": "TSE科技有限公司",
+          "period_year": 2024,
+          "taxable_income": 5121624
+        },
+        {
+          "taxpayer_id": "91310115MA2KZZZZZZ",
+          "taxpayer_name": "TSE科技有限公司",
+          "period_year": 2025,
+          "taxable_income": 7133865
+        }
+      ],
+      "error": null,
+      "entities": {
+        "taxpayer_id": "91310115MA2KZZZZZZ",
+        "taxpayer_name": "TSE科技有限公司",
+        "taxpayer_type": "一般纳税人",
+        "period_year": 2023,
+        "period_month": null,
+        "period_end_month": null,
+        "period_quarter": null,
+        "period_years": [
+          2023,
+          2024,
+          2025
+        ],
+        "period_months": null,
+        "time_range_hint": null,
+        "item_type_hint": null,
+        "domain_hint": "eit",
+        "time_granularity": "yearly",
+        "original_query": "TSE科技有限公司 过去三个纳税年度，公司每年的应纳税所得额是多少",
+        "resolved_query": "TSE科技有限公司 2023年到2025年，公司每年的应纳税所得额是多少",
+        "accounting_standard": "企业会计准则"
+      },
+      "intent": {
+        "domain": "eit",
+        "vat_scope": {
+          "taxpayer_type_hint": "unknown",
+          "views": [
+            "vw_vat_return_general"
+          ],
+          "cross_type_union": false
+        },
+        "eit_scope": {
+          "report_type": "annual",
+          "views": [
+            "vw_eit_annual_main"
+          ]
+        },
+        "account_balance_scope": {
+          "views": [
+            "vw_account_balance"
+          ],
+          "account_filter": null
+        },
+        "balance_sheet_scope": {
+          "gaap_type": "ASBE",
+          "views": [
+            "vw_balance_sheet_eas"
+          ]
+        },
+        "profit_scope": {
+          "accounting_standard": "ASBE",
+          "views": [
+            "vw_profit_eas"
+          ]
+        },
+        "cash_flow_scope": {
+          "accounting_standard": "企业会计准则",
+          "views": [
+            "vw_cash_flow_eas"
+          ]
+        },
+        "financial_metrics_scope": {
+          "views": [
+            "vw_financial_metrics"
+          ]
+        },
+        "invoice_scope": {
+          "direction": "both",
+          "views": [
+            "vw_inv_spec_purchase",
+            "vw_inv_spec_sales"
+          ]
+        },
+        "select": {
+          "metrics": [
+            "taxable_income"
+          ],
+          "dimensions": [
+            "taxpayer_name"
+          ]
+        },
+        "filters": {
+          "taxpayer_id": "91310115MA2KZZZZZZ",
+          "period_mode": "year",
+          "period": {
+            "year": 2023,
+            "period_years": [
+              2023,
+              2024,
+              2025
+            ]
+          },
+          "quarter_mode": "single",
+          "vat_dims": {
+            "item_type": "一般项目",
+            "time_range": "本月"
+          },
+          "profit_time_range": "本年累计",
+          "account_name": null,
+          "category": null,
+          "revision_strategy": "latest"
+        },
+        "aggregation": {
+          "group_by": [],
+          "order_by": [],
+          "limit": 1000
+        },
+        "need_clarification": false,
+        "clarifying_questions": []
+      },
+      "audit_violations": [],
+      "taxpayer_id": "91310115MA2KZZZZZZ",
+      "taxpayer_name": "TSE科技有限公司",
+      "period": "2023年",
+      "domain": "eit",
+      "display_data": {
+        "display_type": "table",
+        "table": {
+          "headers": [
+            "纳税人识别号",
+            "纳税人名称",
+            "年度",
+            "应纳税所得额"
+          ],
+          "rows": [
+            {
+              "纳税人识别号": "91310115MA2KZZZZZZ",
+              "纳税人名称": "TSE科技有限公司",
+              "年度": "2023",
+              "应纳税所得额": "367.70万"
+            },
+            {
+              "纳税人识别号": "91310115MA2KZZZZZZ",
+              "纳税人名称": "TSE科技有限公司",
+              "年度": "2024",
+              "应纳税所得额": "512.16万"
+            },
+            {
+              "纳税人识别号": "91310115MA2KZZZZZZ",
+              "纳税人名称": "TSE科技有限公司",
+              "年度": "2025",
+              "应纳税所得额": "713.39万"
+            }
+          ],
+          "columns": [
+            "taxpayer_id",
+            "taxpayer_name",
+            "period_year",
+            "taxable_income"
+          ]
+        },
+        "chart_data": {
+          "chartType": "combo",
+          "title": "企业所得税 应纳税所得额 趋势分析",
+          "labels": [
+            "2023年",
+            "2024年",
+            "2025年"
+          ],
+          "datasets": [
+            {
+              "label": "应纳税所得额",
+              "data": [
+                3676971,
+                5121624,
+                7133865
+              ],
+              "type": "bar",
+              "backgroundColor": "rgba(54, 162, 235, 0.8)",
+              "borderColor": "rgba(54, 162, 235, 1)",
+              "borderWidth": 1,
+              "borderRadius": 4,
+              "yAxisID": "y"
+            },
+            {
+              "label": "应纳税所得额环比增长率(%)",
+              "data": [
+                null,
+                39.29,
+                39.29
+              ],
+              "type": "line",
+              "borderColor": "rgba(255, 99, 132, 1)",
+              "backgroundColor": "rgba(255, 99, 132, 0.1)",
+              "borderWidth": 2,
+              "fill": false,
+              "yAxisID": "y1",
+              "tension": 0.3,
+              "pointRadius": 4
+            }
+          ],
+          "options": {
+            "scales": {
+              "y": {
+                "type": "linear",
+                "position": "left"
+              },
+              "y1": {
+                "type": "linear",
+                "position": "right",
+                "grid": {
+                  "drawOnChartArea": false
+                },
+                "ticks": {
+                  "callback": "PERCENT_SUFFIX"
+                }
+              }
+            }
+          }
+        },
+        "growth": [
+          {
+            "period": "2024年",
+            "应纳税所得额": {
+              "current": 5121624,
+              "previous": 3676971,
+              "change": 1444653,
+              "change_pct": 39.29,
+              "trend": "up"
+            }
+          },
+          {
+            "period": "2025年",
+            "应纳税所得额": {
+              "current": 7133865,
+              "previous": 5121624,
+              "change": 2012241,
+              "change_pct": 39.29,
+              "trend": "up"
+            }
+          }
+        ]
+      },
+      "response_mode": "detailed",
+      "cache_hit": true,
+      "cache_key": "98a139e92b93ec8abe6dddad1e52bec3",
+      "cached_interpretation": "**总结判断：** TSE科技有限公司在2023-2025三个纳税年度，应纳税所得额呈现**持续高速增长**的态势，且连续两年保持完全一致的**高增长率**，这一趋势在商业实践中较为罕见，需关注其合理性。\n\n**具体分析：**\n1.  **趋势与变动幅度**：公司应纳税所得额从**367.70万**元（2023年）增长至**713.39万**元（2025年），两年间近乎翻倍。环比增长率均为**+39.29%**，显示出**异常平稳的高速增长**趋势。\n2.  **异常点识别**：连续两年增长率精确到小数点后两位完全一致（39.29%），这在真实的经营波动中概率极低。此现象可能源于：\n    *   **数据估算或规划目标**：企业可能基于固定增长模型进行财务预测或税务筹划。\n    *   **会计政策或税务调整的一致性应用**（如资产折旧、费用摊销等）。\n    *   **数据展示的精度处理**，实际原始数据可能存在细微差异。\n3.  **结论与建议**：从数据层面看，增长趋势强劲且“规律”。**建议结合利润表、收入成本明细及税务申报附表，核实增长驱动因素（如收入爆发、成本严控或非经常性损益）的真实性与合规性，以排除人为调节利润的风险。** 仅凭此单一指标无法判断趋势是否异常，需更多业务数据佐证。",
+      "need_reinterpret": false,
+      "thinking_mode": "quick"
+    },
+    "company_id": "91310115MA2KZZZZZZ",
+    "user_id": 1,
+    "domain": "eit"
+  },
+  {
+    "query": "过去三个纳税年度，公司每年的应纳税所得额是多少",
+    "status": "success",
+    "main_output": "",
+    "entity_text": "{\n  \"taxpayer_id\": \"91310115MA2KZZZZZZ\",\n  \"taxpayer_name\": \"TSE科技有限公司\",\n  \"taxpayer_type\": \"一般纳税人\",\n  \"period_year\": 2023,\n  \"period_month\": null,\n  \"period_end_month\": null,\n  \"period_quarter\": null,\n  \"period_years\": [\n    2023,\n    2024,\n    2025\n  ],\n  \"period_months\": null,\n  \"time_range_hint\": null,\n  \"item_type_hint\": null,\n  \"domain_hint\": \"eit\",\n  \"time_granularity\": \"yearly\",\n  \"original_query\": \"TSE科技有限公司 过去三个纳税年度，公司每年的应纳税所得额是多少\",\n  \"resolved_query\": \"TSE科技有限公司 2023年到2025年，公司每年的应纳税所得额是多少\",\n  \"accounting_standard\": \"企业会计准则\"\n}",
+    "intent_text": "{\n  \"domain\": \"eit\",\n  \"vat_scope\": {\n    \"taxpayer_type_hint\": \"unknown\",\n    \"views\": [\n      \"vw_vat_return_general\"\n    ],\n    \"cross_type_union\": false\n  },\n  \"eit_scope\": {\n    \"report_type\": \"annual\",\n    \"views\": [\n      \"vw_eit_annual_main\"\n    ]\n  },\n  \"account_balance_scope\": {\n    \"views\": [\n      \"vw_account_balance\"\n    ],\n    \"account_filter\": null\n  },\n  \"balance_sheet_scope\": {\n    \"gaap_type\": \"ASBE\",\n    \"views\": [\n      \"vw_balance_sheet_eas\"\n    ]\n  },\n  \"profit_scope\": {\n    \"accounting_standard\": \"ASBE\",\n    \"views\": [\n      \"vw_profit_eas\"\n    ]\n  },\n  \"cash_flow_scope\": {\n    \"accounting_standard\": \"企业会计准则\",\n    \"views\": [\n      \"vw_cash_flow_eas\"\n    ]\n  },\n  \"financial_metrics_scope\": {\n    \"views\": [\n      \"vw_financial_metrics\"\n    ]\n  },\n  \"invoice_scope\": {\n    \"direction\": \"both\",\n    \"views\": [\n      \"vw_inv_spec_purchase\",\n      \"vw_inv_spec_sales\"\n    ]\n  },\n  \"select\": {\n    \"metrics\": [\n      \"taxable_income\"\n    ],\n    \"dimensions\": [\n      \"taxpayer_name\"\n    ]\n  },\n  \"filters\": {\n    \"taxpayer_id\": \"91310115MA2KZZZZZZ\",\n    \"period_mode\": \"year\",\n    \"period\": {\n      \"year\": 2023,\n      \"period_years\": [\n        2023,\n        2024,\n        2025\n      ]\n    },\n    \"quarter_mode\": \"single\",\n    \"vat_dims\": {\n      \"item_type\": \"一般项目\",\n      \"time_range\": \"本月\"\n    },\n    \"profit_time_range\": \"本年累计\",\n    \"account_name\": null,\n    \"category\": null,\n    \"revision_strategy\": \"latest\"\n  },\n  \"aggregation\": {\n    \"group_by\": [],\n    \"order_by\": [],\n    \"limit\": 1000\n  },\n  \"need_clarification\": false,\n  \"clarifying_questions\": []\n}",
+    "sql_text": "WITH latest AS (\n  SELECT taxpayer_id, taxpayer_name, period_year, revision_no,\n         taxable_income,\n    ROW_NUMBER() OVER (\n      PARTITION BY taxpayer_id, period_year\n      ORDER BY revision_no DESC\n    ) AS rn\n  FROM vw_eit_annual_main\n  WHERE taxpayer_id = '91310115MA2KZZZZZZ'\n    AND period_year IN (2023, 2024, 2025)\n)\nSELECT taxpayer_id, taxpayer_name, period_year, taxable_income\nFROM latest\nWHERE rn = 1\nORDER BY period_year\nLIMIT 1000;",
+    "route": "financial_data",
     "timestamp": "下午7:29:21",
     "cache_key": "98a139e92b93ec8abe6dddad1e52bec3",
     "conversation_history": [],
@@ -39214,396 +39499,5 @@
       }
     },
     "company_id": "91330200MA2KXXXXXX"
-  },
-  {
-    "query": "2024年3月和2025年3月利润总额、增值税应纳税额、企业所得税应纳税额比较分析",
-    "status": "success",
-    "main_output": "",
-    "entity_text": "{\n  \"taxpayer_id\": \"91310115MA2KZZZZZZ\",\n  \"taxpayer_name\": \"TSE科技有限公司\",\n  \"taxpayer_type\": \"一般纳税人\",\n  \"period_year\": 2024,\n  \"period_month\": 3,\n  \"period_end_month\": 3,\n  \"period_quarter\": null,\n  \"period_years\": null,\n  \"period_months\": null,\n  \"time_range_hint\": null,\n  \"item_type_hint\": null,\n  \"domain_hint\": \"cross_domain\",\n  \"time_granularity\": null,\n  \"original_query\": \"TSE科技有限公司 2024年3月和2025年3月利润总额、增值税应纳税额、企业所得税应纳税额比较分析\",\n  \"resolved_query\": \"TSE科技有限公司 2024年3月和2025年3月利润总额、增值税应纳税额、企业所得税应纳税额比较分析\",\n  \"cross_domain_list\": [\n    \"eit\",\n    \"profit\",\n    \"vat\"\n  ],\n  \"period_end_year\": 2025,\n  \"accounting_standard\": \"企业会计准则\"\n}",
-    "intent_text": "{\n  \"domain\": \"cross_domain\",\n  \"cross_domain_list\": [\n    \"eit\",\n    \"profit\",\n    \"vat\"\n  ],\n  \"vat_scope\": {\n    \"taxpayer_type_hint\": \"一般纳税人\",\n    \"views\": [\n      \"vw_vat_return_general\"\n    ],\n    \"cross_type_union\": false\n  },\n  \"eit_scope\": {\n    \"report_type\": \"quarter\",\n    \"views\": [\n      \"vw_eit_quarter_main\"\n    ]\n  },\n  \"account_balance_scope\": {\n    \"views\": [\n      \"vw_account_balance\"\n    ],\n    \"account_filter\": null\n  },\n  \"balance_sheet_scope\": {\n    \"gaap_type\": \"ASBE\",\n    \"views\": [\n      \"vw_balance_sheet_eas\"\n    ]\n  },\n  \"profit_scope\": {\n    \"accounting_standard\": \"ASBE\",\n    \"views\": [\n      \"vw_profit_eas\"\n    ]\n  },\n  \"cash_flow_scope\": {\n    \"accounting_standard\": \"企业会计准则\",\n    \"views\": [\n      \"vw_cash_flow_eas\"\n    ]\n  },\n  \"financial_metrics_scope\": {\n    \"views\": [\n      \"vw_financial_metrics\"\n    ]\n  },\n  \"invoice_scope\": {\n    \"direction\": \"both\",\n    \"views\": [\n      \"vw_inv_spec_purchase\",\n      \"vw_inv_spec_sales\"\n    ]\n  },\n  \"select\": {\n    \"metrics\": [\n      \"total_profit\",\n      \"tax_payable\",\n      \"tax_payable\"\n    ],\n    \"dimensions\": [\n      \"taxpayer_name\"\n    ]\n  },\n  \"filters\": {\n    \"taxpayer_id\": \"91310115MA2KZZZZZZ\",\n    \"period_mode\": \"range_month\",\n    \"period\": {\n      \"year\": 2024,\n      \"month\": 3,\n      \"quarter\": null,\n      \"end_month\": 3,\n      \"end_year\": 2025\n    },\n    \"quarter_mode\": \"single\",\n    \"vat_dims\": {\n      \"item_type\": \"一般项目\",\n      \"time_range\": \"本月\"\n    },\n    \"profit_time_range\": \"本期\",\n    \"account_name\": null,\n    \"category\": null,\n    \"revision_strategy\": \"latest\"\n  },\n  \"aggregation\": {\n    \"group_by\": [],\n    \"order_by\": [],\n    \"limit\": 1000\n  },\n  \"need_clarification\": false,\n  \"clarifying_questions\": []\n}",
-    "sql_text": "-- [eit]\nWITH latest AS (\n  SELECT taxpayer_id, taxpayer_name, period_year, period_quarter, revision_no,\n         total_profit, tax_payable,\n         ROW_NUMBER() OVER (\n           PARTITION BY taxpayer_id, period_year, period_quarter\n           ORDER BY revision_no DESC\n         ) AS rn\n  FROM vw_eit_quarter_main\n  WHERE taxpayer_id = '91310115MA2KZZZZZZ'\n    AND period_year IN (2024, 2025)\n    AND period_quarter = 1\n)\nSELECT taxpayer_id, taxpayer_name, period_year, period_quarter,\n       total_profit, tax_payable\nFROM latest WHERE rn = 1\nORDER BY period_year\nLIMIT 1000;\n\n-- [profit]\nWITH latest AS (\n  SELECT taxpayer_id, taxpayer_name, period_year, period_month,\n         time_range, accounting_standard_name, revision_no,\n         total_profit,\n    ROW_NUMBER() OVER (\n      PARTITION BY taxpayer_id, period_year, period_month, time_range\n      ORDER BY revision_no DESC\n    ) AS rn\n  FROM vw_profit_eas\n  WHERE taxpayer_id = '91310115MA2KZZZZZZ'\n    AND period_year IN (2024, 2025)\n    AND period_month = 3\n    AND time_range = '本期'\n)\nSELECT taxpayer_id, taxpayer_name, period_year, period_month, time_range,\n       accounting_standard_name, revision_no, total_profit\nFROM latest WHERE rn = 1\nORDER BY period_year, period_month\nLIMIT 1000\n\n-- [vat]\nWITH latest AS (\n  SELECT taxpayer_id, taxpayer_name, period_year, period_month,\n         item_type, time_range, taxpayer_type, revision_no,\n         tax_payable,\n    ROW_NUMBER() OVER (\n      PARTITION BY taxpayer_id, period_year, period_month, item_type, time_range\n      ORDER BY revision_no DESC\n    ) AS rn\n  FROM vw_vat_return_general\n  WHERE taxpayer_id = '91310115MA2KZZZZZZ'\n    AND period_year IN (2024, 2025)\n    AND period_month = 3\n    AND item_type = '一般项目'\n)\nSELECT taxpayer_id, taxpayer_name, period_year, period_month,\n       item_type, time_range,\n       tax_payable\nFROM latest WHERE rn = 1\nORDER BY period_year\nLIMIT 1000;",
-    "timestamp": "下午9:10:36",
-    "cache_key": "584887fddd519dd682edddcf34610fbf",
-    "conversation_history": [],
-    "conversation_enabled": false,
-    "conversation_depth": 3,
-    "response_mode": "detailed",
-    "thinking_mode": "deep",
-    "result": {
-      "success": true,
-      "user_query": "TSE科技有限公司 2024年3月和2025年3月利润总额、增值税应纳税额、企业所得税应纳税额比较分析",
-      "clarification": null,
-      "sql": null,
-      "results": [
-        {
-          "period": "2024-03",
-          "eit_total_profit": 1776879,
-          "eit_tax_payable": 444219.75,
-          "profit_total_profit": 407042,
-          "vat_tax_payable": 126323
-        },
-        {
-          "period": "2025-03",
-          "eit_total_profit": 2475000,
-          "eit_tax_payable": 618750,
-          "profit_total_profit": 566964,
-          "vat_tax_payable": 175956
-        }
-      ],
-      "error": null,
-      "entities": {
-        "taxpayer_id": "91310115MA2KZZZZZZ",
-        "taxpayer_name": "TSE科技有限公司",
-        "taxpayer_type": "一般纳税人",
-        "period_year": 2024,
-        "period_month": 3,
-        "period_end_month": 3,
-        "period_quarter": null,
-        "period_years": null,
-        "period_months": null,
-        "time_range_hint": null,
-        "item_type_hint": null,
-        "domain_hint": "cross_domain",
-        "time_granularity": null,
-        "original_query": "TSE科技有限公司 2024年3月和2025年3月利润总额、增值税应纳税额、企业所得税应纳税额比较分析",
-        "resolved_query": "TSE科技有限公司 2024年3月和2025年3月利润总额、增值税应纳税额、企业所得税应纳税额比较分析",
-        "cross_domain_list": [
-          "eit",
-          "profit",
-          "vat"
-        ],
-        "period_end_year": 2025,
-        "accounting_standard": "企业会计准则"
-      },
-      "intent": {
-        "domain": "cross_domain",
-        "cross_domain_list": [
-          "eit",
-          "profit",
-          "vat"
-        ],
-        "vat_scope": {
-          "taxpayer_type_hint": "一般纳税人",
-          "views": [
-            "vw_vat_return_general"
-          ],
-          "cross_type_union": false
-        },
-        "eit_scope": {
-          "report_type": "quarter",
-          "views": [
-            "vw_eit_quarter_main"
-          ]
-        },
-        "account_balance_scope": {
-          "views": [
-            "vw_account_balance"
-          ],
-          "account_filter": null
-        },
-        "balance_sheet_scope": {
-          "gaap_type": "ASBE",
-          "views": [
-            "vw_balance_sheet_eas"
-          ]
-        },
-        "profit_scope": {
-          "accounting_standard": "ASBE",
-          "views": [
-            "vw_profit_eas"
-          ]
-        },
-        "cash_flow_scope": {
-          "accounting_standard": "企业会计准则",
-          "views": [
-            "vw_cash_flow_eas"
-          ]
-        },
-        "financial_metrics_scope": {
-          "views": [
-            "vw_financial_metrics"
-          ]
-        },
-        "invoice_scope": {
-          "direction": "both",
-          "views": [
-            "vw_inv_spec_purchase",
-            "vw_inv_spec_sales"
-          ]
-        },
-        "select": {
-          "metrics": [
-            "total_profit",
-            "tax_payable",
-            "tax_payable"
-          ],
-          "dimensions": [
-            "taxpayer_name"
-          ]
-        },
-        "filters": {
-          "taxpayer_id": "91310115MA2KZZZZZZ",
-          "period_mode": "range_month",
-          "period": {
-            "year": 2024,
-            "month": 3,
-            "quarter": null,
-            "end_month": 3,
-            "end_year": 2025
-          },
-          "quarter_mode": "single",
-          "vat_dims": {
-            "item_type": "一般项目",
-            "time_range": "本月"
-          },
-          "profit_time_range": "本期",
-          "account_name": null,
-          "category": null,
-          "revision_strategy": "latest"
-        },
-        "aggregation": {
-          "group_by": [],
-          "order_by": [],
-          "limit": 1000
-        },
-        "need_clarification": false,
-        "clarifying_questions": []
-      },
-      "audit_violations": null,
-      "taxpayer_id": "91310115MA2KZZZZZZ",
-      "taxpayer_name": "TSE科技有限公司",
-      "period": "2024年3月",
-      "domain": "cross_domain",
-      "cross_domain_summary": "eit vs profit vs vat，共2个期间",
-      "cross_domain_operation": "compare",
-      "sub_results": [
-        {
-          "domain": "eit",
-          "data": [
-            {
-              "taxpayer_id": "91310115MA2KZZZZZZ",
-              "taxpayer_name": "TSE科技有限公司",
-              "period_year": 2024,
-              "period_quarter": 1,
-              "total_profit": 1776879,
-              "tax_payable": 444219.75
-            },
-            {
-              "taxpayer_id": "91310115MA2KZZZZZZ",
-              "taxpayer_name": "TSE科技有限公司",
-              "period_year": 2025,
-              "period_quarter": 1,
-              "total_profit": 2475000,
-              "tax_payable": 618750
-            }
-          ],
-          "sql": "WITH latest AS (\n  SELECT taxpayer_id, taxpayer_name, period_year, period_quarter, revision_no,\n         total_profit, tax_payable,\n         ROW_NUMBER() OVER (\n           PARTITION BY taxpayer_id, period_year, period_quarter\n           ORDER BY revision_no DESC\n         ) AS rn\n  FROM vw_eit_quarter_main\n  WHERE taxpayer_id = '91310115MA2KZZZZZZ'\n    AND period_year IN (2024, 2025)\n    AND period_quarter = 1\n)\nSELECT taxpayer_id, taxpayer_name, period_year, period_quarter,\n       total_profit, tax_payable\nFROM latest WHERE rn = 1\nORDER BY period_year\nLIMIT 1000;"
-        },
-        {
-          "domain": "profit",
-          "data": [
-            {
-              "taxpayer_id": "91310115MA2KZZZZZZ",
-              "taxpayer_name": "TSE科技有限公司",
-              "period_year": 2024,
-              "period_month": 3,
-              "time_range": "本期",
-              "accounting_standard_name": "企业会计准则",
-              "revision_no": 0,
-              "total_profit": 407042
-            },
-            {
-              "taxpayer_id": "91310115MA2KZZZZZZ",
-              "taxpayer_name": "TSE科技有限公司",
-              "period_year": 2025,
-              "period_month": 3,
-              "time_range": "本期",
-              "accounting_standard_name": "企业会计准则",
-              "revision_no": 0,
-              "total_profit": 566964
-            }
-          ],
-          "sql": "WITH latest AS (\n  SELECT taxpayer_id, taxpayer_name, period_year, period_month,\n         time_range, accounting_standard_name, revision_no,\n         total_profit,\n    ROW_NUMBER() OVER (\n      PARTITION BY taxpayer_id, period_year, period_month, time_range\n      ORDER BY revision_no DESC\n    ) AS rn\n  FROM vw_profit_eas\n  WHERE taxpayer_id = '91310115MA2KZZZZZZ'\n    AND period_year IN (2024, 2025)\n    AND period_month = 3\n    AND time_range = '本期'\n)\nSELECT taxpayer_id, taxpayer_name, period_year, period_month, time_range,\n       accounting_standard_name, revision_no, total_profit\nFROM latest WHERE rn = 1\nORDER BY period_year, period_month\nLIMIT 1000"
-        },
-        {
-          "domain": "vat",
-          "data": [
-            {
-              "taxpayer_id": "91310115MA2KZZZZZZ",
-              "taxpayer_name": "TSE科技有限公司",
-              "period_year": 2024,
-              "period_month": 3,
-              "item_type": "一般项目",
-              "time_range": "本月",
-              "tax_payable": 44293
-            },
-            {
-              "taxpayer_id": "91310115MA2KZZZZZZ",
-              "taxpayer_name": "TSE科技有限公司",
-              "period_year": 2024,
-              "period_month": 3,
-              "item_type": "一般项目",
-              "time_range": "累计",
-              "tax_payable": 126323
-            },
-            {
-              "taxpayer_id": "91310115MA2KZZZZZZ",
-              "taxpayer_name": "TSE科技有限公司",
-              "period_year": 2025,
-              "period_month": 3,
-              "item_type": "一般项目",
-              "time_range": "本月",
-              "tax_payable": 61696
-            },
-            {
-              "taxpayer_id": "91310115MA2KZZZZZZ",
-              "taxpayer_name": "TSE科技有限公司",
-              "period_year": 2025,
-              "period_month": 3,
-              "item_type": "一般项目",
-              "time_range": "累计",
-              "tax_payable": 175956
-            }
-          ],
-          "sql": "WITH latest AS (\n  SELECT taxpayer_id, taxpayer_name, period_year, period_month,\n         item_type, time_range, taxpayer_type, revision_no,\n         tax_payable,\n    ROW_NUMBER() OVER (\n      PARTITION BY taxpayer_id, period_year, period_month, item_type, time_range\n      ORDER BY revision_no DESC\n    ) AS rn\n  FROM vw_vat_return_general\n  WHERE taxpayer_id = '91310115MA2KZZZZZZ'\n    AND period_year IN (2024, 2025)\n    AND period_month = 3\n    AND item_type = '一般项目'\n)\nSELECT taxpayer_id, taxpayer_name, period_year, period_month,\n       item_type, time_range,\n       tax_payable\nFROM latest WHERE rn = 1\nORDER BY period_year\nLIMIT 1000;"
-        }
-      ],
-      "display_data": {
-        "display_type": "cross_domain",
-        "table": {
-          "headers": [
-            "期间",
-            "企业所得税-利润总额",
-            "企业所得税-应纳所得税额",
-            "利润表-利润总额",
-            "增值税-应纳税额"
-          ],
-          "rows": [
-            {
-              "期间": "2024-03",
-              "企业所得税-利润总额": "177.69万",
-              "企业所得税-应纳所得税额": "44.42万",
-              "利润表-利润总额": "40.70万",
-              "增值税-应纳税额": "12.63万"
-            },
-            {
-              "期间": "2025-03",
-              "企业所得税-利润总额": "247.50万",
-              "企业所得税-应纳所得税额": "61.88万",
-              "利润表-利润总额": "56.70万",
-              "增值税-应纳税额": "17.60万"
-            }
-          ],
-          "columns": [
-            "period",
-            "eit_total_profit",
-            "eit_tax_payable",
-            "profit_total_profit",
-            "vat_tax_payable"
-          ]
-        },
-        "chart_data": {
-          "chartType": "bar",
-          "title": "跨域 企业所得税-利润总额、企业所得税-应纳所得税额、利润表-利润总额 趋势分析",
-          "labels": [
-            "2024-03",
-            "2025-03"
-          ],
-          "datasets": [
-            {
-              "label": "企业所得税-利润总额",
-              "data": [
-                1776879,
-                2475000
-              ],
-              "type": "bar",
-              "backgroundColor": "rgba(54, 162, 235, 0.8)",
-              "borderColor": "rgba(54, 162, 235, 1)",
-              "borderWidth": 1,
-              "borderRadius": 4,
-              "yAxisID": "y"
-            },
-            {
-              "label": "企业所得税-应纳所得税额",
-              "data": [
-                444219.75,
-                618750
-              ],
-              "type": "bar",
-              "backgroundColor": "rgba(255, 99, 132, 0.8)",
-              "borderColor": "rgba(255, 99, 132, 1)",
-              "borderWidth": 1,
-              "borderRadius": 4,
-              "yAxisID": "y"
-            },
-            {
-              "label": "利润表-利润总额",
-              "data": [
-                407042,
-                566964
-              ],
-              "type": "bar",
-              "backgroundColor": "rgba(75, 192, 192, 0.8)",
-              "borderColor": "rgba(75, 192, 192, 1)",
-              "borderWidth": 1,
-              "borderRadius": 4,
-              "yAxisID": "y"
-            },
-            {
-              "label": "增值税-应纳税额",
-              "data": [
-                126323,
-                175956
-              ],
-              "type": "bar",
-              "backgroundColor": "rgba(255, 206, 86, 0.8)",
-              "borderColor": "rgba(255, 206, 86, 1)",
-              "borderWidth": 1,
-              "borderRadius": 4,
-              "yAxisID": "y"
-            }
-          ]
-        },
-        "growth": [
-          {
-            "period": "2025-03",
-            "企业所得税-利润总额": {
-              "current": 2475000,
-              "previous": 1776879,
-              "change": 698121,
-              "change_pct": 39.29,
-              "trend": "up"
-            },
-            "企业所得税-应纳所得税额": {
-              "current": 618750,
-              "previous": 444219.75,
-              "change": 174530.25,
-              "change_pct": 39.29,
-              "trend": "up"
-            },
-            "利润表-利润总额": {
-              "current": 566964,
-              "previous": 407042,
-              "change": 159922,
-              "change_pct": 39.29,
-              "trend": "up"
-            },
-            "增值税-应纳税额": {
-              "current": 175956,
-              "previous": 126323,
-              "change": 49633,
-              "change_pct": 39.29,
-              "trend": "up"
-            }
-          }
-        ],
-        "summary": "eit vs profit vs vat，共2个期间"
-      },
-      "response_mode": "detailed",
-      "cache_key": "584887fddd519dd682edddcf34610fbf",
-      "cache_hit": false,
-      "need_reinterpret": false
-    },
-    "company_id": "91310115MA2KZZZZZZ"
   }
 ]

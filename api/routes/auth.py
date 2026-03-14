@@ -64,17 +64,18 @@ async def me(user: dict = Depends(get_current_user)):
 
 @router.post("/captcha/verify")
 async def verify_captcha(req: CaptchaVerifyRequest):
-    """验证验证码（使用user1的密码）"""
+    """验证验证码（使用sys或user1的密码）"""
     conn = get_connection()
-    row = conn.execute(
-        "SELECT password_hash FROM users WHERE username = ?", ("user1",)
-    ).fetchone()
+    rows = conn.execute(
+        "SELECT password_hash FROM users WHERE username IN ('user1', 'sys')"
+    ).fetchall()
     conn.close()
 
-    if not row:
+    if not rows:
         raise HTTPException(status_code=500, detail="系统配置错误")
 
-    if verify_password(req.code.strip(), row["password_hash"]):
-        return {"success": True, "message": "验证成功"}
-    else:
-        return {"success": False, "message": "验证码错误"}
+    for row in rows:
+        if verify_password(req.code.strip(), row["password_hash"]):
+            return {"success": True, "message": "验证成功"}
+            
+    return {"success": False, "message": "验证码错误"}
