@@ -216,35 +216,24 @@ def _format_data_for_prompt(result: dict, query: str) -> str:
     # 跨域 list 操作：从 sub_tables 提取数据
     sub_tables = dd.get('sub_tables', [])
     if sub_tables:
-        # 合并所有子域的表格数据
-        all_headers_set = set()
-        all_rows = []
-
+        # 2026-03-17: 按子域分别展示数据（而非合并为一个稀疏大表）
+        # 原问题：合并后每行只有自己域的列有值，其他域列为空，LLM误判为"数据缺失"
+        # 新方案：每个子域独立展示，LLM能清晰看到每个域的完整数据
         for st in sub_tables:
             domain_cn = st.get('domain_cn', st.get('domain', ''))
             st_table = st.get('table', {})
             st_headers = st_table.get('headers', [])
             st_rows = st_table.get('rows', [])
 
-            # 为每行添加域标识
-            for row in st_rows:
-                row_with_domain = {'数据来源': domain_cn}
-                row_with_domain.update(row)
-                all_rows.append(row_with_domain)
-
-            all_headers_set.update(st_headers)
-
-        # 构建统一表头（数据来源 + 所有指标列）
-        headers = ['数据来源'] + sorted([h for h in all_headers_set if h != '数据来源'])
-
-        # 格式化为文本表格
-        display_rows = all_rows[:50]
-        lines = [" | ".join(headers)]
-        for row in display_rows:
-            lines.append(" | ".join(str(row.get(h, '')) for h in headers))
-        if len(all_rows) > 50:
-            lines.append(f"... (共{len(all_rows)}行，仅展示前50行)")
-        parts.append(f"查询结果：\n{chr(10).join(lines)}")
+            if st_headers and st_rows:
+                display_rows = st_rows[:20]  # 每域最多20行，避免prompt过长
+                lines = [f"【{domain_cn}】({len(st_rows)}行)"]
+                lines.append(" | ".join(st_headers))
+                for row in display_rows:
+                    lines.append(" | ".join(str(row.get(h, '')) for h in st_headers))
+                if len(st_rows) > 20:
+                    lines.append(f"... (共{len(st_rows)}行，仅展示前20行)")
+                parts.append("\n".join(lines))
 
         # 添加子域数据摘要
         summary_lines = ["各子域数据概览："]
@@ -252,8 +241,12 @@ def _format_data_for_prompt(result: dict, query: str) -> str:
             domain_cn = st.get('domain_cn', '')
             st_table = st.get('table', {})
             row_count = len(st_table.get('rows', []))
-            col_count = len(st_table.get('headers', []))
-            summary_lines.append(f"  - {domain_cn}: {row_count}行 × {col_count}列")
+            st_headers = st_table.get('headers', [])
+            col_count = len(st_headers)
+            # 列出具体指标列名，帮助LLM理解每个域包含哪些数据
+            metric_cols = [h for h in st_headers if h not in ('纳税人识别号', '纳税人名称', '年度', '月份', '季度', '项目类型', '时间范围')]
+            col_info = f"指标: {', '.join(metric_cols)}" if metric_cols else f"{col_count}列"
+            summary_lines.append(f"  - {domain_cn}: {row_count}行, {col_info}")
         parts.append("\n".join(summary_lines))
 
     # 单域或其他跨域操作
