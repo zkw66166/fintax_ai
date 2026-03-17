@@ -118,7 +118,9 @@ _EIT_KEYWORDS = [
     '预缴所得税', '应补退所得税', '实际应纳所得税', '所得税年报', '所得税季报',
     '年度申报', '季度预缴', 'EIT', '税前利润', '会计利润',
     # 补充企业所得税申报表特有名词
-    '营业收入', '营业成本', '利润总额', '纳税调整增加额', '纳税调整减少额',
+    # 注意：'营业收入','营业成本','利润总额' 已移至 _PROFIT_EIT_SHARED_ITEMS 进行消歧，
+    # 不应在此处出现，否则 _has_eit_keyword() 会短路消歧逻辑（2026-03-17修复）
+    '纳税调整增加额', '纳税调整减少额',
     '免税收入', '减计收入', '加计扣除', '所得减免', '抵扣应纳税所得额',
     '抵免所得税额', '境外所得应纳所得税额', '实际应纳所得税额', '本年累计实际已预缴的所得税额',
     '本年应补退所得税额', '以前年度多缴在本年抵缴', '以前年度应缴未缴在本年入库',
@@ -293,12 +295,12 @@ _CASH_FLOW_ITEMS_UNIQUE = [
     '经营现金流', '投资现金流', '筹资现金流', '现金流净额',
     '现金净增加额', '现金及现金等价物净增加额',
     '期初现金及现金等价物', '期末现金及现金等价物',
-    '销售商品收到的现金', '提供劳务收到的现金', '购买商品支付的现金',
-    '支付给职工的现金', '支付的各项税费', '收到的税费返还',
-    '收回投资收到的现金', '取得投资收益收到的现金',
-    '处置固定资产收回的现金', '购建固定资产支付的现金',
+    '销售商品收到的现金', '销售收到的现金', '提供劳务收到的现金', '购买商品支付的现金',
+    '支付给职工的现金', '支付职工的现金', '支付的各项税费', '收到的税费返还',
+    '收回投资收到的现金', '收回投资的现金', '取得投资收益收到的现金',
+    '处置固定资产收回的现金', '购建固定资产支付的现金', '购建固定资产的现金',
     '投资支付的现金', '吸收投资收到的现金', '取得借款收到的现金',
-    '偿还债务支付的现金', '分配股利支付的现金',
+    '偿还债务支付的现金', '偿还债务的现金', '分配股利支付的现金', '分配股利的现金',
     '汇率变动对现金的影响', '汇率变动影响',
     '经营活动产生的现金', '投资活动产生的现金', '筹资活动产生的现金',
     # 补充现金流量表特有项目
@@ -822,32 +824,31 @@ def detect_entities(user_query: str, db_conn: sqlite3.Connection) -> dict:
         detected = result['domain_hint']
         other_domains = set()
 
+        # 2026-03-17: financial_metrics域的指标名（如"增值税税负率"）天然包含其他域关键词子串
+        # （如"增值税"触发VAT、"企业所得税"触发EIT），不应因此升级为跨域。
+        # 解决：当detected=financial_metrics时，先从查询中移除所有已匹配的指标名，
+        # 再用"清洗后"的查询检测其他域关键词。
+        if detected == 'financial_metrics':
+            _cross_detect_query = user_query
+            for kw in _FINANCIAL_METRICS_ITEMS_UNIQUE:
+                _cross_detect_query = _cross_detect_query.replace(kw, '')
+            for kw in _FINANCIAL_METRICS_KEYWORDS_HIGH:
+                _cross_detect_query = _cross_detect_query.replace(kw, '')
+        else:
+            _cross_detect_query = user_query
+
         # 检查是否同时包含VAT独有关键词（增值税、销项税等不与其他域共享）
-        if detected != 'vat' and _has_vat_keyword(user_query):
+        if detected != 'vat' and _has_vat_keyword(_cross_detect_query):
             other_domains.add('vat')
         # 检查是否同时包含发票域关键词
-        if detected != 'invoice' and any(kw in user_query for kw in _INVOICE_KEYWORDS):
+        if detected != 'invoice' and any(kw in _cross_detect_query for kw in _INVOICE_KEYWORDS):
             other_domains.add('invoice')
-        # 检查是否同时包含利润表独有关键词/项目（排除与EIT共有的项目）
-        if detected != 'profit':
-            has_profit_unique = (
-                any(kw in user_query for kw in _PROFIT_KEYWORDS_HIGH) or
-                any(kw in user_query for kw in _PROFIT_ITEMS_UNIQUE)
-            )
-            # 当已检测到非EIT域时，共有项目（如"营业收入"）也应触发profit跨域
-            if not has_profit_unique and detected not in ('eit',):
-                has_profit_shared = any(kw in user_query for kw in _PROFIT_DEFAULT_ITEMS)
-                if has_profit_shared:
-                    has_profit_unique = True
-            # 新增：当detected='eit'且已触发其他跨域（如vat）时，利润表共有项目也应触发profit跨域
-            # 场景：用户同时查询"利润总额、增值税应纳税额、企业所得税应纳税额"（3域查询）
-            # "利润总额"通常来自利润表（月度数据），非EIT申报表（仅年度/季度）
-            elif not has_profit_unique and detected == 'eit' and other_domains:
-                has_profit_shared = any(kw in user_query for kw in _PROFIT_DEFAULT_ITEMS)
-                if has_profit_shared:
-                    has_profit_unique = True
-            if has_profit_unique:
-                other_domains.add('profit')
+
+        # 2026-03-17: 将资产负债表、EIT、科目余额、现金流量表检测移到利润表之前，
+        # 确保 other_domains 在利润表的 "detected=='eit' and other_domains" 条件评估时已填充。
+        # 原问题：利润表检测在资产负债表之前，导致 detected='eit' 时 other_domains 为空，
+        # "营业收入"等共有项目无法触发 profit 跨域升级。
+
         # 检查是否同时包含资产负债表关键词（含共有项目如"存货"）
         # 注意：account_balance 和 balance_sheet 共享大量项目，已在0e步骤消歧，
         # 不应因共有项目触发跨域升级
@@ -855,38 +856,61 @@ def detect_entities(user_query: str, db_conn: sqlite3.Connection) -> dict:
         # 不应因此触发 balance_sheet 跨域升级
         if detected not in ('balance_sheet', 'account_balance', 'financial_metrics'):
             has_bs = (
-                any(kw in user_query for kw in _BALANCE_SHEET_KEYWORDS_HIGH) or
-                any(kw in user_query for kw in _BALANCE_SHEET_KEYWORDS_MED) or
-                any(kw in user_query for kw in _BALANCE_SHEET_ITEMS_UNIQUE) or
-                any(kw in user_query for kw in _BS_SHARED_ITEMS)
+                any(kw in _cross_detect_query for kw in _BALANCE_SHEET_KEYWORDS_HIGH) or
+                any(kw in _cross_detect_query for kw in _BALANCE_SHEET_KEYWORDS_MED) or
+                any(kw in _cross_detect_query for kw in _BALANCE_SHEET_ITEMS_UNIQUE) or
+                any(kw in _cross_detect_query for kw in _BS_SHARED_ITEMS)
             )
             if has_bs:
                 other_domains.add('balance_sheet')
         # 检查是否同时包含EIT独有关键词
-        if detected != 'eit' and _has_eit_keyword(user_query):
+        if detected != 'eit' and _has_eit_keyword(_cross_detect_query):
             other_domains.add('eit')
         # 检查是否同时包含科目余额表独有关键词
         # 注意：balance_sheet 和 account_balance 已在0e步骤消歧
         if detected not in ('account_balance', 'balance_sheet'):
             has_ab = (
-                any(kw in user_query for kw in _ACCOUNT_BALANCE_KEYWORDS_HIGH) or
-                any(kw in user_query for kw in ['账上', '账面', '账载'])
+                any(kw in _cross_detect_query for kw in _ACCOUNT_BALANCE_KEYWORDS_HIGH) or
+                any(kw in _cross_detect_query for kw in ['账上', '账面', '账载'])
             )
             if has_ab:
                 other_domains.add('account_balance')
         # 检查是否同时包含现金流量表独有关键词
         if detected != 'cash_flow':
             has_cf = (
-                any(kw in user_query for kw in _CASH_FLOW_KEYWORDS_HIGH) or
-                any(kw in user_query for kw in _CASH_FLOW_ITEMS_UNIQUE)
+                any(kw in _cross_detect_query for kw in _CASH_FLOW_KEYWORDS_HIGH) or
+                any(kw in _cross_detect_query for kw in _CASH_FLOW_ITEMS_UNIQUE)
             )
             if has_cf:
                 other_domains.add('cash_flow')
+
+        # 检查是否同时包含利润表独有关键词/项目（排除与EIT共有的项目）
+        # 注意：此检测必须在资产负债表等检测之后，确保 other_domains 已填充
+        if detected != 'profit':
+            has_profit_unique = (
+                any(kw in _cross_detect_query for kw in _PROFIT_KEYWORDS_HIGH) or
+                any(kw in _cross_detect_query for kw in _PROFIT_ITEMS_UNIQUE)
+            )
+            # 当已检测到非EIT域时，共有项目（如"营业收入"）也应触发profit跨域
+            if not has_profit_unique and detected not in ('eit',):
+                has_profit_shared = any(kw in _cross_detect_query for kw in _PROFIT_DEFAULT_ITEMS)
+                if has_profit_shared:
+                    has_profit_unique = True
+            # 当detected='eit'且已触发其他跨域（如balance_sheet）时，利润表共有项目也应触发profit跨域
+            # 场景：用户同时查询"利润总额、增值税应纳税额、企业所得税应纳税额"（3域查询）
+            # "利润总额"通常来自利润表（月度数据），非EIT申报表（仅年度/季度）
+            elif not has_profit_unique and detected == 'eit' and other_domains:
+                has_profit_shared = any(kw in _cross_detect_query for kw in _PROFIT_DEFAULT_ITEMS)
+                if has_profit_shared:
+                    has_profit_unique = True
+            if has_profit_unique:
+                other_domains.add('profit')
+
         # 检查是否同时包含财务指标独有关键词
         if detected != 'financial_metrics':
             has_fm = (
-                any(kw in user_query for kw in _FINANCIAL_METRICS_KEYWORDS_HIGH) or
-                any(kw in user_query for kw in _FINANCIAL_METRICS_ITEMS_UNIQUE)
+                any(kw in _cross_detect_query for kw in _FINANCIAL_METRICS_KEYWORDS_HIGH) or
+                any(kw in _cross_detect_query for kw in _FINANCIAL_METRICS_ITEMS_UNIQUE)
             )
             if has_fm:
                 other_domains.add('financial_metrics')

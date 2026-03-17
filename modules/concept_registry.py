@@ -2240,6 +2240,16 @@ def build_concept_sql(concept_def: dict, entities: dict,
         where_parts.append("time_range = :time_range")
         params['time_range'] = tr
 
+    # 2026-03-17: 月份范围支持（如"1-3月"→ period_month BETWEEN 1 AND 3）
+    # 解决概念管线之前因不支持月份范围而跳过的问题
+    if entities.get('period_end_month') and entities.get('period_month'):
+        start_m = int(entities['period_month'])
+        end_m = int(entities['period_end_month'])
+        if start_m != end_m:
+            where_parts.append('period_month BETWEEN :month_start AND :month_end')
+            params['month_start'] = start_m
+            params['month_end'] = end_m
+
     # 概念级额外过滤（如 financial_metrics 的 metric_name）
     extra_filter = concept_def.get('filter', {})
     for fk, fv in extra_filter.items():
