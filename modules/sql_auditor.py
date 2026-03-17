@@ -84,6 +84,20 @@ def audit_sql(sql: str, allowed_views: list, max_rows: int = 1000, domain: str =
         )
         if has_quarter_filter:
             has_period = True
+    # 2026-03-17: financial_metrics域"每月"查询场景下，LLM可能用 metric_name + period_type
+    # 过滤代替显式的 period_year 过滤（因为用户要"每月"的指标值），此时应视为合法。
+    # 安全约束：必须同时有 metric_name 过滤 + period_type 过滤 + LIMIT ≤ 100，
+    # 防止无年份约束时返回过多跨年数据
+    if not has_period and domain == 'financial_metrics':
+        has_metric_filter = bool(
+            re.search(r"metric_name\s*=", sql_stripped, re.I) or
+            re.search(r"metric_name\s+IN\b", sql_stripped, re.I)
+        )
+        has_period_type = bool(re.search(r"period_type\s*=", sql_stripped, re.I))
+        _limit_m = re.search(r'\bLIMIT\s+(\d+)', sql_stripped, re.I)
+        has_safe_limit = bool(_limit_m and int(_limit_m.group(1)) <= 100)
+        if has_metric_filter and has_period_type and has_safe_limit:
+            has_period = True
     if not has_period:
         violations.append("缺少期间过滤(period_year)")
 
@@ -117,6 +131,10 @@ def audit_sql(sql: str, allowed_views: list, max_rows: int = 1000, domain: str =
             re.search(r'period_year\s*\*\s*100\s*\+\s*period_month', sql_stripped, re.I) or
             re.search(r'\w+\.period_year\s*\*\s*100\s*\+\s*\w+\.period_month', sql_stripped, re.I)
         )
+        # 2026-03-17: financial_metrics域接受 period_type='monthly' 作为月份过滤替代
+        # 场景：查询"每月的XXX率"时，SQL用 period_type='monthly' 返回所有月份
+        if not has_month and domain == 'financial_metrics':
+            has_month = bool(re.search(r"period_type\s*=", sql_stripped, re.I))
         if not has_month:
             violations.append("缺少月份过滤(period_month)")
 

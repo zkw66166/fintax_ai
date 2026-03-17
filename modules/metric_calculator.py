@@ -461,7 +461,36 @@ def extract_all_rate_metrics(query: str) -> list:
     """
     import re
 
-    # 常见的率型指标模式（使用非贪婪匹配，限制长度）
+    # 2026-03-17: 直接匹配的已知率型指标名称（优先级最高，无需regex）
+    # 解决短指标名（毛利率、净利率等）因前缀长度要求无法被regex匹配的问题
+    _KNOWN_RATE_METRICS = [
+        '增值税税负率', '企业所得税税负率', '综合税负率', '所得税税负率',
+        '毛利率', '净利率', '利润率', '净利润率', '营业利润率', '成本费用利润率', '销售净利率',
+        '资产负债率', '产权比率', '流动比率', '速动比率',
+        '净资产收益率', '总资产报酬率', '总资产收益率',
+        '应收账款周转率', '存货周转率', '总资产周转率',
+        '营业收入增长率', '收入增长率', '净利润增长率', '利润增长率', '资产增长率', '总资产增长率',
+        '管理费用率', '销售费用率', '期间费用率',
+        '销项进项配比率', '进项税额转出占比', '应税所得率', '零申报率',
+        '发票开具异常率', '发票异常率', '顶额开具率',
+        '权益乘数', '利息保障倍数', '现金债务保障比率', '现金流量利息保障倍数',
+        '销售收现比', '长期资本负债率',
+        'ROE', 'ROA',
+    ]
+
+    found = []
+
+    # 阶段1: 直接匹配已知指标名（按名称长度降序，优先匹配长名称避免子串冲突）
+    sorted_known = sorted(_KNOWN_RATE_METRICS, key=len, reverse=True)
+    remaining_query = query
+    for metric_name in sorted_known:
+        if metric_name in remaining_query:
+            if metric_name not in found:
+                found.append(metric_name)
+            # 从查询中移除已匹配的指标名，防止子串被后续regex重复匹配
+            remaining_query = remaining_query.replace(metric_name, '')
+
+    # 阶段2: regex模式兜底匹配（在remaining_query上，捕获阶段1未覆盖的率型指标）
     rate_patterns = [
         r'([\u4e00-\u9fa5]{2,8}税负率)',  # X税负率（2-8个汉字）
         r'([\u4e00-\u9fa5]{2,8}利润率)',  # X利润率
@@ -476,26 +505,15 @@ def extract_all_rate_metrics(query: str) -> list:
         r'(ROE|ROA)',  # 英文缩写
     ]
 
-    found = []
     for pattern in rate_patterns:
-        matches = re.findall(pattern, query)
+        matches = re.findall(pattern, remaining_query)
         for match in matches:
-            # 过滤掉包含数字的匹配（如"3月利润率"）
-            # 但允许"和"字（如"净利润率和毛利率"）
             if re.search(r'\d', match):
                 continue
-            # 如果包含"和"，需要拆分
             if '和' in match:
-                # 跳过，让后续的单独模式匹配
                 continue
             if match not in found:
                 found.append(match)
-
-    # 特殊处理：单独的"利润率"可能指"净利润率"
-    if '利润率' in query and '利润率' not in found:
-        # 检查是否有其他前缀（如"净利润率"）
-        if not any('利润率' in m for m in found):
-            found.append('利润率')
 
     return found
 

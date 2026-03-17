@@ -26,7 +26,9 @@ def is_multi_period_query(entities: dict) -> bool:
     - 跨季度: period_end_quarter 存在
     - 多年范围: period_years 长度 > 1
     - 多月枚举: period_months 长度 > 1
-    - 月份范围: period_end_month != period_month (同年内)
+
+    2026-03-17: 同年月份范围（如"1-3月"）不再视为多期间查询，
+    概念管线已支持 BETWEEN 月份范围过滤。
     """
     # 跨年查询
     if entities.get('period_end_year') and entities.get('period_year'):
@@ -45,10 +47,9 @@ def is_multi_period_query(entities: dict) -> bool:
     if entities.get('period_months') and len(entities['period_months']) > 1:
         return True
 
-    # 同年内月份范围（排除单月查询）
-    if entities.get('period_end_month') and entities.get('period_month'):
-        if entities['period_end_month'] != entities['period_month']:
-            return True
+    # 2026-03-17: 移除同年月份范围检测，概念管线现已支持月份范围
+    # 原逻辑：if period_end_month != period_month → return True（阻止概念管线）
+    # 新逻辑：月份范围由概念管线的 build_concept_sql() 处理
 
     return False
 
@@ -390,31 +391,50 @@ def run_pipeline(user_query: str, db_path: str = None, progress_callback=None, c
             print(f"    日期解析: {resolved_query}")
 
         # Step 1b: 提前检测计算指标并调整域路由（在同义词标准化前）
-        # 优先级调整（2026-03-10）：
-        # - 带"率"的指标优先走 financial_metrics 域（查表）
-        # - 不带"率"的指标（如"占比"）走 metric_calculator（计算）
+        # 2026-03-17 重构：率型指标检测独立于 METRIC_FORMULAS
+        # - 先用 extract_all_rate_metrics() 检测所有率型指标（包括存储型如"增值税税负率"）
+        # - 纯率型查询 → 锁定 financial_metrics 域（查表优先）
+        # - 混合查询（率型+非率型如"增值税应纳税额"）→ 智能分流，保持跨域
+        # - 非率型计算指标（如"占比"）→ 走 metric_calculator（计算）
         early_metric_names = []
-        domain_locked = False  # NEW: 域锁定标志
-        if domain_hint != 'financial_metrics':
+        domain_locked = False  # 域锁定标志
+
+        # 阶段A: 检测所有率型指标（不依赖 METRIC_FORMULAS，解决存储型率指标漏检问题）
+        from modules.metric_calculator import extract_all_rate_metrics
+        all_rate_metrics = extract_all_rate_metrics(resolved_query)
+
+        if all_rate_metrics:
+            # 检测是否为纯率型查询（所有请求的指标都是率型）
+            all_requested = _extract_requested_metrics(resolved_query, entities)
+            # 判断非率指标：从所有请求中排除已检测的率指标
+            non_rate_requested = [m for m in all_requested
+                                  if not any(rate in m or m in rate for rate in all_rate_metrics)]
+
+            if non_rate_requested:
+                # 混合查询：率型+非率型，保持跨域，确保 financial_metrics 在子域列表中
+                print(f"[1b] 检测到混合指标: 率型={all_rate_metrics}, 非率型={non_rate_requested}")
+                print(f"[1b] 保持跨域路由，确保 financial_metrics 在子域列表中")
+                cross_list = entities.get('cross_domain_list', [])
+                if 'financial_metrics' not in cross_list:
+                    cross_list.append('financial_metrics')
+                    entities['cross_domain_list'] = sorted(set(cross_list))
+                if entities.get('domain_hint') != 'cross_domain':
+                    entities['domain_hint'] = 'cross_domain'
+                    domain_hint = 'cross_domain'
+            else:
+                # 纯率型查询：锁定 financial_metrics 域
+                print(f"[1b] 检测到纯'率'型指标: {all_rate_metrics}，锁定 financial_metrics 域")
+                domain_hint = 'financial_metrics'
+                entities['domain_hint'] = 'financial_metrics'
+                if 'cross_domain_list' in entities:
+                    del entities['cross_domain_list']
+                domain_locked = True
+            early_metric_names = []  # 率型指标不走 metric_calculator
+        elif domain_hint != 'financial_metrics':
+            # 阶段B: 无率型指标时，检测非率型计算指标（原有逻辑）
             early_metric_names = detect_computed_metrics(resolved_query)
-
-            # 过滤：如果指标名包含"率"，优先走 financial_metrics 域（不走 metric_calculator）
             if early_metric_names:
-                rate_metrics = [m for m in early_metric_names if '率' in m]
                 non_rate_metrics = [m for m in early_metric_names if '率' not in m]
-
-                if rate_metrics:
-                    print(f"[1b] 检测到'率'型指标: {rate_metrics}，锁定 financial_metrics 域")
-                    # 设置 domain_hint 为 financial_metrics，让 Stage 1 识别为该域
-                    domain_hint = 'financial_metrics'
-                    entities['domain_hint'] = 'financial_metrics'
-                    # 清空 cross_domain_list，防止跨域路由（所有率型指标都在 financial_metrics 表中）
-                    if 'cross_domain_list' in entities:
-                        del entities['cross_domain_list']
-                    early_metric_names = []  # 清空，不走 metric_calculator
-                    domain_locked = True  # NEW: 锁定域，跳过 Stage 1 LLM
-
-                # 保留非"率"型指标走 metric_calculator
                 early_metric_names = non_rate_metrics
 
         if early_metric_names:
@@ -498,15 +518,31 @@ def run_pipeline(user_query: str, db_path: str = None, progress_callback=None, c
         # NEW: 如果域已锁定（Step 1b检测到'率'型指标），跳过LLM，直接构造intent
         if domain_locked:
             print(f"[3] 域已锁定为 {domain_hint}，跳过LLM阶段1，直接构造intent")
-            # 提取查询中的所有'率'型指标（包括计算指标和存储指标）
-            from modules.metric_calculator import extract_all_rate_metrics
-            detected_metrics = extract_all_rate_metrics(resolved_query)
+            # 2026-03-17: 使用已检测的率指标（避免重复调用extract_all_rate_metrics）
+            detected_metrics = all_rate_metrics
+
+            # 2026-03-17: 从entities提取完整期间信息注入filters
+            # 解决率锁定后LLM不知道时间范围的问题
+            filters = {}
+            period = {}
+            if entities.get('period_year'):
+                period['year'] = entities['period_year']
+            if entities.get('period_month'):
+                period['month'] = entities['period_month']
+            if entities.get('period_end_month'):
+                period['end_month'] = entities['period_end_month']
+            if period:
+                filters['period'] = period
+            if entities.get('time_granularity'):
+                filters['time_granularity'] = entities['time_granularity']
+
             intent = {
                 'domain': domain_hint,
                 'views': ['vw_financial_metrics'],
                 'metrics': detected_metrics,
-                'filters': {},
-                'need_clarification': False
+                'filters': filters,
+                'need_clarification': False,
+                'all_rate_metrics': detected_metrics,  # 显式传递所有指标名供Stage 2参考
             }
             result['intent'] = intent
             domain = domain_hint
@@ -1231,6 +1267,15 @@ def _build_params(entities: dict, intent: dict) -> dict:
             params[f'year{i+1}'] = y
         params['start_year'] = period_years[0]
         params['end_year'] = period_years[-1]
+
+    # 2026-03-17: 同年月份范围参数（如"1-3月"→ month_start=1, month_end=3）
+    # 供 LLM 生成 period_month BETWEEN :month_start AND :month_end 使用
+    if entities.get('period_end_month') and entities.get('period_month'):
+        start_m = int(entities['period_month'])
+        end_m = int(entities['period_end_month'])
+        if start_m != end_m:
+            params['month_start'] = start_m
+            params['month_end'] = end_m
 
     # 枚举月份参数
     period_months = entities.get('period_months')
