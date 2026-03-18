@@ -1,0 +1,15 @@
+{
+  "_comment": "域→允许视图白名单",
+  "domain_views": {
+    "vat": ["vw_vat_return_general", "vw_vat_return_small"],
+    "eit": ["vw_eit_annual_main", "vw_eit_quarter_main"],
+    "balance_sheet": ["vw_balance_sheet_eas", "vw_balance_sheet_sas"],
+    "profit": ["vw_profit_eas", "vw_profit_sas"],
+    "cash_flow": ["vw_cash_flow_eas", "vw_cash_flow_sas"],
+    "account_balance": ["vw_account_balance"],
+    "invoice": ["vw_inv_spec_purchase", "vw_inv_spec_sales"],
+    "profile": ["vw_enterprise_profile"],
+    "financial_metrics": ["vw_financial_metrics"],
+    "cross_domain": []
+  }
+}

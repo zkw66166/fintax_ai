@@ -6,16 +6,19 @@ from typing import Optional
 from pathlib import Path
 
 from config.settings import DB_PATH
+from config.config_loader import load_json as _load_json
 from modules.schema_catalog import DOMAIN_VIEWS
+
+_CFG_display = _load_json(Path(__file__).resolve().parent.parent / "config" / "display" / "display_constants.json", {})
 
 # ── 常量 ──────────────────────────────────────────────────────────
 
-HIDDEN_COLUMNS = {
+HIDDEN_COLUMNS = set(_CFG_display.get("hidden_columns", [
     'revision_no', 'etl_batch_id', 'etl_confidence',
     'submitted_at', 'source_doc_id', 'source_unit', 'filing_id',
-}
+]))
 
-COMMON_COLUMN_CN = {
+COMMON_COLUMN_CN = _CFG_display.get("common_column_cn", {
     'taxpayer_id': '纳税人识别号', 'taxpayer_name': '纳税人名称',
     'taxpayer_type': '纳税人类型', 'accounting_standard': '会计准则',
     'accounting_standard_name': '会计准则',
@@ -51,20 +54,20 @@ COMMON_COLUMN_CN = {
     '_source_domain': '来源域',
     '差异': '差异', '差异率(%)': '差异率(%)',
     '比率(%)': '比率(%)', '一致': '一致', '最大差异': '最大差异',
-}
+})
 
-PERCENTAGE_COLUMNS = {
+PERCENTAGE_COLUMNS = set(_CFG_display.get("percentage_columns", [
     'tax_rate', 'branch_share_ratio',
-}
-PERCENTAGE_SUFFIXES = ('_rate', '_ratio')
+]))
+PERCENTAGE_SUFFIXES = tuple(_CFG_display.get("percentage_suffixes", ['_rate', '_ratio']))
 
-DOMAIN_CN_DISPLAY = {
+DOMAIN_CN_DISPLAY = _CFG_display.get("domain_cn_display", {
     'vat': '增值税', 'eit': '企业所得税',
     'balance_sheet': '资产负债表', 'profit': '利润表',
     'cash_flow': '现金流量表', 'account_balance': '科目余额',
     'invoice': '发票', 'financial_metrics': '财务指标',
     'cross_domain': '跨域', 'profile': '企业画像',
-}
+})
 
 # ── ColumnMapper（懒加载单例）──────────────────────────────────
 
@@ -1064,6 +1067,21 @@ def build_display_data(result: dict, query: str = '') -> dict:
             'table': {'headers': [], 'rows': [], 'columns': []},
             'chart_data': None,
             'growth': None,
+        }
+
+    # 概念管线路径：虽然有 cross_domain_summary，但数据已合并为单一表格，走标准表格路径
+    if result.get('concept_pipeline') and not result.get('sub_results'):
+        domain, view = _infer_domain_and_view(result)
+        table = _format_table_rows(rows, domain, view)
+        metric_cols = _extract_metric_cols(rows)
+        chart_data = _build_chart_data(rows, metric_cols, domain, view)
+        growth = _compute_growth(rows, metric_cols, domain, view)
+        return {
+            'display_type': 'table',
+            'table': table,
+            'chart_data': chart_data,
+            'growth': growth if growth else None,
+            'summary': result.get('cross_domain_summary'),
         }
 
     # 跨域路径

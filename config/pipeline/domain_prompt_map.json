@@ -1,0 +1,14 @@
+{
+  "_comment": "域→Stage2 prompt模板文件映射",
+  "domain_prompt_map": {
+    "vat": "stage2_vat.txt",
+    "eit": "stage2_eit.txt",
+    "account_balance": "stage2_account_balance.txt",
+    "balance_sheet": "stage2_balance_sheet.txt",
+    "profit": "stage2_profit.txt",
+    "cash_flow": "stage2_cash_flow.txt",
+    "cross_domain": "stage2_cross_domain.txt",
+    "financial_metrics": "stage2_financial_metrics.txt",
+    "invoice": "stage2_invoice.txt"
+  }
+}

@@ -6,6 +6,11 @@ from fastapi import APIRouter, Depends, HTTPException
 from api.auth import verify_password, create_access_token, get_current_user, get_user_company_ids
 from api.schemas import LoginRequest, CaptchaVerifyRequest
 from modules.db_utils import get_connection
+from pathlib import Path as _Path
+from config.config_loader import load_json as _load_json
+
+_CFG_roles = _load_json(_Path(__file__).resolve().parent.parent.parent / "config" / "auth" / "roles.json", {})
+_CAPTCHA_USERNAMES = tuple(_CFG_roles.get("captcha_usernames", ['user1', 'sys']))
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -66,8 +71,10 @@ async def me(user: dict = Depends(get_current_user)):
 async def verify_captcha(req: CaptchaVerifyRequest):
     """验证验证码（使用sys或user1的密码）"""
     conn = get_connection()
+    placeholders = ','.join('?' * len(_CAPTCHA_USERNAMES))
     rows = conn.execute(
-        "SELECT password_hash FROM users WHERE username IN ('user1', 'sys')"
+        f"SELECT password_hash FROM users WHERE username IN ({placeholders})",
+        _CAPTCHA_USERNAMES
     ).fetchall()
     conn.close()
 

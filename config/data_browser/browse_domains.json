@@ -1,0 +1,15 @@
+{
+  "_comment": "数据浏览器域配置",
+  "domains": [
+    {"key": "profit", "label": "利润表", "eav_table": "fs_income_statement_item", "dict_table": "fs_income_statement_item_dict", "views": {"CAS": "vw_profit_eas", "SAS": "vw_profit_sas"}, "raw_cols": ["current_amount", "cumulative_amount"], "raw_labels": ["本期金额", "本年累计金额"]},
+    {"key": "balance_sheet", "label": "资产负债表", "eav_table": "fs_balance_sheet_item", "dict_table": "fs_balance_sheet_item_dict", "views": {"ASBE": "vw_balance_sheet_eas", "ASSE": "vw_balance_sheet_sas"}, "raw_cols": ["beginning_balance", "ending_balance"], "raw_labels": ["年初余额", "期末余额"]},
+    {"key": "cash_flow", "label": "现金流量表", "eav_table": "fs_cash_flow_item", "dict_table": "fs_cash_flow_item_dict", "views": {"CAS": "vw_cash_flow_eas", "SAS": "vw_cash_flow_sas"}, "raw_cols": ["current_amount", "cumulative_amount"], "raw_labels": ["本期金额", "本年累计金额"]},
+    {"key": "vat", "label": "增值税申报表", "eav_table": null, "views": {"一般纳税人": "vw_vat_return_general", "小规模纳税人": "vw_vat_return_small"}},
+    {"key": "eit_annual", "label": "企业所得税年报", "eav_table": null, "views": {"_default": "vw_eit_annual_main"}},
+    {"key": "eit_quarter", "label": "企业所得税季报", "eav_table": null, "views": {"_default": "vw_eit_quarter_main"}},
+    {"key": "account_balance", "label": "科目余额表", "eav_table": null, "views": {"_default": "vw_account_balance"}},
+    {"key": "purchase_invoice", "label": "采购发票", "eav_table": null, "views": {"_default": "vw_inv_spec_purchase"}},
+    {"key": "sales_invoice", "label": "销售发票", "eav_table": null, "views": {"_default": "vw_inv_spec_sales"}},
+    {"key": "financial_metrics", "label": "财务指标", "eav_table": null, "views": {"_default": "vw_financial_metrics"}}
+  ]
+}

@@ -1919,26 +1919,39 @@ _SORTED_CONCEPT_NAMES = sorted(_CONCEPT_ALIASES.keys(), key=len, reverse=True)
 
 # ── 时间粒度检测 ────────────────────────────────────────────
 
-_QUARTERLY_PATTERNS = re.compile(
+from config.config_loader import load_json as _load_json_tp
+_CFG_time_patterns = _load_json_tp(Path(__file__).resolve().parent.parent / "config" / "pipeline" / "time_patterns.json", {})
+
+_QUARTERLY_FALLBACK = (
     r'各季度?|每个?季度?|按季度?|分季度?|逐季度?|季度对比|季度趋势|季度变化'
-    r'|Q[1-4]|[一二三四]季度|第[1-4一二三四]季度'  # 新增：Q1-Q4, 季度表达
-    r'|季度走势|季度变动'  # 新增：季度分析关键词
-    r'|季度末|季末'  # 新增：季度末关键词
+    r'|Q[1-4]|[一二三四]季度|第[1-4一二三四]季度'
+    r'|季度走势|季度变动'
+    r'|季度末|季末'
 )
-_MONTHLY_PATTERNS = re.compile(
+_MONTHLY_FALLBACK = (
     r'各月|每个?月|按月|分月|逐月|月度对比|月度趋势|月度变化'
-    r'|月度走势|月度变动|每月末|每月底|各月末|各月底'  # 新增：月度分析关键词
-    r'|过去\d+[个]?月|近\d+[个]?月|最近\d+[个]?月'  # 新增：过去N个月
-    r'|上半年|下半年'  # 新增：半年关键词
+    r'|月度走势|月度变动|每月末|每月底|各月末|各月底'
+    r'|过去\d+[个]?月|近\d+[个]?月|最近\d+[个]?月'
+    r'|上半年|下半年'
 )
-_YEARLY_PATTERNS = re.compile(
+_YEARLY_FALLBACK = (
     r'各年|每年|按年|分年|逐年|年度对比|年度趋势|年度变化'
-    r'|过去\d+[个]?年|近\d+[个]?年|最近\d+[个]?年'  # 新增：过去N年
-    r'|过去\d+[个]?纳税年度'  # 新增：过去N个纳税年度
-    r'|\d{4}\s*年?\s*[-~到至和与]\s*\d{4}\s*年?'  # 新增：2024-2025, 2024年到2025年
-    r'|每年末|每年底|每年初|各年末|各年底|各年初'  # 新增：年末/年初
-    r'|年度趋势|年度走势|年度变动'  # 新增：年度分析关键词
+    r'|过去\d+[个]?年|近\d+[个]?年|最近\d+[个]?年'
+    r'|过去\d+[个]?纳税年度'
+    r'|\d{4}\s*年?\s*[-~到至和与]\s*\d{4}\s*年?'
+    r'|每年末|每年底|每年初|各年末|各年底|各年初'
+    r'|年度趋势|年度走势|年度变动'
 )
+
+def _build_time_pattern(key, fallback):
+    patterns = _CFG_time_patterns.get(key)
+    if patterns and isinstance(patterns, list):
+        return re.compile('|'.join(patterns))
+    return re.compile(fallback)
+
+_QUARTERLY_PATTERNS = _build_time_pattern("quarterly_patterns", _QUARTERLY_FALLBACK)
+_MONTHLY_PATTERNS = _build_time_pattern("monthly_patterns", _MONTHLY_FALLBACK)
+_YEARLY_PATTERNS = _build_time_pattern("yearly_patterns", _YEARLY_FALLBACK)
 
 
 def detect_time_granularity(query: str, entities: dict = None) -> str:

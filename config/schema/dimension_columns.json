@@ -1,0 +1,69 @@
+{
+  "_comment": "各域维度列定义与域名映射",
+  "vat_general_item_types": ["一般项目", "即征即退项目"],
+  "vat_general_time_ranges": ["本月", "累计"],
+  "vat_small_item_types": ["货物及劳务", "服务不动产无形资产"],
+  "vat_small_time_ranges": ["本期", "累计"],
+  "profit_time_ranges": ["本期", "本年累计"],
+  "cash_flow_time_ranges": ["本期", "本年累计"],
+  "eit_annual_dim_cols": [
+    "filing_id", "taxpayer_id", "taxpayer_name", "taxpayer_type",
+    "period_year", "revision_no"
+  ],
+  "eit_quarter_dim_cols": [
+    "filing_id", "taxpayer_id", "taxpayer_name", "taxpayer_type",
+    "period_year", "period_quarter", "revision_no"
+  ],
+  "account_balance_dim_cols": [
+    "taxpayer_id", "taxpayer_name", "accounting_standard",
+    "period_year", "period_month",
+    "account_code", "account_name", "level", "category", "balance_direction",
+    "is_gaap", "is_small", "revision_no"
+  ],
+  "balance_sheet_dim_cols": [
+    "taxpayer_id", "taxpayer_name", "accounting_standard",
+    "period_year", "period_month", "revision_no"
+  ],
+  "profit_dim_cols": [
+    "taxpayer_id", "taxpayer_name", "period_year", "period_month",
+    "time_range", "accounting_standard_name", "revision_no"
+  ],
+  "cash_flow_dim_cols": [
+    "taxpayer_id", "taxpayer_name", "period_year", "period_month",
+    "time_range", "taxpayer_type", "accounting_standard", "revision_no"
+  ],
+  "financial_metrics_dim_cols": [
+    "taxpayer_id", "taxpayer_name", "taxpayer_type", "accounting_standard",
+    "period_year", "period_month", "period_type",
+    "metric_category", "metric_code", "metric_name"
+  ],
+  "invoice_dim_cols": [
+    "taxpayer_id", "taxpayer_name", "taxpayer_type",
+    "period_year", "period_month",
+    "invoice_format", "invoice_pk", "line_no",
+    "invoice_code", "invoice_number", "digital_invoice_no",
+    "seller_tax_id", "seller_name", "buyer_tax_id", "buyer_name",
+    "invoice_date", "invoice_source", "invoice_type", "invoice_status",
+    "is_positive", "risk_level", "issuer", "remark"
+  ],
+  "domain_cn_map": {
+    "增值税": "vat", "增值税申报": "vat", "VAT": "vat",
+    "企业所得税": "eit", "所得税": "eit", "EIT": "eit",
+    "企业所得税年报": "eit", "企业所得税季报": "eit",
+    "年度所得税": "eit", "季度所得税": "eit", "所得税申报": "eit",
+    "资产负债表": "balance_sheet", "资产负债": "balance_sheet",
+    "利润表": "profit", "损益表": "profit",
+    "现金流量表": "cash_flow", "现金流量": "cash_flow",
+    "科目余额": "account_balance", "科目": "account_balance",
+    "科目余额表": "account_balance", "余额表": "account_balance",
+    "会计科目": "account_balance",
+    "发票": "invoice",
+    "进项发票": "invoice", "销项发票": "invoice",
+    "采购发票": "invoice", "销售发票": "invoice",
+    "专用发票": "invoice", "普通发票": "invoice", "数电票": "invoice",
+    "企业画像": "profile", "画像": "profile",
+    "净利润率": "financial_metrics", "净利率": "financial_metrics",
+    "财务指标": "financial_metrics", "财务比率": "financial_metrics",
+    "财税指标": "financial_metrics", "指标分析": "financial_metrics"
+  }
+}

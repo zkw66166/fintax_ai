@@ -1,0 +1,12 @@
+{
+  "_comment": "跨域操作类型检测关键词",
+  "operations": {
+    "compare": "比较",
+    "ratio": "比率",
+    "reconcile": "勾稽核对",
+    "list": "列举"
+  },
+  "compare_keywords": ["对比", "比较", "一致", "差异", "差额", "vs", "VS"],
+  "ratio_keywords": ["比重", "占比", "比率", "百分比"],
+  "reconcile_keywords": ["核对", "勾稽", "一致性", "是否一致", "是否相符"]
+}

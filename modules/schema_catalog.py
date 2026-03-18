@@ -1,7 +1,16 @@
 """静态白名单：域→视图、视图→列、黑名单"""
 
+from pathlib import Path as _Path
+from config.config_loader import load_json as _load_json
+
+_SCHEMA_DIR = _Path(__file__).resolve().parent.parent / "config" / "schema"
+_CFG_domain_views = _load_json(_SCHEMA_DIR / "domain_views.json", {})
+_CFG_view_columns = _load_json(_SCHEMA_DIR / "view_columns.json", {})
+_CFG_blacklists = _load_json(_SCHEMA_DIR / "security_blacklists.json", {})
+_CFG_dimensions = _load_json(_SCHEMA_DIR / "dimension_columns.json", {})
+
 # 域 → 允许视图
-DOMAIN_VIEWS = {
+DOMAIN_VIEWS = _CFG_domain_views.get("domain_views", {
     "vat": ["vw_vat_return_general", "vw_vat_return_small"],
     "eit": ["vw_eit_annual_main", "vw_eit_quarter_main"],
     "balance_sheet": ["vw_balance_sheet_eas", "vw_balance_sheet_sas"],
@@ -12,10 +21,11 @@ DOMAIN_VIEWS = {
     "profile": ["vw_enterprise_profile"],
     "financial_metrics": ["vw_financial_metrics"],
     "cross_domain": [],  # 动态组合
-}
+})
 
-# 视图 → 允许列
-VIEW_COLUMNS = {
+# 视图 → 允许列（从JSON加载，过滤掉_comment等内部key）
+_vc_raw = {k: v for k, v in _CFG_view_columns.items() if not k.startswith("_")} if _CFG_view_columns else {}
+VIEW_COLUMNS = _vc_raw if _vc_raw else {
     "vw_vat_return_general": [
         "taxpayer_id", "taxpayer_name", "period_year", "period_month",
         "item_type", "time_range", "taxpayer_type", "revision_no",

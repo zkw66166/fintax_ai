@@ -1,0 +1,424 @@
+{
+  "_comment": "计算指标公式注册表",
+  "formulas": {
+    "资产负债率": {
+      "formula": "total_liabilities / total_assets * 100 if total_assets else None",
+      "sources": {
+        "total_liabilities": {
+          "domain": "balance_sheet",
+          "column": "liabilities_end"
+        },
+        "total_assets": {
+          "domain": "balance_sheet",
+          "column": "assets_end"
+        }
+      },
+      "label": "资产负债率",
+      "unit": "%"
+    },
+    "净资产收益率": {
+      "formula": "net_profit / avg_equity * 100 if avg_equity else None",
+      "sources": {
+        "net_profit": {
+          "domain": "profit",
+          "column": "net_profit",
+          "time_range": "本年累计"
+        },
+        "avg_equity": {
+          "domain": "balance_sheet",
+          "expression": "(equity_begin + equity_end) / 2.0",
+          "columns": ["equity_begin", "equity_end"]
+        }
+      },
+      "label": "净资产收益率(ROE)",
+      "unit": "%"
+    },
+    "ROE": {
+      "alias": "净资产收益率"
+    },
+    "毛利率": {
+      "formula": "(revenue - cost) / revenue * 100 if revenue else None",
+      "sources": {
+        "revenue": {
+          "domain": "profit",
+          "column": "operating_revenue"
+        },
+        "cost": {
+          "domain": "profit",
+          "column": "operating_cost"
+        }
+      },
+      "label": "毛利率",
+      "unit": "%"
+    },
+    "总资产周转率": {
+      "formula": "revenue / avg_assets if avg_assets else None",
+      "sources": {
+        "revenue": {
+          "domain": "profit",
+          "column": "operating_revenue",
+          "time_range": "本年累计"
+        },
+        "avg_assets": {
+          "domain": "balance_sheet",
+          "expression": "(assets_begin + assets_end) / 2.0",
+          "columns": ["assets_begin", "assets_end"]
+        }
+      },
+      "label": "总资产周转率",
+      "unit": "次"
+    },
+    "净利润率": {
+      "formula": "net_profit / revenue * 100 if revenue else None",
+      "sources": {
+        "net_profit": {
+          "domain": "profit",
+          "column": "net_profit"
+        },
+        "revenue": {
+          "domain": "profit",
+          "column": "operating_revenue"
+        }
+      },
+      "label": "净利润率",
+      "unit": "%"
+    },
+    "流动比率": {
+      "formula": "current_assets / current_liabilities if current_liabilities else None",
+      "sources": {
+        "current_assets": {
+          "domain": "balance_sheet",
+          "column": "current_assets_end"
+        },
+        "current_liabilities": {
+          "domain": "balance_sheet",
+          "column": "current_liabilities_end"
+        }
+      },
+      "label": "流动比率",
+      "unit": ""
+    },
+    "现金债务保障比率": {
+      "formula": "operating_cash / total_liabilities * 100 if total_liabilities else None",
+      "sources": {
+        "operating_cash": {
+          "domain": "cash_flow",
+          "column": "operating_net_cash",
+          "time_range": "本年累计"
+        },
+        "total_liabilities": {
+          "domain": "balance_sheet",
+          "column": "liabilities_end"
+        }
+      },
+      "label": "现金债务保障比率",
+      "unit": "%"
+    },
+    "管理费用率": {
+      "formula": "admin_expense / revenue * 100 if revenue else None",
+      "sources": {
+        "admin_expense": {
+          "domain": "profit",
+          "column": "administrative_expense"
+        },
+        "revenue": {
+          "domain": "profit",
+          "column": "operating_revenue"
+        }
+      },
+      "label": "管理费用率",
+      "unit": "%"
+    },
+    "销售费用率": {
+      "formula": "selling_expense / revenue * 100 if revenue else None",
+      "sources": {
+        "selling_expense": {
+          "domain": "profit",
+          "column": "selling_expense"
+        },
+        "revenue": {
+          "domain": "profit",
+          "column": "operating_revenue"
+        }
+      },
+      "label": "销售费用率",
+      "unit": "%"
+    },
+    "流动资产占比": {
+      "formula": "current_assets / total_assets * 100 if total_assets else None",
+      "sources": {
+        "current_assets": {
+          "domain": "balance_sheet",
+          "column": "current_assets_end"
+        },
+        "total_assets": {
+          "domain": "balance_sheet",
+          "column": "assets_end"
+        }
+      },
+      "label": "流动资产占比",
+      "unit": "%"
+    },
+    "固定资产占比": {
+      "formula": "fixed_assets / total_assets * 100 if total_assets else None",
+      "sources": {
+        "fixed_assets": {
+          "domain": "balance_sheet",
+          "column": "fixed_assets_end"
+        },
+        "total_assets": {
+          "domain": "balance_sheet",
+          "column": "assets_end"
+        }
+      },
+      "label": "固定资产占比",
+      "unit": "%"
+    },
+    "流动负债占比": {
+      "formula": "current_liabilities / total_liabilities * 100 if total_liabilities else None",
+      "sources": {
+        "current_liabilities": {
+          "domain": "balance_sheet",
+          "column": "current_liabilities_end"
+        },
+        "total_liabilities": {
+          "domain": "balance_sheet",
+          "column": "liabilities_end"
+        }
+      },
+      "label": "流动负债占比",
+      "unit": "%"
+    },
+    "营业成本占比": {
+      "formula": "cost / revenue * 100 if revenue else None",
+      "sources": {
+        "cost": {
+          "domain": "profit",
+          "column": "operating_cost"
+        },
+        "revenue": {
+          "domain": "profit",
+          "column": "operating_revenue"
+        }
+      },
+      "label": "营业成本占比",
+      "unit": "%"
+    },
+    "期间费用占比": {
+      "formula": "(admin + selling + finance) / revenue * 100 if revenue else None",
+      "sources": {
+        "admin": {
+          "domain": "profit",
+          "column": "administrative_expense"
+        },
+        "selling": {
+          "domain": "profit",
+          "column": "selling_expense"
+        },
+        "finance": {
+          "domain": "profit",
+          "column": "financial_expense"
+        },
+        "revenue": {
+          "domain": "profit",
+          "column": "operating_revenue"
+        }
+      },
+      "label": "期间费用占比",
+      "unit": "%"
+    },
+    "研发费用占比": {
+      "formula": "rd_expense / revenue * 100 if revenue else None",
+      "sources": {
+        "rd_expense": {
+          "domain": "profit",
+          "column": "rd_expense"
+        },
+        "revenue": {
+          "domain": "profit",
+          "column": "operating_revenue"
+        }
+      },
+      "label": "研发费用占比",
+      "unit": "%"
+    },
+    "进项税额占比": {
+      "formula": "input_tax / output_tax * 100 if output_tax else None",
+      "sources": {
+        "input_tax": {
+          "domain": "vat",
+          "column": "input_tax"
+        },
+        "output_tax": {
+          "domain": "vat",
+          "column": "output_tax"
+        }
+      },
+      "label": "进项税额占比",
+      "unit": "%"
+    },
+    "留抵税额占比": {
+      "formula": "carryover_tax / output_tax * 100",
+      "sources": {
+        "carryover_tax": {
+          "domain": "vat",
+          "column": "carryover_tax_end"
+        },
+        "output_tax": {
+          "domain": "vat",
+          "column": "output_tax"
+        }
+      },
+      "label": "留抵税额占比",
+      "unit": "%"
+    },
+    "产权比率": {
+      "formula": "total_liabilities / equity",
+      "sources": {
+        "total_liabilities": {
+          "domain": "balance_sheet",
+          "column": "total_liabilities_end"
+        },
+        "equity": {
+          "domain": "balance_sheet",
+          "column": "equity_end"
+        }
+      },
+      "label": "产权比率",
+      "unit": ""
+    },
+    "权益乘数": {
+      "formula": "total_assets / equity",
+      "sources": {
+        "total_assets": {
+          "domain": "balance_sheet",
+          "column": "total_assets_end"
+        },
+        "equity": {
+          "domain": "balance_sheet",
+          "column": "equity_end"
+        }
+      },
+      "label": "权益乘数",
+      "unit": ""
+    },
+    "营业利润率": {
+      "formula": "operating_profit / revenue * 100",
+      "sources": {
+        "operating_profit": {
+          "domain": "profit",
+          "column": "operating_profit",
+          "time_range": "本年累计"
+        },
+        "revenue": {
+          "domain": "profit",
+          "column": "operating_revenue",
+          "time_range": "本年累计"
+        }
+      },
+      "label": "营业利润率",
+      "unit": "%"
+    },
+    "成本费用利润率": {
+      "formula": "total_profit / (cost + admin + selling + finance) * 100",
+      "sources": {
+        "total_profit": {
+          "domain": "profit",
+          "column": "total_profit",
+          "time_range": "本年累计"
+        },
+        "cost": {
+          "domain": "profit",
+          "column": "operating_cost",
+          "time_range": "本年累计"
+        },
+        "admin": {
+          "domain": "profit",
+          "column": "admin_expense",
+          "time_range": "本年累计"
+        },
+        "selling": {
+          "domain": "profit",
+          "column": "selling_expense",
+          "time_range": "本年累计"
+        },
+        "finance": {
+          "domain": "profit",
+          "column": "finance_expense",
+          "time_range": "本年累计"
+        }
+      },
+      "label": "成本费用利润率",
+      "unit": "%"
+    },
+    "总资产报酬率": {
+      "formula": "net_profit / avg_assets * 100",
+      "sources": {
+        "net_profit": {
+          "domain": "profit",
+          "column": "net_profit",
+          "time_range": "本年累计"
+        },
+        "avg_assets": {
+          "domain": "balance_sheet",
+          "column": "total_assets_end",
+          "aggregate": "AVG"
+        }
+      },
+      "label": "总资产报酬率",
+      "unit": "%"
+    },
+    "ROA": {
+      "alias": "总资产报酬率"
+    }
+  },
+  "synonyms": {
+    "资产负债率": "资产负债率",
+    "负债率": "资产负债率",
+    "净资产收益率": "净资产收益率",
+    "ROE": "净资产收益率",
+    "毛利率": "毛利率",
+    "销售毛利率": "毛利率",
+    "总资产周转率": "总资产周转率",
+    "资产周转率": "总资产周转率",
+    "净利润率": "净利润率",
+    "销售净利率": "净利润率",
+    "流动比率": "流动比率",
+    "现金债务保障比率": "现金债务保障比率",
+    "现金比率": "现金债务保障比率",
+    "管理费用率": "管理费用率",
+    "管理费用占比": "管理费用率",
+    "销售费用率": "销售费用率",
+    "销售费用占比": "销售费用率",
+    "利润率": "净利润率",
+    "流动资产占比": "流动资产占比",
+    "固定资产占比": "固定资产占比",
+    "流动负债占比": "流动负债占比",
+    "营业成本占比": "营业成本占比",
+    "期间费用占比": "期间费用占比",
+    "研发费用占比": "研发费用占比",
+    "研发占比": "研发费用占比",
+    "进项税额占比": "进项税额占比",
+    "留抵税额占比": "留抵税额占比",
+    "产权比率": "产权比率",
+    "权益乘数": "权益乘数",
+    "营业利润率": "营业利润率",
+    "成本费用利润率": "成本费用利润率",
+    "总资产报酬率": "总资产报酬率",
+    "ROA": "总资产报酬率"
+  },
+  "known_rate_metrics": [
+    "增值税税负率", "企业所得税税负率", "综合税负率", "所得税税负率",
+    "毛利率", "净利率", "利润率", "净利润率", "营业利润率", "成本费用利润率", "销售净利率",
+    "资产负债率", "产权比率", "流动比率", "速动比率",
+    "净资产收益率", "总资产报酬率", "总资产收益率",
+    "应收账款周转率", "存货周转率", "总资产周转率",
+    "营业收入增长率", "收入增长率", "净利润增长率", "利润增长率", "资产增长率", "总资产增长率",
+    "管理费用率", "销售费用率", "期间费用率",
+    "销项进项配比率", "进项税额转出占比", "应税所得率", "零申报率",
+    "发票开具异常率", "发票异常率", "顶额开具率",
+    "权益乘数", "利息保障倍数", "现金债务保障比率", "现金流量利息保障倍数",
+    "销售收现比", "长期资本负债率",
+    "ROE", "ROA"
+  ]
+}
