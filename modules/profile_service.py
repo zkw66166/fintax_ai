@@ -10,47 +10,54 @@ from typing import Optional, Tuple
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from config.settings import DB_PATH
+from config.config_loader import load_json as _load_json
+
+_CFG_profile = _load_json(Path(__file__).resolve().parent.parent / "config" / "profile" / "evaluation_rules.json", {})
 
 # ── 画像结果缓存（TTL 5分钟）──────────────────────────────
 _profile_cache = {}  # key: (taxpayer_id, year) → {'data': dict, 'ts': float}
-_PROFILE_CACHE_TTL = 300  # 5 minutes
+_PROFILE_CACHE_TTL = _CFG_profile.get("cache_ttl", 300)  # 5 minutes
 
 
 # ── 评价规则 ──────────────────────────────────────────────
-EVAL_RULES = {
-    "debt_ratio": [
-        (30, "优秀", "positive"), (50, "良好", "positive"),
-        (70, "偏高", "warning"), (100, "风险", "negative"),
-    ],
-    "current_ratio": [
-        (1.0, "偏低", "warning"), (1.5, "一般", "neutral"),
-        (2.0, "良好", "positive"), (9999, "优秀", "positive"),
-    ],
-    "quick_ratio": [
-        (0.8, "偏低", "warning"), (1.0, "一般", "neutral"),
-        (1.5, "良好", "positive"), (9999, "优秀", "positive"),
-    ],
-    "gross_margin": [
-        (10, "偏低", "warning"), (20, "一般", "neutral"),
-        (40, "良好", "positive"), (100, "优秀", "positive"),
-    ],
-    "net_margin": [
-        (3, "偏低", "warning"), (8, "一般", "neutral"),
-        (15, "良好", "positive"), (100, "优秀", "positive"),
-    ],
-    "roe": [
-        (5, "偏低", "warning"), (10, "一般", "neutral"),
-        (20, "良好", "positive"), (100, "优秀", "positive"),
-    ],
-    "revenue_growth": [
-        (0, "负增长", "negative"), (10, "低速", "neutral"),
-        (20, "中速", "positive"), (9999, "高速增长", "growth"),
-    ],
-    "total_tax_burden": [
-        (2, "偏低", "warning"), (5, "合理", "positive"),
-        (10, "偏高", "warning"), (100, "过高", "negative"),
-    ],
-}
+_EVAL_RULES_RAW = _CFG_profile.get("eval_rules", None)
+if _EVAL_RULES_RAW:
+    EVAL_RULES = {k: [tuple(r) for r in v] for k, v in _EVAL_RULES_RAW.items()}
+else:
+    EVAL_RULES = {
+        "debt_ratio": [
+            (30, "优秀", "positive"), (50, "良好", "positive"),
+            (70, "偏高", "warning"), (100, "风险", "negative"),
+        ],
+        "current_ratio": [
+            (1.0, "偏低", "warning"), (1.5, "一般", "neutral"),
+            (2.0, "良好", "positive"), (9999, "优秀", "positive"),
+        ],
+        "quick_ratio": [
+            (0.8, "偏低", "warning"), (1.0, "一般", "neutral"),
+            (1.5, "良好", "positive"), (9999, "优秀", "positive"),
+        ],
+        "gross_margin": [
+            (10, "偏低", "warning"), (20, "一般", "neutral"),
+            (40, "良好", "positive"), (100, "优秀", "positive"),
+        ],
+        "net_margin": [
+            (3, "偏低", "warning"), (8, "一般", "neutral"),
+            (15, "良好", "positive"), (100, "优秀", "positive"),
+        ],
+        "roe": [
+            (5, "偏低", "warning"), (10, "一般", "neutral"),
+            (20, "良好", "positive"), (100, "优秀", "positive"),
+        ],
+        "revenue_growth": [
+            (0, "负增长", "negative"), (10, "低速", "neutral"),
+            (20, "中速", "positive"), (9999, "高速增长", "growth"),
+        ],
+        "total_tax_burden": [
+            (2, "偏低", "warning"), (5, "合理", "positive"),
+            (10, "偏高", "warning"), (100, "过高", "negative"),
+        ],
+    }
 
 
 def evaluate_metric(code: str, value) -> Optional[dict]:

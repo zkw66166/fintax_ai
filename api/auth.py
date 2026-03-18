@@ -8,29 +8,37 @@ from fastapi import Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from config.settings import DB_PATH, JWT_SECRET_KEY, JWT_ALGORITHM, JWT_EXPIRE_MINUTES
+from pathlib import Path as _Path
+from config.config_loader import load_json as _load_json
 
 security = HTTPBearer(auto_error=False)
 
+_CFG_roles = _load_json(_Path(__file__).resolve().parent.parent / "config" / "auth" / "roles.json", {})
+
 # ── 角色常量 ──────────────────────────────────────────────
-ROLES = ['sys', 'admin', 'firm', 'group', 'enterprise']
-ADMIN_ROLES = {'sys', 'admin'}
-ROLE_LABELS = {
+ROLES = _CFG_roles.get("roles", ['sys', 'admin', 'firm', 'group', 'enterprise'])
+ADMIN_ROLES = set(_CFG_roles.get("admin_roles", ['sys', 'admin']))
+ROLE_LABELS = _CFG_roles.get("role_labels", {
     'sys': '超级管理员',
     'admin': '系统管理员',
     'firm': '事务所用户',
     'group': '集团企业用户',
     'enterprise': '普通企业用户',
-}
-CREATABLE_ROLES = {
-    'sys':        {'admin', 'firm', 'group', 'enterprise'},
-    'admin':      {'admin', 'firm', 'group', 'enterprise'},
-    'firm':       {'firm', 'enterprise'},
-    'group':      {'group', 'enterprise'},
-    'enterprise': {'enterprise'},
-}
+})
+_cr_raw = _CFG_roles.get("creatable_roles", None)
+if _cr_raw:
+    CREATABLE_ROLES = {k: set(v) for k, v in _cr_raw.items()}
+else:
+    CREATABLE_ROLES = {
+        'sys':        {'admin', 'firm', 'group', 'enterprise'},
+        'admin':      {'admin', 'firm', 'group', 'enterprise'},
+        'firm':       {'firm', 'enterprise'},
+        'group':      {'group', 'enterprise'},
+        'enterprise': {'enterprise'},
+    }
 
 # ── 角色默认企业映射 ──────────────────────────────────────
-ROLE_DEFAULT_COMPANIES = {
+ROLE_DEFAULT_COMPANIES = _CFG_roles.get("role_default_companies", {
     'firm': [
         '91310000MA1FL8XQ30',  # 华兴科技有限公司
         '92440300MA5EQXL17P',  # 鑫源贸易商行
@@ -44,7 +52,7 @@ ROLE_DEFAULT_COMPANIES = {
     'enterprise': [
         '91310000MA1FL8XQ30',  # 华兴科技有限公司
     ],
-}
+})
 
 
 def hash_password(password: str) -> str:

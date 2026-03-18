@@ -5,6 +5,8 @@
 """
 import json
 from typing import List, Dict, Tuple, Set
+from pathlib import Path as _Path
+from config.config_loader import load_json as _load_json
 from config.settings import (
     LLM_API_KEY,
     LLM_API_BASE,
@@ -13,6 +15,10 @@ from config.settings import (
     MIXED_ANALYSIS_MIN_ROUTES
 )
 from openai import OpenAI
+
+_CFG_mixed = _load_json(_Path(__file__).resolve().parent.parent / "config" / "analysis" / "mixed_analysis_keywords.json", {})
+_SYNTHESIS_KEYWORDS = _CFG_mixed.get("synthesis_keywords", ['综合', '匹配', '建议', '筹划', '优化', '对比', '结合', '根据上述', '根据前面'])
+_SYNTHESIS_PROMPT_CRITERIA = _CFG_mixed.get("synthesis_prompt_criteria", '如果查询要求"综合分析"、"匹配"、"建议"、"筹划"、"优化"、"对比"、"结合"、"根据上述"等，返回true')
 
 
 def should_trigger_mixed_analysis(
@@ -128,7 +134,7 @@ def llm_check_synthesis_need(
 当前查询：{user_query}
 
 判断标准：
-- 如果查询要求"综合分析"、"匹配"、"建议"、"筹划"、"优化"、"对比"、"结合"、"根据上述"等，返回true
+- {_SYNTHESIS_PROMPT_CRITERIA}
 - 如果查询只是独立的新问题（不依赖历史数据），返回false
 
 返回JSON格式：{{"needs_synthesis": true/false, "reason": "..."}}
@@ -164,7 +170,7 @@ def llm_check_synthesis_need(
     except json.JSONDecodeError:
         print(f"[mixed_analysis_detector] LLM返回非JSON: {result_text}")
         # 降级策略：检查关键词
-        keywords = ['综合', '匹配', '建议', '筹划', '优化', '对比', '结合', '根据上述', '根据前面']
+        keywords = _SYNTHESIS_KEYWORDS
         return any(kw in user_query for kw in keywords)
 
 

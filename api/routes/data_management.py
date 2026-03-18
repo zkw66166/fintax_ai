@@ -4,8 +4,12 @@ import time
 from fastapi import APIRouter, Depends, Query, HTTPException
 from api.auth import get_current_user, get_user_company_ids, require_company_access, require_admin
 from config.settings import DB_PATH
+from pathlib import Path as _Path
+from config.config_loader import load_json as _load_json
 
 router = APIRouter(prefix="/data-management", tags=["data-management"])
+
+_CFG_dm = _load_json(_Path(__file__).resolve().parent.parent.parent / "config" / "data_management" / "domain_config.json", {})
 
 
 def require_sys(user: dict = Depends(get_current_user)):
@@ -15,16 +19,16 @@ def require_sys(user: dict = Depends(get_current_user)):
     return user
 
 # Domain config for stats
-DOMAIN_TABLES = {
+DOMAIN_TABLES = _CFG_dm.get("domain_tables", {
     "balance_sheet": {"label": "资产负债表", "label_en": "Balance Sheet", "table": "fs_balance_sheet_item", "freq": "月度", "period_col": "period_month"},
     "profit": {"label": "利润表", "label_en": "Income Statement", "table": "fs_income_statement_item", "freq": "月度", "period_col": "period_month"},
     "cash_flow": {"label": "现金流量表", "label_en": "Cash Flow Statement", "table": "fs_cash_flow_item", "freq": "月度", "period_col": "period_month"},
     "vat": {"label": "增值税申报表", "label_en": "VAT Return", "table": "vat_return_general", "freq": "月度", "period_col": "period_month"},
     "eit": {"label": "企业所得税申报表", "label_en": "CIT Return", "table": "eit_annual_filing", "freq": "季度", "period_col": None},
     "account_balance": {"label": "科目余额表", "label_en": "Subject Balance Sheet", "table": "account_balance", "freq": "月度", "period_col": "period_month"},
-}
+})
 
-SYNONYM_MAPPINGS_STATIC = [
+SYNONYM_MAPPINGS_STATIC = _CFG_dm.get("synonym_mappings", [
     {"standard_name": "资产负债表", "synonyms": "Balance Sheet, Statement of Financial Position", "status": "Mapped", "match_rate": 100},
     {"standard_name": "利润表", "synonyms": "Income Statement, Profit and Loss Statement", "status": "Mapped", "match_rate": 100},
     {"standard_name": "科目余额表", "synonyms": "Subject Balance Sheet, Trial Balance General Ledger Summary", "status": "Mapped", "match_rate": 95},
@@ -34,16 +38,16 @@ SYNONYM_MAPPINGS_STATIC = [
     {"standard_name": "企业所得税申报表", "synonyms": "CIT Return, Corporate Income Tax Return A100000", "status": "Mapped", "match_rate": 90},
     {"standard_name": "发票", "synonyms": "Invoices, FaPiao VAT Invoices", "status": "Mapped", "match_rate": 100},
     {"standard_name": "企业画像", "synonyms": "Enterprise Profile, Company Portrait", "status": "Mapped", "match_rate": 100},
-]
+])
 
-QUALITY_CHECK_ITEMS = [
+QUALITY_CHECK_ITEMS = _CFG_dm.get("quality_check_items", [
     {"key": "subject_balance", "name_cn": "科目余额表", "name_en": "Subject Balance Sheet"},
     {"key": "balance_sheet", "name_cn": "资产负债表", "name_en": "Balance Sheet"},
     {"key": "income_statement", "name_cn": "利润表", "name_en": "Income Statement"},
     {"key": "cash_flow", "name_cn": "现金流量表", "name_en": "Cash Flow Statement"},
     {"key": "vat_return", "name_cn": "增值税申报表", "name_en": "VAT Return"},
     {"key": "eit_return", "name_cn": "企业所得税申报表", "name_en": "CIT Return"},
-]
+])
 
 
 def _get_conn():
@@ -191,7 +195,7 @@ async def quality_check(company_id: str = Query(""), user: dict = Depends(get_cu
 @router.post("/recalculate-metrics")
 async def recalculate_metrics(
     company_id: str = Query(..., description="纳税人ID"),
-    version: str = Query("both", regex="^(v1|v2|both)$", description="指标版本"),
+    version: str = Query("both", pattern="^(v1|v2|both)$", description="指标版本"),
     user: dict = Depends(require_admin)  # 仅admin/sys可调用
 ):
     """
@@ -265,7 +269,7 @@ async def recalculate_metrics(
 
 @router.post("/recalculate-metrics-all")
 async def recalculate_metrics_all(
-    version: str = Query("both", regex="^(v1|v2|both)$", description="指标版本"),
+    version: str = Query("both", pattern="^(v1|v2|both)$", description="指标版本"),
     user: dict = Depends(require_admin)  # 仅admin/sys可调用
 ):
     """

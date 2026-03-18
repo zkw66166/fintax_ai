@@ -1,23 +1,26 @@
 """跨域计算引擎：支持差异比较、比率计算、勾稽核对等跨域操作"""
 import re
 import logging
+from pathlib import Path as _Path
+from config.config_loader import load_json as _load_json
 
 # PHASE 4 FIX: 添加日志记录器
 logger = logging.getLogger(__name__)
 
+_CFG_cross_domain = _load_json(_Path(__file__).resolve().parent.parent / "config" / "cross_domain" / "operation_keywords.json", {})
 
 # 跨域操作类型
-CROSS_DOMAIN_OPS = {
+CROSS_DOMAIN_OPS = _CFG_cross_domain.get("operations", {
     'compare': '比较',
     'ratio': '比率',
     'reconcile': '勾稽核对',
     'list': '列举',
-}
+})
 
 # 跨域操作检测关键词
-_COMPARE_KEYWORDS = ['对比', '比较', '一致', '差异', '差额', 'vs', 'VS']
-_RATIO_KEYWORDS = ['比重', '占比', '比率', '百分比']
-_RECONCILE_KEYWORDS = ['核对', '勾稽', '一致性', '是否一致', '是否相符']
+_COMPARE_KEYWORDS = _CFG_cross_domain.get("compare_keywords", ['对比', '比较', '一致', '差异', '差额', 'vs', 'VS'])
+_RATIO_KEYWORDS = _CFG_cross_domain.get("ratio_keywords", ['比重', '占比', '比率', '百分比'])
+_RECONCILE_KEYWORDS = _CFG_cross_domain.get("reconcile_keywords", ['核对', '勾稽', '一致性', '是否一致', '是否相符'])
 
 
 def detect_cross_domain_operation(query: str) -> str:

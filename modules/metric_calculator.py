@@ -1,12 +1,16 @@
 """计算指标引擎：支持资产负债率、ROE、毛利率等跨域计算指标"""
 
+from pathlib import Path as _Path
+from config.config_loader import load_json as _load_json
+_CFG_metrics = _load_json(_Path(__file__).resolve().parent.parent / "config" / "metrics" / "metric_formulas.json", {})
+
 # 指标公式注册表
 # 每个指标定义：
 #   formula: Python表达式（变量名对应sources中的key）
 #   sources: 每个变量的数据来源（域+列名/表达式）
 #   label: 中文名称
 #   unit: 单位（%表示百分比）
-METRIC_FORMULAS = {
+METRIC_FORMULAS = _CFG_metrics.get("formulas", {
     '资产负债率': {
         'formula': 'total_liabilities / total_assets * 100 if total_assets else None',
         'sources': {
@@ -379,10 +383,10 @@ METRIC_FORMULAS = {
     'ROA': {
         'alias': '总资产报酬率',
     },
-}
+})
 
 # 指标同义词映射
-METRIC_SYNONYMS = {
+METRIC_SYNONYMS = _CFG_metrics.get("synonyms", {
     '资产负债率': '资产负债率',
     '负债率': '资产负债率',
     '净资产收益率': '净资产收益率',
@@ -417,7 +421,7 @@ METRIC_SYNONYMS = {
     '成本费用利润率': '成本费用利润率',
     '总资产报酬率': '总资产报酬率',
     'ROA': '总资产报酬率',
-}
+})
 
 
 def is_multi_period_query(entities: dict) -> bool:
@@ -463,7 +467,7 @@ def extract_all_rate_metrics(query: str) -> list:
 
     # 2026-03-17: 直接匹配的已知率型指标名称（优先级最高，无需regex）
     # 解决短指标名（毛利率、净利率等）因前缀长度要求无法被regex匹配的问题
-    _KNOWN_RATE_METRICS = [
+    _KNOWN_RATE_METRICS = _CFG_metrics.get("known_rate_metrics", [
         '增值税税负率', '企业所得税税负率', '综合税负率', '所得税税负率',
         '毛利率', '净利率', '利润率', '净利润率', '营业利润率', '成本费用利润率', '销售净利率',
         '资产负债率', '产权比率', '流动比率', '速动比率',
@@ -476,7 +480,7 @@ def extract_all_rate_metrics(query: str) -> list:
         '权益乘数', '利息保障倍数', '现金债务保障比率', '现金流量利息保障倍数',
         '销售收现比', '长期资本负债率',
         'ROE', 'ROA',
-    ]
+    ])
 
     found = []
 

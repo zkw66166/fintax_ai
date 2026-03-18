@@ -1,0 +1,35 @@
+{
+  "_comment": "种子用户配置（仅用于初始化/迁移脚本）",
+  "_warning": "包含明文密码，生产环境部署后应保护此文件",
+  "users": [
+    {"username": "sys", "password": "sys123", "role": "sys", "display_name": "超级管理员"},
+    {"username": "user2", "password": "123456", "role": "group", "display_name": "集团用户2"},
+    {"username": "user3", "password": "123456", "role": "group", "display_name": "集团用户3"},
+    {"username": "user4", "password": "123456", "role": "enterprise", "display_name": "企业用户4"},
+    {"username": "sws2", "password": "123456", "role": "firm", "display_name": "事务所用户2"}
+  ],
+  "access_map": {
+    "user1": [
+      "91310000MA1FL8XQ30",
+      "92440300MA5EQXL17P"
+    ],
+    "user2": [
+      "91330200MA2KXXXXXX",
+      "91330200MA2KYYYYYY",
+      "91310115MA2KZZZZZZ",
+      "91330100MA2KWWWWWW"
+    ],
+    "user3": [
+      "91330200MA2KXXXXXX",
+      "91330200MA2KYYYYYY",
+      "91310115MA2KZZZZZZ"
+    ],
+    "user4": [
+      "91310000MA1FL8XQ30"
+    ],
+    "sws2": [
+      "91310000MA1FL8XQ30",
+      "92440300MA5EQXL17P"
+    ]
+  }
+}

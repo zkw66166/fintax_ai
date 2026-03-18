@@ -3,6 +3,10 @@ import re
 import sqlite3
 from datetime import date, timedelta
 from typing import List, Dict, Optional
+from pathlib import Path as _Path
+from config.config_loader import load_json as _load_json
+
+_DOMAIN_DETECTION_DIR = _Path(__file__).resolve().parent.parent / "config" / "domain_detection"
 
 # 模块级缓存：纳税人列表（启动时加载一次）
 _taxpayer_cache = None
@@ -11,25 +15,26 @@ _taxpayer_cache = None
 _synonym_cache = {}
 
 # 科目余额域关键词（最高优先级 — 仅科目余额表独有）
-_ACCOUNT_BALANCE_KEYWORDS_HIGH = [
+_CFG_account_balance = _load_json(_DOMAIN_DETECTION_DIR / "account_balance.json", {})
+_ACCOUNT_BALANCE_KEYWORDS_HIGH = _CFG_account_balance.get("account_balance_keywords_high", [
     '科目余额', '借方发生额', '贷方发生额', '期初余额', '期末余额',
     '借方发生', '贷方发生', '科目余额表',
     # 补充：总账、明细账、科目汇总表等专有词汇
     '总账', '明细账', '科目汇总表', '三栏式明细账', '多栏式明细账', '数量金额式明细账',
     '科目余额查询', '科目发生额', '科目期初', '科目期末', '累计发生额', '本期发生额',
-]
+])
 # 科目余额域关键词（中优先级 — 需结合上下文）
-_ACCOUNT_BALANCE_KEYWORDS_MED = [
+_ACCOUNT_BALANCE_KEYWORDS_MED = _CFG_account_balance.get("account_balance_keywords_med", [
     '发生额', '借方', '贷方', '会计科目', '科目编码', '余额方向',
     '账上', '账面', '账载',
     # 补充：常用账务术语
     '借或贷', '余额方向', '期初借方余额', '期初贷方余额', '期末借方余额', '期末贷方余额',
     '本期借方发生额', '本期贷方发生额', '本年累计借方', '本年累计贷方',
     '银行存款日记账', '现金日记账',
-]
+])
 # 科目余额表特有科目名称（具体会计科目，不是资产负债表行项目）
 # 此处仅保留资产负债表主表中不直接列示的明细科目（如存货明细、备抵科目、过渡科目等）
-_ACCOUNT_SPECIFIC_NAMES = [
+_ACCOUNT_SPECIFIC_NAMES = _CFG_account_balance.get("account_specific_names", [
     # 货币资金明细
     '银行存款', '库存现金', '其他货币资金',
     # 收入成本明细
@@ -44,7 +49,7 @@ _ACCOUNT_SPECIFIC_NAMES = [
     '材料成本差异', '商品进销差价',
     # 过渡/清理科目
     '固定资产清理', '待处理财产损溢',
-    # 存货明细（主表仅列示“存货”总额）
+    # 存货明细（主表仅列示"存货"总额）
     '原材料', '材料采购', '在途物资', '库存商品', '发出商品', '委托加工物资',
     '周转材料', '包装物', '低值易耗品', '生产成本', '制造费用',
     # 其他明细（不直接对应主表项目）
@@ -54,24 +59,25 @@ _ACCOUNT_SPECIFIC_NAMES = [
     # 补充更多常用明细（但需确保不在资产负债表主表直接列示）
     '以前年度损益调整', '公允价值变动损益', '汇兑损益', '手续费支出',
     '利息支出', '利息收入', '其他业务支出',
-]
+])
 
 # 资产负债表域关键词（高优先级 — 直接命中）
-_BALANCE_SHEET_KEYWORDS_HIGH = [
+_CFG_balance_sheet = _load_json(_DOMAIN_DETECTION_DIR / "balance_sheet.json", {})
+_BALANCE_SHEET_KEYWORDS_HIGH = _CFG_balance_sheet.get("balance_sheet_keywords_high", [
     '资产负债表', '资产负债',
-]
+])
 # 资产负债表域关键词（中优先级 — 需结合上下文判断）
-_BALANCE_SHEET_KEYWORDS_MED = [
+_BALANCE_SHEET_KEYWORDS_MED = _CFG_balance_sheet.get("balance_sheet_keywords_med", [
     '资产总计', '负债合计', '所有者权益合计', '股东权益合计',
     '负债和所有者权益', '流动资产合计', '非流动资产合计',
     '流动负债合计', '非流动负债合计', '负债及权益总计',
     '总资产', '总负债',
     '流动资产', '非流动资产', '流动负债', '非流动负债',
-]
+])
 # 资产负债表特有项目（不与科目余额表/EIT重叠的项目）
 # 此处仅保留主表独有的汇总项或新准则下不常见于科目余额表的项目，
 # 其余具体项目移入 _BS_SHARED_ITEMS 中，通过上下文消歧。
-_BALANCE_SHEET_ITEMS_UNIQUE = [
+_BALANCE_SHEET_ITEMS_UNIQUE = _CFG_balance_sheet.get("balance_sheet_items_unique", [
     # 合计项
     '流动资产合计', '非流动资产合计', '资产总计',
     '流动负债合计', '非流动负债合计', '负债合计',
@@ -86,9 +92,9 @@ _BALANCE_SHEET_ITEMS_UNIQUE = [
     # 合并报表特有
     '少数股东权益', '归属于母公司所有者权益合计',
     '其中：利息收入', '汇兑收益', '手续费及佣金支出',
-]
+])
 # 资产负债表与科目余额表共有项目 — 需要"年初"/"期末"等修饰词区分
-_BS_SHARED_ITEMS = [
+_BS_SHARED_ITEMS = _CFG_balance_sheet.get("bs_shared_items", [
     '货币资金', '应收票据', '应收账款', '预付账款', '其他应收款',
     '存货', '固定资产', '无形资产', '在建工程', '长期待摊费用',
     '长期股权投资', '生产性生物资产', '开发支出',
@@ -106,13 +112,14 @@ _BS_SHARED_ITEMS = [
     '递延税款', '其他流动资产', '其他非流动资产',
     '其他流动负债', '其他非流动负债', '专项应付款',
     '永续债', '其他权益工具',
-]
+])
 # "年初"指向资产负债表，"期初"指向科目余额表
-_BS_TIME_MARKERS = ['年初', '年初余额', '年末', '年末余额']
-_AB_TIME_MARKERS = ['期初', '期初余额', '期末余额']  # 注意"期末"单独出现时默认BS
+_BS_TIME_MARKERS = _CFG_balance_sheet.get("bs_time_markers", ['年初', '年初余额', '年末', '年末余额'])
+_AB_TIME_MARKERS = _CFG_balance_sheet.get("ab_time_markers", ['期初', '期初余额', '期末余额'])  # 注意"期末"单独出现时默认BS
 
 # EIT 域关键词（用于域提示检测）
-_EIT_KEYWORDS = [
+_CFG_eit = _load_json(_DOMAIN_DETECTION_DIR / "eit.json", {})
+_EIT_KEYWORDS = _CFG_eit.get("eit_keywords", [
     '企业所得税', '应纳税所得额', '纳税调整',
     '纳税调增', '纳税调减', '弥补亏损', '减免所得税', '实际利润额',
     '预缴所得税', '应补退所得税', '实际应纳所得税', '所得税年报', '所得税季报',
@@ -131,13 +138,13 @@ _EIT_KEYWORDS = [
     '查账征收', '核定征收', '应税所得率', '收入总额', '成本费用总额',
     '核定应纳税所得额', '所得税汇算清缴', '汇算清缴', '季度预缴', '年度汇算',
     '退税', '补税', '滞纳金', '跨地区经营', '汇总纳税', '分支机构分摊',
-]
-_EIT_KEYWORD_SUODESHUI = '所得税'
-_EIT_SUODESHUI_EXCLUSIONS = ['所得税费用']
+])
+_EIT_KEYWORD_SUODESHUI = _CFG_eit.get("eit_keyword_suodeshui", '所得税')
+_EIT_SUODESHUI_EXCLUSIONS = _CFG_eit.get("eit_suodeshui_exclusions", ['所得税费用'])
 
 # EIT/VAT共享关键词：需上下文消歧（"增值税应纳税额"→VAT，"应纳税额"单独出现→EIT）
-_EIT_CONTEXT_KEYWORDS = ['应纳税额', '适用税率']
-_EIT_CONTEXT_EXCLUSIONS = ['增值税应纳税额', '增值税适用税率']
+_EIT_CONTEXT_KEYWORDS = _CFG_eit.get("eit_context_keywords", ['应纳税额', '适用税率'])
+_EIT_CONTEXT_EXCLUSIONS = _CFG_eit.get("eit_context_exclusions", ['增值税应纳税额', '增值税适用税率'])
 
 
 def _has_eit_keyword(query: str) -> bool:
@@ -181,7 +188,8 @@ def _check_context_keyword(query: str, keyword: str, exclusions: list) -> bool:
     return False
 
 # VAT 域关键词
-_VAT_KEYWORDS = [
+_CFG_vat = _load_json(_DOMAIN_DETECTION_DIR / "vat.json", {})
+_VAT_KEYWORDS = _CFG_vat.get("vat_keywords", [
     '增值税', '销项税', '进项税', '留抵', '征收率', '简易计税',
     '免抵退', '即征即退', 'VAT',
     # 补充增值税申报表特有名词
@@ -194,12 +202,12 @@ _VAT_KEYWORDS = [
     '增值税纳税申报表', '增值税及附加税费申报表', '增值税附列资料', '增值税附表一', '增值税附表二', '增值税附表三', '增值税附表四',
     '增值税减免税明细表', '其他免税销售额', '本期应纳税额', '本期应纳税额减征额',
     '进项税额结构明细表', '本期进项税额明细', '增值税减免税申报明细表',
-]
+])
 
 # VAT/EIT共享关键词：在跨域检测中需要上下文排除
-_VAT_SHARED_KEYWORDS = ['应纳税额', '适用税率']
-_VAT_SHARED_EXCLUSIONS = ['企业所得税应纳税额', '所得税应纳税额',
-                          '企业所得税适用税率', '所得税适用税率']
+_VAT_SHARED_KEYWORDS = _CFG_vat.get("vat_shared_keywords", ['应纳税额', '适用税率'])
+_VAT_SHARED_EXCLUSIONS = _CFG_vat.get("vat_shared_exclusions", ['企业所得税应纳税额', '所得税应纳税额',
+                          '企业所得税适用税率', '所得税适用税率'])
 
 
 def _has_vat_keyword(query: str) -> bool:

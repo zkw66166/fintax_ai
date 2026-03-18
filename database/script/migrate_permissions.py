@@ -5,6 +5,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from config.settings import DB_PATH
+from config.config_loader import load_json as _load_json
+
+_CFG_seed = _load_json(Path(__file__).resolve().parent.parent / "config" / "auth" / "seed_users.json", {})
 
 try:
     import bcrypt
@@ -45,12 +48,16 @@ def migrate(db_path=None):
     print("[migrate_permissions] 更新 user1 -> firm, admin display_name -> 系统管理员")
 
     # 3. 插入新用户 (INSERT OR IGNORE 防止重复)
+    _seed_users = _CFG_seed.get("users", [
+        {"username": "sys", "password": "sys123", "role": "sys", "display_name": "超级管理员"},
+        {"username": "user2", "password": "123456", "role": "group", "display_name": "集团用户2"},
+        {"username": "user3", "password": "123456", "role": "group", "display_name": "集团用户3"},
+        {"username": "user4", "password": "123456", "role": "enterprise", "display_name": "企业用户4"},
+        {"username": "sws2", "password": "123456", "role": "firm", "display_name": "事务所用户2"},
+    ])
     new_users = [
-        ("sys",   _hash_pw("sys123"), "sys",        "超级管理员", 1),
-        ("user2", _hash_pw("123456"), "group",      "集团用户2",  1),
-        ("user3", _hash_pw("123456"), "group",      "集团用户3",  1),
-        ("user4", _hash_pw("123456"), "enterprise", "企业用户4",  1),
-        ("sws2",  _hash_pw("123456"), "firm",       "事务所用户2", 1),
+        (u["username"], _hash_pw(u["password"]), u["role"], u["display_name"], 1)
+        for u in _seed_users
     ]
     for username, pw_hash, role, display_name, is_active in new_users:
         cur.execute(
@@ -62,7 +69,7 @@ def migrate(db_path=None):
 
     # 4. 插入 user_company_access 关联
     # sys/admin 不需要行，靠角色判断获取全部企业
-    access_map = {
+    access_map = _CFG_seed.get("access_map", {
         "user1": [
             "91310000MA1FL8XQ30",  # 华兴科技有限公司
             "92440300MA5EQXL17P",  # 鑫源贸易商行
@@ -85,7 +92,7 @@ def migrate(db_path=None):
             "91310000MA1FL8XQ30",  # 华兴科技有限公司
             "92440300MA5EQXL17P",  # 鑫源贸易商行
         ],
-    }
+    })
     for username, taxpayer_ids in access_map.items():
         row = cur.execute("SELECT id FROM users WHERE username = ?", (username,)).fetchone()
         if not row:

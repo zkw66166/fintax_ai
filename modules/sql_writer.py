@@ -6,6 +6,7 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from config.settings import LLM_API_KEY, LLM_API_BASE, LLM_MODEL, LLM_TIMEOUT, PROMPTS_DIR
+from config.config_loader import load_json as _load_json
 
 # 模块级OpenAI客户端单例（复用httpx连接池）
 _client = None
@@ -18,7 +19,8 @@ def _get_client():
     return _client
 
 # 域 → prompt模板映射
-_DOMAIN_PROMPT_MAP = {
+_CFG_pipeline = _load_json(Path(__file__).resolve().parent.parent / "config" / "pipeline" / "domain_prompt_map.json", {})
+_DOMAIN_PROMPT_MAP = _CFG_pipeline.get("domain_prompt_map", {
     'vat': 'stage2_vat.txt',
     'eit': 'stage2_eit.txt',
     'account_balance': 'stage2_account_balance.txt',
@@ -28,7 +30,7 @@ _DOMAIN_PROMPT_MAP = {
     'cross_domain': 'stage2_cross_domain.txt',
     'financial_metrics': 'stage2_financial_metrics.txt',
     'invoice': 'stage2_invoice.txt',
-}
+})
 
 
 def generate_sql(constraints: dict, retry_feedback: str = None, domain: str = 'vat', conversation_history: Optional[List[Dict]] = None) -> str:

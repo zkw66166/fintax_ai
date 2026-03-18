@@ -4,11 +4,18 @@ import sqlite3
 from fastapi import APIRouter, Depends, Query
 from api.auth import get_current_user, require_company_access
 from config.settings import DB_PATH
+from pathlib import Path as _Path
+from config.config_loader import load_json as _load_json
 
 router = APIRouter(prefix="/data-browser", tags=["data-browser"])
 
+_DB_CFG_DIR = _Path(__file__).resolve().parent.parent.parent / "config" / "data_browser"
+_CFG_browse = _load_json(_DB_CFG_DIR / "browse_domains.json", {})
+_CFG_col_names = _load_json(_DB_CFG_DIR / "column_chinese_names.json", {})
+_CFG_col_class = _load_json(_DB_CFG_DIR / "column_classification.json", {})
+
 # Domain → browsable config
-BROWSE_DOMAINS = [
+_BROWSE_DOMAINS_FALLBACK = [
     {"key": "profit", "label": "利润表", "eav_table": "fs_income_statement_item", "dict_table": "fs_income_statement_item_dict", "views": {"CAS": "vw_profit_eas", "SAS": "vw_profit_sas"}, "raw_cols": ("current_amount", "cumulative_amount"), "raw_labels": ("本期金额", "本年累计金额")},
     {"key": "balance_sheet", "label": "资产负债表", "eav_table": "fs_balance_sheet_item", "dict_table": "fs_balance_sheet_item_dict", "views": {"ASBE": "vw_balance_sheet_eas", "ASSE": "vw_balance_sheet_sas"}, "raw_cols": ("beginning_balance", "ending_balance"), "raw_labels": ("年初余额", "期末余额")},
     {"key": "cash_flow", "label": "现金流量表", "eav_table": "fs_cash_flow_item", "dict_table": "fs_cash_flow_item_dict", "views": {"CAS": "vw_cash_flow_eas", "SAS": "vw_cash_flow_sas"}, "raw_cols": ("current_amount", "cumulative_amount"), "raw_labels": ("本期金额", "本年累计金额")},
@@ -20,9 +27,23 @@ BROWSE_DOMAINS = [
     {"key": "sales_invoice", "label": "销售发票", "eav_table": None, "views": {"_default": "vw_inv_spec_sales"}},
     {"key": "financial_metrics", "label": "财务指标", "eav_table": None, "views": {"_default": "vw_financial_metrics"}},
 ]
+_browse_from_json = _CFG_browse.get("domains")
+if _browse_from_json:
+    # JSON stores tuples as lists; convert raw_cols/raw_labels back to tuples
+    BROWSE_DOMAINS = []
+    for d in _browse_from_json:
+        entry = dict(d)
+        if "raw_cols" in entry and isinstance(entry["raw_cols"], list):
+            entry["raw_cols"] = tuple(entry["raw_cols"])
+        if "raw_labels" in entry and isinstance(entry["raw_labels"], list):
+            entry["raw_labels"] = tuple(entry["raw_labels"])
+        BROWSE_DOMAINS.append(entry)
+else:
+    BROWSE_DOMAINS = _BROWSE_DOMAINS_FALLBACK
 
 # Comprehensive Column Chinese Name Dictionary
-_COLUMN_CHINESE_NAMES = {
+# Loaded from JSON if available, with hardcoded fallback below
+_COLUMN_CHINESE_NAMES_HARDCODED = {
     # 公共字段
     "taxpayer_id": "纳税人识别号",
     "taxpayer_name": "纳税人名称",
@@ -310,6 +331,12 @@ _COLUMN_CHINESE_NAMES = {
     "restricted_or_prohibited_industry": "限制或禁止行业",
     "small_micro_enterprise": "小型微利企业"
 }
+# Merge: JSON takes precedence over hardcoded
+_col_from_json = {k: v for k, v in _CFG_col_names.items() if not k.startswith("_")} if _CFG_col_names else {}
+if _col_from_json:
+    _COLUMN_CHINESE_NAMES = _col_from_json
+else:
+    _COLUMN_CHINESE_NAMES = _COLUMN_CHINESE_NAMES_HARDCODED
 
 # Column Chinese name cache
 _col_name_cache = {}
@@ -391,16 +418,18 @@ def _get_chinese_col_name(conn, col_name, view_name):
 
 def _is_numeric_col(col_name):
     """Heuristic: columns that should be right-aligned."""
-    numeric_suffixes = ("_amount", "_tax", "_total", "_balance", "_begin", "_end", "_rate", "_ratio",
-                        "_revenue", "_cost", "_expense", "_profit", "_income", "_loss", "_value",
-                        "_count", "_avg", "_payable", "_credit", "_debit", "_refund",
-                        "_gains", "_expenses", "_surcharges", "_relief", "_adjustment",
-                        "_share", "_due", "_exemption", "_decrease", "_increase",
-                        "_offset", "_deduction", "_depreciation", "_prepaid")
-    numeric_names = {"amount", "tax_amount", "total_amount", "quantity", "unit_price", "line_no",
-                     "period_year", "period_month", "period_quarter", "revision_no", "metric_value",
-                     "revenue", "cost", "tax_due",
-                     "less_losses_carried_forward", "less_prepaid_tax_current_year"}
+    numeric_suffixes = tuple(_CFG_col_class.get("numeric_suffixes", [
+        "_amount", "_tax", "_total", "_balance", "_begin", "_end", "_rate", "_ratio",
+        "_revenue", "_cost", "_expense", "_profit", "_income", "_loss", "_value",
+        "_count", "_avg", "_payable", "_credit", "_debit", "_refund",
+        "_gains", "_expenses", "_surcharges", "_relief", "_adjustment",
+        "_share", "_due", "_exemption", "_decrease", "_increase",
+        "_offset", "_deduction", "_depreciation", "_prepaid"]))
+    numeric_names = set(_CFG_col_class.get("numeric_names", [
+        "amount", "tax_amount", "total_amount", "quantity", "unit_price", "line_no",
+        "period_year", "period_month", "period_quarter", "revision_no", "metric_value",
+        "revenue", "cost", "tax_due",
+        "less_losses_carried_forward", "less_prepaid_tax_current_year"]))
     if col_name in numeric_names:
         return True
     for suffix in numeric_suffixes:
@@ -411,17 +440,17 @@ def _is_numeric_col(col_name):
 
 def _classify_col_type(col_name):
     """Classify column into semantic type for frontend width strategy."""
-    _id_cols = {
+    _id_cols = set(_CFG_col_class.get("id_cols", [
         'taxpayer_id', 'invoice_pk', 'digital_invoice_no', 'invoice_code',
         'invoice_number', 'seller_tax_id', 'buyer_tax_id', 'account_code',
         'tax_category_code', 'metric_code', 'filing_id', 'item_code',
-    }
-    _name_cols = {
+    ]))
+    _name_cols = set(_CFG_col_class.get("name_cols", [
         'taxpayer_name', 'seller_name', 'buyer_name', 'account_name',
         'goods_name', 'metric_name', 'item_name', 'business_scope',
         'registered_address', 'remark',
-    }
-    _enum_cols = {
+    ]))
+    _enum_cols = set(_CFG_col_class.get("enum_cols", [
         'period_year', 'period_month', 'period_quarter', 'period_type',
         'period', 'taxpayer_type', 'invoice_format', 'invoice_type',
         'invoice_status', 'invoice_source', 'is_positive', 'risk_level',
@@ -430,7 +459,7 @@ def _classify_col_type(col_name):
         'collection_method', 'item_type', 'time_range', 'unit',
         'issuer', 'specification', 'special_business_type',
         'invoice_date', 'calculated_at', 'gaap_type',
-    }
+    ]))
     if col_name in _id_cols:
         return 'id'
     if col_name in _name_cols:
