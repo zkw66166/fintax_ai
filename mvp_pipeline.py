@@ -275,6 +275,7 @@ def run_pipeline_stream(
         return
 
     # financial_data：使用现有非流式管线
+    yield {'type': 'stage', 'route': 'financial_data', 'text': '正在查询财务数据...'}
     result = run_pipeline(user_query, db_path=db_path, progress_callback=progress_callback, conversation_history=conversation_history)
     yield {'type': 'done', 'result': result}
 

@@ -177,10 +177,13 @@ export default function HistoryPanel({ items, setItems, onSelect, onReinvoke, cu
   const handleDelete = async () => {
     if (selected.size === 0) return
 
-    // Collect timestamps of selected records
     const timestamps = Array.from(selected)
     await removeEntries(timestamps)
     setSelected(new Set())
+    // Immediately remove deleted items from the displayed list
+    setFiltered(prev => prev.filter(item => !timestamps.includes(item.timestamp)))
+    // Trigger a background refresh to sync counts and pagination
+    setRefreshTrigger(prev => prev + 1)
   }
 
   const handleReinvoke = (e, item, index) => {
