@@ -82,7 +82,7 @@ export default function ChatInput({
         )}
       </div>
       <div className={s.bottomRow}>
-        <div className={s.modes}>
+        <div className={s.modes} style={{ display: 'none' }}>
           {MODES.map((m) => (
             <span
               key={m.key}

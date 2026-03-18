@@ -5,7 +5,11 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      '/api': 'http://localhost:8000',
+      '/api': {
+        target: 'http://localhost:8000',
+        timeout: 300000,      // 5 min — SSE streams need long timeouts
+        proxyTimeout: 300000,  // 5 min — proxy socket timeout
+      },
     },
   },
   build: {

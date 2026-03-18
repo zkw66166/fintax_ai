@@ -11,8 +11,9 @@ from pydantic import BaseModel, Field
 
 router = APIRouter()
 
+from config.settings import HISTORY_MAX
+
 HISTORY_PATH = Path(__file__).resolve().parent.parent.parent / "query_history.json"
-HISTORY_MAX = 100
 _lock = threading.Lock()
 
 
@@ -177,8 +178,8 @@ async def get_history_counts(
     # all: 全部记录去重
     counts["all"] = len(dedup_with_priority(history))
 
-    # financial_data
-    fd_items = [h for h in history if h.get("route") == "financial_data"]
+    # financial_data: 仅单域查询（排除 cross_domain）
+    fd_items = [h for h in history if h.get("route") == "financial_data" and h.get("domain") != "cross_domain"]
     counts["financial_data"] = len(dedup_with_priority(fd_items))
 
     # tax_incentive
@@ -189,8 +190,8 @@ async def get_history_counts(
     reg_items = [h for h in history if h.get("route") == "regulation"]
     counts["regulation"] = len(dedup_with_priority(reg_items))
 
-    # mixed_analysis: 未分类记录
-    ma_items = [h for h in history if h.get("route", "") not in known_routes]
+    # mixed_analysis: 未分类记录 + financial_data 跨域查询
+    ma_items = [h for h in history if h.get("route", "") not in known_routes or (h.get("route") == "financial_data" and h.get("domain") == "cross_domain")]
     counts["mixed_analysis"] = len(dedup_with_priority(ma_items))
 
     return counts
@@ -270,9 +271,12 @@ async def get_history(
     # 过滤：按分类（category="all" 表示全部，不过滤）
     if category and category != "all":
         if category == "mixed_analysis":
-            # 综合分析: mixed_analysis + 未分类（route为空/未知）
+            # 综合分析: mixed_analysis + 未分类（route为空/未知）+ financial_data 跨域查询
             known_routes = {"financial_data", "tax_incentive", "regulation"}
-            history = [h for h in history if h.get("route", "") not in known_routes]
+            history = [h for h in history if h.get("route", "") not in known_routes or (h.get("route") == "financial_data" and h.get("domain") == "cross_domain")]
+        elif category == "financial_data":
+            # 财税数据: 仅单域查询（排除 cross_domain）
+            history = [h for h in history if h.get("route") == "financial_data" and h.get("domain") != "cross_domain"]
         else:
             history = [h for h in history if h.get("route") == category]
 
@@ -655,7 +659,13 @@ async def reinvoke_from_history(req: ReinvokeRequest, user: dict = Depends(get_c
                 result["thinking_mode"] = thinking_mode
                 result["cache_hit"] = False
                 result["need_reinterpret"] = False
-                data = json.dumps(result, ensure_ascii=False)
+                try:
+                    data = json.dumps(result, ensure_ascii=False, default=str)
+                except Exception as e:
+                    print(f"[reinvoke] json.dumps failed: {e}, using safe fallback")
+                    safe_result = {k: v for k, v in result.items()
+                                   if k not in ("display_data", "sub_results")}
+                    data = json.dumps(safe_result, ensure_ascii=False, default=str)
                 yield f"event: done\ndata: {data}\n\n"
 
     return StreamingResponse(

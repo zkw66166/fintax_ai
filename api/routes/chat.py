@@ -447,12 +447,15 @@ def _sse_generator(
             # Save to persistent cache (strip transient keys before saving)
             cache_key = ""
             if QUERY_CACHE_ENABLED and result.get("success"):
-                save_result = {k: v for k, v in result.items()
-                               if k not in ("cache_hit", "cache_key", "cached_interpretation",
-                                            "need_reinterpret", "thinking_mode")}
-                cache_key = save_query_cache(
-                    company_id, original_query, response_mode, route, save_result
-                )
+                try:
+                    save_result = {k: v for k, v in result.items()
+                                   if k not in ("cache_hit", "cache_key", "cached_interpretation",
+                                                "need_reinterpret", "thinking_mode")}
+                    cache_key = save_query_cache(
+                        company_id, original_query, response_mode, route, save_result
+                    )
+                except Exception as e:
+                    print(f"[L1 Cache] Save error: {e}")
 
             # Save to L2 template cache
             if QUERY_CACHE_ENABLED_L2 and result.get("success") and route == "financial_data" and company_id:
@@ -595,11 +598,21 @@ def _sse_generator(
             result["cache_hit"] = False
             result["need_reinterpret"] = False
 
-            data = json.dumps(result, ensure_ascii=False)
+            try:
+                data = json.dumps(result, ensure_ascii=False, default=str)
+            except Exception as e:
+                print(f"[chat] json.dumps failed: {e}, using safe fallback")
+                # Fallback: strip potentially problematic fields
+                safe_result = {k: v for k, v in result.items()
+                               if k not in ("display_data", "sub_results")}
+                data = json.dumps(safe_result, ensure_ascii=False, default=str)
             yield f"event: done\ndata: {data}\n\n"
 
             # 记录查询路径
-            log_query_path(original_query, company_id, "pipeline", time.time() - start_time, thinking_mode, response_mode, result.get("success", False), result.get("error"))
+            try:
+                log_query_path(original_query, company_id, "pipeline", time.time() - start_time, thinking_mode, response_mode, result.get("success", False), result.get("error"))
+            except Exception as e:
+                print(f"[chat] log_query_path failed: {e}")
 
 
 @router.post("/chat")
