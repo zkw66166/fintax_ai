@@ -6,9 +6,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 fintax_ai is a Chinese tax and financial consulting platform (税务智能咨询系统) that uses a two-stage NL2SQL pipeline to answer natural language queries against structured tax return and financial data stored in SQLite.
 
-**Current status**: MVP complete with VAT, EIT, balance sheet, account balance, profit statement (利润表), cash flow statement (现金流量表), invoice (发票, 进项/销项), cross-domain queries (跨域), computed financial metrics (财务指标), and enterprise profile (企业画像) domains. Additionally supports tax incentive policy queries (税收优惠政策, via local `tax_incentives.db`) and external regulation knowledge base queries (法规知识库, via Coze RAG API). Includes JWT-based user auth with 5-role hierarchy and company-scoped data access, data browser (general + raw format modes), and data quality check service. Frontend: FastAPI + React SPA with SSE streaming, 5-page layout (工作台, AI智问, 企业画像, 数据管理, 系统设置). Dashboard (工作台) is the default landing page with 6 role-adaptive widgets. LLM backend is DeepSeek (`deepseek-chat`) via OpenAI-compatible API.
+**Current status**: MVP complete with VAT, EIT, balance sheet, account balance, profit statement (利润表), cash flow statement (现金流量表), invoice (发票, 进项/销项), cross-domain queries (跨域), computed financial metrics (财务指标, 22 metrics), and enterprise profile (企业画像) domains. Additionally supports tax incentive policy queries (税收优惠政策, via local `tax_incentives.db`, 1522 policies with FTS5) and external regulation knowledge base queries (法规知识库, via Coze RAG API). Includes JWT-based user auth with 5-role hierarchy and company-scoped data access, data browser (general + raw format modes, 10 browsable domains), data quality check service (5 check categories), and LLM interpretation service (7 scenario types). Frontend: FastAPI + React 19 SPA with SSE streaming, 5-page layout (工作台, AI智问, 企业画像, 数据管理, 系统设置). Dashboard (工作台) is the default landing page with 6 role-adaptive widgets. LLM backend is DeepSeek (`deepseek-chat`) via OpenAI-compatible API. 18 core views serve as the only SQL query entry points; 326 registered financial concepts; 9 synonym tables with 300+ mappings.
 
-**Sample data**: 6 taxpayers total — 2 original (华兴科技/一般纳税人, 鑫源贸易/小规模纳税人) + 4 additional (创智软件/一般纳税人, 大华智能制造/小规模纳税人, TSE科技/一般纳税人, 环球机械/小规模纳税人). Original 2 cover 2024.01–2026.02; additional 4 cover 2023.01–2025.12 across all domains.
+**Sample data**: 6 taxpayers total — 2 original (华兴科技/一般纳税人/科技制造业, 鑫源贸易/小规模纳税人/贸易流通业) + 4 additional (创智软件/一般纳税人/软件服务业, 大华智能制造/小规模纳税人/智能制造业, TSE科技/一般纳税人/高新技术, 环球机械/小规模纳税人/机械制造业). Original 2 cover 2024.01–2026.02; additional 4 cover 2023.01–2025.12 across all domains. Accounting standards: 一般纳税人→企业会计准则(ASBE/EAS), 小规模纳税人→小企业会计准则(ASSE/SAS).
 
 
 ## Architecture
@@ -98,7 +98,7 @@ Tier 2: Cross-Route Mixed Analysis (comprehensive synthesis, bypasses original 3
 1. **Relative Date Resolution** (`modules/entity_preprocessor.py`) — converts "今年3月"→"2026年3月", "去年12月"→"2025年12月", "上个月"→previous month, "上个季度"→previous quarter range; context-aware (VAT "本月" preserved)
 2. **Entity Preprocessing** (`modules/entity_preprocessor.py`) — regex extraction of taxpayer_id, period, taxpayer_type; domain detection via keyword heuristics with multi-domain disambiguation (balance_sheet vs account_balance via "年初"/"期初"/"借"/"贷" markers; profit vs EIT via "年度"/"季度"→EIT, "本期金额"/"本年累计"→profit, shared items default→profit); cross-domain upgrade when query contains keywords from multiple domains
 3. **Scope-Aware View Selection** (`modules/entity_preprocessor.py:get_scope_view()`) — routes to correct view based on domain + taxpayer_type + accounting_standard (e.g. 一般纳税人→`vw_profit_eas`, 小规模纳税人→`vw_profit_sas`)
-4. **Synonym Normalization** (`modules/entity_preprocessor.py`) — longest-match-first, scope-aware mapping from NL phrases to standard column names using domain-specific synonym tables (`vat_synonyms`, `eit_synonyms`, `account_synonyms`, `fs_balance_sheet_synonyms`, `fs_income_statement_synonyms`, `fs_cash_flow_synonyms`)
+4. **Synonym Normalization** (`modules/entity_preprocessor.py`) — longest-match-first, scope-aware mapping from NL phrases to standard column names using 9 domain-specific synonym tables (300+ total mappings): `vat_synonyms` (150+), `eit_synonyms` (80+), `fs_balance_sheet_synonyms` (200+), `fs_income_statement_synonyms` (180+), `fs_cash_flow_synonyms` (120+), `account_synonyms` (100+), `invoice_synonyms` (50+), `financial_metrics_synonyms` (60+), `cross_domain_synonyms` (30+)
 
 **Standard path stages:**
 
@@ -117,11 +117,17 @@ Tier 2: Cross-Route Mixed Analysis (comprehensive synthesis, bypasses original 3
 - Each metric defines `sources` (cross-domain data requirements), `formula` (Python expression), `label`, `unit`
 - Deterministic SQL construction → Python formula evaluation → no LLM needed
 - Synonym mapping supports aliases (e.g. "ROE" → "净资产收益率")
+- **22 supported metrics** by category:
+  - Profitability (盈利能力): 毛利率, 净利润率, 营业利润率, 成本费用利润率, ROE, ROA
+  - Solvency (偿债能力): 资产负债率, 产权比率, 权益乘数, 流动比率, 现金债务保障比率
+  - Operational (营运能力): 总资产周转率
+  - Structural (结构占比): 流动资产占比, 固定资产占比, 流动负债占比, 营业成本占比, 期间费用占比, 研发费用占比, 进项税额占比, 留抵税额占比
 
 ### Concept Registry (`modules/concept_registry.py`)
 
 Deterministic cross-domain query engine via pre-registered financial concept mappings:
 - **326 concepts** loaded from JSON config files (`config/concepts/*.json`), with hardcoded fallback
+- **Concept count by domain**: balance_sheet 68, profit 61, cash_flow 35, VAT 30, EIT 18, invoice 6, financial_metrics 26, plus cross-domain aliases
 - **Concept externalization** (2026-03-10): migrated from code to JSON for hot-reload and non-technical editing
 - **Concept segmentation strategy** (mixed approach):
   - **Financial statements** (balance_sheet, profit, cash_flow): split by accounting standard (EAS/SAS) — 20% column structure difference
@@ -156,8 +162,8 @@ Role-adaptive landing page with 6 core widgets (Phase 1 MVP):
 
 ### FastAPI Backend (`api/`)
 
-REST API layer with JWT auth, 9 route modules:
-- `api/main.py` — FastAPI entry point with CORS, static file serving for React SPA; registers 9 routers (auth, users, chat, history, company, profile, data_management, data_browser, dashboard)
+REST API layer with JWT auth, 11 route modules:
+- `api/main.py` — FastAPI entry point with CORS, static file serving for React SPA; registers 11 routers (auth, users, chat, history, company, profile, data_management, data_browser, interpret, dashboard, cache_stats)
 - `api/auth.py` — JWT utilities: `create_access_token()`, `get_current_user()` (dependency), `require_company_access(user, company_id)` (per-request company-level authorization)
 - `api/routes/auth.py` — `POST /api/auth/login` (returns JWT + user info + company_ids), `POST /api/auth/logout`, `GET /api/auth/me`
 - `api/routes/users.py` — user CRUD: `GET/POST /api/users`, `PUT/DELETE /api/users/{id}`, `GET/PUT /api/users/{id}/companies`; role-based creation rules via `CREATABLE_ROLES`
@@ -168,7 +174,9 @@ REST API layer with JWT auth, 9 route modules:
 - `api/routes/data_browser.py` — `GET /api/data-browser/tables|periods|data` data browsing with `general` (flat view) and `raw` (domain-specific structured format) modes; 10 browsable domains; 300+ column→Chinese name mappings
 - `api/routes/data_management.py` — `GET /api/data-management/stats|companies-overview`, `POST /api/data-management/quality-check` data management and quality check endpoints
 - `api/routes/dashboard.py` — `GET /api/dashboard/summary?company_id={id}` dashboard aggregation endpoint (health score, top metrics, recent activity)
-- `api/schemas.py` — Pydantic models (`ChatRequest`, `LoginRequest`, `UserCreate`, `UserUpdate`, `HistoryDeleteRequest`, `CompanyItem`)
+- `api/routes/interpret.py` — `POST /api/interpret` SSE streaming interpretation endpoint; wraps `interpret_stream()` from `interpretation_service.py`; writes interpretation back to L1 cache; respects `INTERPRETATION_ENABLED` and `response_mode`
+- `api/routes/cache_stats.py` — `GET /api/cache/stats` cache statistics endpoint; returns L1/L2 file counts, hit counts, hit rates, and performance metrics
+- `api/schemas.py` — Pydantic models (`ChatRequest`, `LoginRequest`, `UserCreate`, `UserUpdate`, `HistoryDeleteRequest`, `CompanyItem`, `InterpretRequest`)
 - Attaches `display_data` (from `build_display_data()`) to financial_data route results before SSE emission
 
 ### Display Formatter (`modules/display_formatter.py`)
@@ -180,6 +188,22 @@ Presentation layer for query results consumed by the React frontend:
 - Chart data generation: builds Chart.js-compatible data structures (bar/line/pie) for React frontend
 - Growth analysis: calculates period-over-period changes and trends
 - `build_display_data(result)` → structured JSON dict for React consumption (summary, table, chart, metadata)
+
+### Interpretation Service (`modules/interpretation_service.py`)
+
+LLM-based professional data interpretation with scenario-aware prompt construction:
+- `detect_scenario(result)` — classifies query results into 7 scenarios based on row count, numeric column count, and domain:
+  - `single_indicator_single_period` — single value analysis with reasonableness assessment
+  - `single_indicator_multi_period` — trend analysis with period-over-period changes
+  - `multi_indicator_single_period` — grouped analysis with internal ratios
+  - `multi_indicator_multi_period` — comprehensive cross-period multi-indicator analysis
+  - `metric_computed` — computed metric interpretation (from MetricCalculator)
+  - `cross_domain` — cross-domain comparison analysis
+  - `financial_metrics_single_period` / `financial_metrics_multi_period` — EAV-structured financial metrics
+- Scenario-specific prompt instructions guide LLM to produce structured, professional analysis
+- `interpret_stream(result, query, response_mode)` — streaming generator yielding `(chunk_text, is_done)` tuples
+- Uses DeepSeek LLM with configurable `INTERPRETATION_MAX_TOKENS` (2000) and `INTERPRETATION_TEMPERATURE` (0.3)
+- Exposed via `POST /api/interpret` SSE endpoint (`api/routes/interpret.py`); writes interpretation back to L1 cache
 
 ### Enterprise Profile Service (`modules/profile_service.py`)
 
@@ -263,7 +287,7 @@ Two-level persistent cache system (company-aware, survives server restarts):
 - Stores complete pipeline results including `display_data` and `interpretation`
 - Cache key: MD5 hash of `company_id|normalized_query|response_mode`
 - File-based storage in `cache/` directory
-- LRU eviction: max 1500 files, oldest deleted when exceeded
+- LRU eviction: max 1200 files, oldest deleted when exceeded
 - In-memory index for fast lookups (rebuilt on startup)
 
 **L2 Cache (SQL Template)**:
@@ -290,7 +314,7 @@ Two-level persistent cache system (company-aware, survives server restarts):
   - On cache hit: instantiates all sub-domain SQLs, executes them, merges results using `merge_cross_domain_results()`
 - **Smart adaptation removed** (2026-03-08): Previously attempted to adapt templates across accounting standards/taxpayer types, but removed due to 20% column structure differences between standards and complete structural differences in VAT views
 - Enables cross-company reuse for same query type + accounting standard/taxpayer type combination
-- Max 500 files
+- Max 600 files
 
 **Note**: In-memory pipeline cache (Stage 1 intent, Stage 2 SQL, result, cross-domain) has been removed due to cross-company cache pollution issues. The system now relies solely on L1/L2 persistent cache, which is company-aware and provides better cross-session benefits. All taxpayer_type values use Chinese ("一般纳税人", "小规模纳税人") for consistency with database and pipeline code.
 
@@ -304,7 +328,7 @@ Two-level persistent cache system (company-aware, survives server restarts):
 File-based persistent cache that survives server restarts and page refreshes:
 - Stores complete pipeline results (including `display_data` and `interpretation`) as JSON files in `cache/` directory (L1 cache)
 - Cache key: MD5 hash of `company_id|normalized_query|response_mode`
-- LRU eviction: max 1500 files (`QUERY_CACHE_MAX_FILES_L1`), oldest deleted when exceeded
+- LRU eviction: max 1200 files (`QUERY_CACHE_MAX_FILES_L1`), oldest deleted when exceeded
 - In-memory index for fast lookups (rebuilt on startup from disk)
 - `get_cached_query()` — lookup by company_id + query + response_mode; updates access metadata on hit
 - `save_query_cache()` — save pipeline result + route + interpretation text
@@ -364,7 +388,7 @@ Detection in `entity_preprocessor.py` follows this priority:
 
 ### Data Model (SQLite: `database/fintax_ai.db`)
 
-NL2SQL never touches detail tables directly. Views join detail tables with `taxpayer_info` and serve as the only query entry points.
+NL2SQL never touches detail tables directly. 18 core views join detail tables with `taxpayer_info` and serve as the only query entry points. Views use `ROW_NUMBER()` window function to auto-select latest `revision_no`. Financial statements split by accounting standard (EAS/SAS), VAT split by taxpayer type (一般纳税人/小规模纳税人).
 
 
 Composite PK pattern: `(taxpayer_id, period_year, period_month, item_type, time_range, revision_no)` (VAT); `(taxpayer_id, period_year, period_month, gaap_type, item_code, revision_no)` (balance sheet, profit statement, cash flow)
@@ -378,14 +402,17 @@ All config in `config/settings.py`:
 - `LLM_API_KEY` / `LLM_API_BASE` / `LLM_MODEL` — DeepSeek API settings
 - `LLM_MAX_RETRIES` / `LLM_TIMEOUT` — LLM call resilience (3 retries, 60s timeout)
 - `CACHE_ENABLED` — **DEPRECATED** (set to `False`); in-memory cache removed due to cross-company pollution
-- `QUERY_CACHE_ENABLED` / `QUERY_CACHE_DIR` / `QUERY_CACHE_MAX_FILES_L1` — L1 persistent cache (default: enabled, `cache/` dir, max 1500 files)
-- `QUERY_CACHE_ENABLED_L2` / `QUERY_CACHE_MAX_FILES_L2` — L2 template cache (default: enabled, max 500 files)
-- `TAXPAYER_TYPE_SMART_ADAPT` — L2 smart adaptation switch (default: `True`)
+- `QUERY_CACHE_ENABLED` / `QUERY_CACHE_DIR` / `QUERY_CACHE_MAX_FILES_L1` — L1 persistent cache (default: enabled, `cache/` dir, max 1200 files)
+- `QUERY_CACHE_ENABLED_L2` / `QUERY_CACHE_MAX_FILES_L2` / `QUERY_CACHE_L2_PREFIX` — L2 template cache (default: enabled, max 600 files, prefix `template_`)
+- `TAXPAYER_TYPE_SMART_ADAPT` — **DEPRECATED** (set to `False`); L2 smart adaptation removed due to column structure differences between standards
 - `MAX_ROWS` / `MAX_PERIOD_MONTHS` — pipeline safety limits
 - `TAX_INCENTIVES_DB_PATH` — tax incentive policy database path
 - `COZE_API_URL` / `COZE_PAT_TOKEN` / `COZE_BOT_ID` / `COZE_USER_ID` / `COZE_TIMEOUT` — Coze RAG API settings
 - `ROUTER_ENABLED` — intent router master switch (set `False` to bypass routing, revert to original behavior)
 - `JWT_SECRET_KEY` / `JWT_ALGORITHM` / `JWT_EXPIRE_MINUTES` — JWT auth settings (HS256, 24h default)
+- `INTERPRETATION_ENABLED` / `INTERPRETATION_MAX_TOKENS` / `INTERPRETATION_TEMPERATURE` — LLM interpretation (default: enabled, 2000 tokens, 0.3 temperature)
+- `HISTORY_MAX` — max history entries (default: 300)
+- `CACHE_INVALIDATE_L2_ON_DATA_UPDATE` — whether to invalidate L2 cache on data updates (default: `False`)
 - `CONVERSATION_ENABLED` — multi-turn conversation master switch (default: `True`)
 - `CONVERSATION_MAX_TURNS` — default conversation depth (default: 3 turns = 6 messages)
 - `CONVERSATION_MIN_TURNS` / `CONVERSATION_MAX_TURNS_LIMIT` — min/max turn limits (2-5)
@@ -396,6 +423,26 @@ All config in `config/settings.py`:
 - `MIXED_ANALYSIS_LLM_MODEL` — LLM model for synthesis (default: `deepseek-chat`)
 - `MIXED_ANALYSIS_MAX_CONTEXT_TOKENS` — max tokens for historical context (default: 8000)
 - `MIXED_ANALYSIS_STREAM_CHUNK_SIZE` — streaming chunk size (default: 50)
+
+### Externalized Config Directory (`config/`)
+
+Business logic configs externalized from code for hot-reload and non-technical editing:
+- `config/settings.py` — main settings (DB, LLM, cache, JWT, conversation, mixed analysis)
+- `config/tax_query_config.json` — intent router keyword classification layers
+- `config/tax_search_keywords.json` — tax incentive search keyword lists
+- `config/config_loader.py` — unified config loader with hot-reload support
+- `config/concepts/` — 326 financial concept definitions (JSON, split by domain+standard)
+- `config/domain_detection/` — domain detection keyword configs
+- `config/metrics/` — financial metric formula definitions (22 metrics)
+- `config/schema/` — schema catalog configs
+- `config/cross_domain/` — cross-domain operation configs
+- `config/display/` — display formatting configs
+- `config/pipeline/` — pipeline stage configs
+- `config/profile/` — enterprise profile configs
+- `config/auth/` — auth and role configs
+- `config/data_browser/` — data browser domain/column configs
+- `config/data_management/` — data management configs
+- `config/analysis/` — analysis configs
 
 ## Documentation
 
@@ -505,4 +552,104 @@ Tier 2: Cross-Route Mixed Analysis (comprehensive synthesis, bypasses original 3
 - **Frontend-controlled**: Only triggers when user enables multi-turn conversation
 - **Fully isolated**: Tier 2 is a new 4th route, zero impact on existing 3 routes and Tier 1
 - **Auto-fallback**: If detection fails, falls back to original routing logic
+
+## Frontend Tech Stack
+
+- React 19.x + Vite 7.x (SPA, CSS Modules for style isolation)
+- Chart.js + react-chartjs-2 (chart rendering)
+- react-markdown (Markdown rendering for LLM interpretation)
+- lucide-react (icon library)
+- React.lazy + Suspense (code splitting), virtual scrolling (history list), debounce/throttle (search input)
+- 5-page layout: 工作台 (Dashboard), AI智问 (Chat), 企业画像 (Profile), 数据管理 (Data Management), 系统设置 (Settings)
+
+## Permission Matrix
+
+| Capability | sys | admin | firm | group | enterprise |
+|-----------|-----|-------|------|-------|------------|
+| View all companies | ✓ | ✓ | ✗ | ✗ | ✗ |
+| View authorized companies | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Create sys users | ✓ | ✗ | ✗ | ✗ | ✗ |
+| Create admin users | ✓ | ✓ | ✗ | ✗ | ✗ |
+| Create firm/group users | ✓ | ✓ | ✓ | ✓ | ✗ |
+| Create enterprise users | ✓ | ✓ | ✓ | ✓ | ✗ |
+| Modify user company access | ✓ | ✓ | ✗ | ✗ | ✗ |
+| Session management | ✓ | ✓ | ✗ | ✗ | ✗ |
+| Clear cache | ✓ | ✗ | ✗ | ✗ | ✗ |
+| Data quality check | ✓ | ✓ | ✓ | ✓ | ✓ |
+
+## Data Security
+
+- **SQL injection**: parameterized queries + SQL auditor whitelist enforcement
+- **XSS**: React auto-escaping + CSP headers
+- **Password**: bcrypt hashing (cost=12)
+- **JWT**: HS256 + 24h expiry, stored in localStorage
+- **Secrets**: environment variables for API keys (production)
+- **Audit trail**: `user_query_log` table records all queries with user_id, timestamp, route, query text
+
+## Performance Characteristics
+
+| Layer | Hit Rate | Response Time | Use Case |
+|-------|----------|---------------|----------|
+| L1 result cache | 60-70% | <50ms | Repeated queries |
+| L2 template cache | 40-50% | 200-500ms | Cross-company same-type queries |
+| Deterministic calc | N/A | 100-300ms | Metric/concept queries |
+| Full pipeline | N/A | 2-5s | First-time complex queries |
+
+## System Requirements
+
+| Component | Requirement |
+|-----------|-------------|
+| CPU | 2+ cores |
+| Memory | 4GB+ (8GB recommended) |
+| Disk | 10GB+ available |
+| Network | Stable internet (LLM API access) |
+| Python | 3.9+ |
+| Node.js | 16+ (frontend build) |
+| SQLite | 3.35+ |
+
+## Startup
+
+```bash
+# Backend
+uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
+
+# Frontend dev
+cd frontend && npm install && npm run dev
+
+# Frontend production build
+cd frontend && npm run build
+```
+
+## Extension Guide
+
+### Adding a New Data Domain
+
+1. **Database**: create detail table + view (JOIN `taxpayer_info`, `ROW_NUMBER()` for latest revision) + indexes
+2. **Config**: update `modules/schema_catalog.py` (view + column whitelist), create `prompts/stage2_{domain}.txt`, update `config/pipeline/domain_prompt_map.json`, add domain detection keywords, add synonym mappings
+3. **Code**: update `entity_preprocessor.py` domain detection, `sql_auditor.py` domain-specific rules, `display_formatter.py` formatting
+
+### Adding a New Financial Metric
+
+No code changes needed — edit `config/metrics/metric_formulas.json`:
+```json
+{
+  "新指标名称": {
+    "label": "新指标", "unit": "%",
+    "formula": "变量A / 变量B * 100",
+    "sources": {
+      "变量A": {"domain": "profit", "column": "营业收入"},
+      "变量B": {"domain": "profit", "column": "营业成本"}
+    }
+  }
+}
+```
+
+### Switching LLM Provider
+
+System uses OpenAI-compatible API; change in `config/settings.py`:
+```python
+LLM_API_BASE = "https://your-llm-provider.com/v1"
+LLM_API_KEY = "your-api-key"
+LLM_MODEL = "your-model-name"
+```
 

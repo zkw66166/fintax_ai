@@ -1,11 +1,23 @@
 """意图路由器：将用户查询分流到 financial_data / tax_incentive / regulation 三条路径"""
 import json
+import logging
 import os
 import re
 import sqlite3
 from pathlib import Path
 
+logger = logging.getLogger(__name__)
+
 _CONFIG_PATH = Path(__file__).resolve().parent.parent / "config" / "tax_query_config.json"
+
+# 路由正确性依赖的关键配置 key
+_REQUIRED_CONFIG_KEYS = [
+    "incentive_keywords",
+    "financial_db_priority_keywords",
+    "financial_tax_type_keywords",
+    "knowledge_base_priority_keywords",
+    "exclude_from_incentive",
+]
 
 
 class IntentRouter:
@@ -41,6 +53,12 @@ class IntentRouter:
         regulation_pass_kws = cfg.get("regulation_passthrough_keywords", [])
         has_exclude = any(k in question for k in exclude_kws)
 
+        # 提前加载类别/实体路由关键词（Layer 0 和 Layer 1.5/1.6 共用）
+        routing_cat_kws = cfg.get("routing_category_keywords",
+                                  cfg.get("category_keywords", []))
+        routing_ent_kws = cfg.get("routing_entity_keywords", [])
+        policy_patterns = cfg.get("policy_query_patterns", [])
+
         # Layer 0: 企业数据查询 — 纳税人名称匹配（含模糊前缀）或 时间+金额模式
         if db_conn is not None:
             names = self._get_taxpayer_names(db_conn)
@@ -61,8 +79,15 @@ class IntentRouter:
                 all_incentive_kws = incentive_kws + extra_incentive
                 has_incentive = not has_exclude and any(k in question for k in all_incentive_kws)
                 has_regulation = any(k in question for k in regulation_pass_kws)
-                if has_incentive or has_regulation:
-                    pass  # 不返回financial_data，继续到Layer 1 / default
+                # Layer 0 扩展：类别/实体 + 政策模式 也应放行
+                has_policy_intent = (
+                    (any(k in question for k in routing_cat_kws)
+                     or any(k in question for k in routing_ent_kws))
+                    and any(p in question for p in policy_patterns)
+                )
+                has_category_alone = any(k in question for k in routing_cat_kws)
+                if has_incentive or has_regulation or has_policy_intent or has_category_alone:
+                    pass  # 不返回financial_data，继续到Layer 1 / 1.5 / 1.6
                 else:
                     return "financial_data"
         if re.search(r'\d{4}年.*多少', question):
@@ -76,6 +101,21 @@ class IntentRouter:
         if not has_exclude and any(k in question for k in extra_incentive):
             return "tax_incentive"
 
+        # Layer 1.5: 政策类别/实体 + 政策查询模式 → tax_incentive
+        # 捕获 "节能环保政策有哪些"、"高新技术有什么优惠" 等查询
+        has_cat_or_ent = (
+            any(k in question for k in routing_cat_kws)
+            or any(k in question for k in routing_ent_kws)
+        )
+        has_policy_pattern = any(p in question for p in policy_patterns)
+        if has_cat_or_ent and has_policy_pattern:
+            return "tax_incentive"
+
+        # Layer 1.6: 纯类别关键词 → tax_incentive
+        # "改善民生"、"节能环保" 等类别词本身就暗示税收优惠语境
+        if not has_exclude and any(k in question for k in routing_cat_kws):
+            return "tax_incentive"
+
         # Default → regulation
         return "regulation"
 
@@ -84,7 +124,7 @@ class IntentRouter:
     # ------------------------------------------------------------------
 
     def _load_config(self) -> dict:
-        """热更新：检查文件 mtime，变化时重新加载"""
+        """热更新：检查文件 mtime，变化时重新加载；解析失败保留上次有效配置"""
         try:
             mtime = os.path.getmtime(self._config_path)
         except OSError:
@@ -92,10 +132,26 @@ class IntentRouter:
         if self._config is None or mtime != self._config_mtime:
             try:
                 with open(self._config_path, "r", encoding="utf-8") as f:
-                    self._config = json.load(f)
-            except Exception:
-                self._config = {}
-            self._config_mtime = mtime
+                    new_config = json.load(f)
+                # 验证关键 key
+                missing = [k for k in _REQUIRED_CONFIG_KEYS if not new_config.get(k)]
+                if missing:
+                    logger.warning("[IntentRouter] 配置缺少关键字段: %s", missing)
+                self._config = new_config
+                self._config_mtime = mtime
+            except json.JSONDecodeError as e:
+                logger.error("[IntentRouter] JSON解析失败: %s — %s", self._config_path, e)
+                if self._config is not None:
+                    logger.warning("[IntentRouter] 保留上次有效配置")
+                else:
+                    logger.error("[IntentRouter] 无历史有效配置，使用空配置（路由将不准确）")
+                    self._config = {}
+                self._config_mtime = mtime
+            except Exception as e:
+                logger.error("[IntentRouter] 配置加载异常: %s", e)
+                if self._config is None:
+                    self._config = {}
+                self._config_mtime = mtime
         return self._config
 
     def _get_taxpayer_names(self, db_conn: sqlite3.Connection) -> list:
@@ -127,7 +183,14 @@ class IntentRouter:
         try:
             # 强制重新加载配置
             with open(self._config_path, "r", encoding="utf-8") as f:
-                self._config = json.load(f)
+                new_config = json.load(f)
+
+            # 验证关键 key
+            missing = [k for k in _REQUIRED_CONFIG_KEYS if not new_config.get(k)]
+            if missing:
+                logger.warning("[IntentRouter] reload: 配置缺少关键字段: %s", missing)
+
+            self._config = new_config
 
             # 更新 mtime
             self._config_mtime = os.path.getmtime(self._config_path)
