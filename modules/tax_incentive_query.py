@@ -1,5 +1,6 @@
 """税收优惠查询模块：四级搜索（结构化→实体→关键词LIKE→FTS5）+ LLM摘要"""
 import json
+import logging
 import re
 import sqlite3
 from pathlib import Path
@@ -25,11 +26,18 @@ def _get_client():
     return _client
 
 
+_tiq_logger = logging.getLogger(__name__)
+
+
 def _load_config() -> dict:
     try:
         with open(_CONFIG_PATH, "r", encoding="utf-8") as f:
             return json.load(f)
-    except Exception:
+    except json.JSONDecodeError as e:
+        _tiq_logger.error("[TaxIncentiveQuery] JSON解析失败: %s — %s", _CONFIG_PATH, e)
+        return {}
+    except Exception as e:
+        _tiq_logger.error("[TaxIncentiveQuery] 配置加载异常: %s", e)
         return {}
 
 
@@ -37,7 +45,11 @@ def _load_search_keywords() -> dict:
     try:
         with open(_SEARCH_KW_PATH, "r", encoding="utf-8") as f:
             return json.load(f)
-    except Exception:
+    except json.JSONDecodeError as e:
+        _tiq_logger.error("[TaxIncentiveQuery] 搜索关键词JSON解析失败: %s — %s", _SEARCH_KW_PATH, e)
+        return {}
+    except Exception as e:
+        _tiq_logger.error("[TaxIncentiveQuery] 搜索关键词加载异常: %s", e)
         return {}
 
 
