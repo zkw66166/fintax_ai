@@ -128,6 +128,60 @@ const ChatArea = forwardRef(function ChatArea(
     bottomRef.current?.scrollIntoView({ behavior, block: 'end' })
   }
 
+  // Build a concise text summary of financial query results for mixed analysis context
+  const _buildResultSummaryText = (result) => {
+    const rows = result.results || []
+    if (rows.length === 0) return ''
+
+    const display = result.display_data || {}
+    const headers = display.table?.headers || []
+    // Build column key→Chinese label map from display_data headers
+    const colMap = {}
+    if (headers.length > 0) {
+      const cols = display.table?.columns || []
+      headers.forEach((h, i) => { if (cols[i]) colMap[cols[i]] = h })
+    }
+
+    // Determine domain label
+    const domainLabels = {
+      vat: '增值税', eit: '企业所得税', balance_sheet: '资产负债表',
+      profit: '利润表', cash_flow: '现金流量表', account_balance: '科目余额',
+      invoice: '发票', financial_metrics: '财务指标', cross_domain: '跨域查询',
+    }
+    const domain = result.intent?.domain || ''
+    const domainLabel = domainLabels[domain] || domain || '财务数据'
+
+    // Hidden metadata columns to skip
+    const hiddenCols = new Set([
+      'taxpayer_id', 'revision_no', 'etl_batch_id', 'etl_confidence',
+      'submitted_at', 'source_doc_id', 'source_unit', 'filing_id',
+    ])
+
+    const lines = [`${domainLabel}查询结果（共${rows.length}行）：`]
+    const maxRows = 20
+    const sliced = rows.slice(0, maxRows)
+
+    for (const row of sliced) {
+      const parts = []
+      for (const [key, val] of Object.entries(row)) {
+        if (hiddenCols.has(key) || val === null || val === undefined || val === '') continue
+        const label = colMap[key] || key
+        parts.push(`${label}: ${val}`)
+      }
+      lines.push(parts.join(', '))
+    }
+    if (rows.length > maxRows) {
+      lines.push(`...（共${rows.length}行，仅展示前${maxRows}行）`)
+    }
+
+    // Include sub_results summary for cross-domain queries
+    if (result.sub_results && result.sub_results.length > 0) {
+      lines.push(`涉及${result.sub_results.length}个子域查询`)
+    }
+
+    return lines.join('\n')
+  }
+
   // Build conversation history for multi-turn context
   const buildConversationHistory = useCallback(() => {
     if (!conversationEnabled || messages.length === 0) {
@@ -165,6 +219,10 @@ const ChatArea = forwardRef(function ChatArea(
           route: msg.route || 'financial_data',
           domain: msg.result.intent?.domain || 'vat',
           entities: msg.result.entities || {},
+        }
+        // Enrich with financial data summary for mixed analysis context
+        if (msg.result.results && msg.result.results.length > 0) {
+          formatted.metadata.result_data = _buildResultSummaryText(msg.result)
         }
       }
 

@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 fintax_ai is a Chinese tax and financial consulting platform (税务智能咨询系统) that uses a two-stage NL2SQL pipeline to answer natural language queries against structured tax return and financial data stored in SQLite.
 
-**Current status**: MVP complete with VAT, EIT, balance sheet, account balance, profit statement (利润表), cash flow statement (现金流量表), invoice (发票, 进项/销项), cross-domain queries (跨域), computed financial metrics (财务指标, 22 metrics), and enterprise profile (企业画像) domains. Additionally supports tax incentive policy queries (税收优惠政策, via local `tax_incentives.db`, 1522 policies with FTS5) and external regulation knowledge base queries (法规知识库, via Coze RAG API). Includes JWT-based user auth with 5-role hierarchy and company-scoped data access, data browser (general + raw format modes, 10 browsable domains), data quality check service (5 check categories), and LLM interpretation service (7 scenario types). Frontend: FastAPI + React 19 SPA with SSE streaming, 5-page layout (工作台, AI智问, 企业画像, 数据管理, 系统设置). Dashboard (工作台) is the default landing page with 6 role-adaptive widgets. LLM backend is DeepSeek (`deepseek-chat`) via OpenAI-compatible API. 18 core views serve as the only SQL query entry points; 326 registered financial concepts; 9 synonym tables with 300+ mappings.
+**Current status**: MVP complete with VAT, EIT, balance sheet, account balance, profit statement (利润表), cash flow statement (现金流量表), invoice (发票, 进项/销项), cross-domain queries (跨域), computed financial metrics (财务指标, 22 metrics), and enterprise profile (企业画像) domains. Additionally supports tax incentive policy queries (税收优惠政策, via local `tax_incentives.db`, 1522 policies with FTS5) and external regulation knowledge base queries (法规知识库, via Coze RAG API). Includes JWT-based user auth with 5-role hierarchy and company-scoped data access, data browser (general + raw format modes, 10 browsable domains), data quality check service (5 check categories), LLM interpretation service (7 scenario types), and **enterprise profile analysis report generation** (企业画像分析报告, LLM-powered 14-module comprehensive report with SSE streaming, persistent storage, print/PDF). Frontend: FastAPI + React 19 SPA with SSE streaming, 7-page layout (工作台, AI智问, 企业画像, 企业画像报告, 报告列表, 数据管理, 系统设置). Dashboard (工作台) is the default landing page with 6 role-adaptive widgets. LLM backend is DeepSeek (`deepseek-chat`) via OpenAI-compatible API. 18 core views serve as the only SQL query entry points; 326 registered financial concepts; 9 synonym tables with 300+ mappings.
 
 **Sample data**: 6 taxpayers total — 2 original (华兴科技/一般纳税人/科技制造业, 鑫源贸易/小规模纳税人/贸易流通业) + 4 additional (创智软件/一般纳税人/软件服务业, 大华智能制造/小规模纳税人/智能制造业, TSE科技/一般纳税人/高新技术, 环球机械/小规模纳税人/机械制造业). Original 2 cover 2024.01–2026.02; additional 4 cover 2023.01–2025.12 across all domains. Accounting standards: 一般纳税人→企业会计准则(ASBE/EAS), 小规模纳税人→小企业会计准则(ASSE/SAS).
 
@@ -163,7 +163,7 @@ Role-adaptive landing page with 6 core widgets (Phase 1 MVP):
 ### FastAPI Backend (`api/`)
 
 REST API layer with JWT auth, 11 route modules:
-- `api/main.py` — FastAPI entry point with CORS, static file serving for React SPA; registers 11 routers (auth, users, chat, history, company, profile, data_management, data_browser, interpret, dashboard, cache_stats)
+- `api/main.py` — FastAPI entry point with CORS, static file serving for React SPA; registers 12 routers (auth, users, chat, history, company, profile_report, profile, data_management, data_browser, interpret, dashboard, cache_stats)
 - `api/auth.py` — JWT utilities: `create_access_token()`, `get_current_user()` (dependency), `require_company_access(user, company_id)` (per-request company-level authorization)
 - `api/routes/auth.py` — `POST /api/auth/login` (returns JWT + user info + company_ids), `POST /api/auth/logout`, `GET /api/auth/me`
 - `api/routes/users.py` — user CRUD: `GET/POST /api/users`, `PUT/DELETE /api/users/{id}`, `GET/PUT /api/users/{id}/companies`; role-based creation rules via `CREATABLE_ROLES`
@@ -171,6 +171,7 @@ REST API layer with JWT auth, 11 route modules:
 - `api/routes/history.py` — `GET/POST/DELETE /api/chat/history` JSON file-based chat history (max 100 entries); `POST /api/chat/history/reinvoke` re-invocation endpoint with quick/think/deep mode support; enhanced schema with `conversation_history`, `result`, `thinking_mode`, `response_mode` fields for persistent re-invocation
 - `api/routes/company.py` — `GET /api/companies` taxpayer list for UI dropdown (filtered by user's company access)
 - `api/routes/profile.py` — `GET /api/profile/{taxpayer_id}?year=2025` enterprise profile aggregation endpoint
+- `api/routes/profile_report.py` — `POST /api/profile/{taxpayer_id}/report` SSE streaming report generation; `GET /api/profile/reports` paginated list; `GET /api/profile/reports/{id}` single report; `DELETE /api/profile/reports/{id}` delete report; all with JWT + role-based access
 - `api/routes/data_browser.py` — `GET /api/data-browser/tables|periods|data` data browsing with `general` (flat view) and `raw` (domain-specific structured format) modes; 10 browsable domains; 300+ column→Chinese name mappings
 - `api/routes/data_management.py` — `GET /api/data-management/stats|companies-overview`, `POST /api/data-management/quality-check` data management and quality check endpoints
 - `api/routes/dashboard.py` — `GET /api/dashboard/summary?company_id={id}` dashboard aggregation endpoint (health score, top metrics, recent activity)
@@ -222,6 +223,23 @@ Company profile aggregation service (企业画像) that queries across all finan
   - `compliance_risk` — compliance risk assessment
 - Evaluation rules for 8 metrics (debt_ratio, current_ratio, quick_ratio, gross_margin, net_margin, ROE, revenue_growth, total_tax_burden) with threshold-based level/type classification
 - Exposed via `GET /api/profile/{taxpayer_id}?year=2025`
+
+### Profile Report Generation (`modules/profile_report_service.py`, `api/routes/profile_report.py`)
+
+LLM-powered comprehensive enterprise analysis report generation (企业画像分析报告):
+- **Report generation**: collects all profile data via `get_company_profile()`, filters null sections, builds prompt from `prompts/profile_report.txt`, streams LLM response via DeepSeek
+- **14 analysis modules**: 企业身份与股权治理, 组织与人力, 财务表现, 业务运营, 购销存/供应链, 研发创新, 税务表现, 跨境业务, 合规风险, 外部关系, 数字化, ESG, 政策匹配, 特殊业务; concludes with 企业全景综合结论 (6 dimensions: 经营健康度, 财务状况, 税务合规水平, 涉税风险分级, 税收优惠筹划, 管理建议)
+- **Null section handling**: sections with no data are automatically skipped in prompt construction — LLM is strictly instructed to never fabricate missing data
+- **Persistent storage**: `profile_reports` table (SQLite) stores report metadata + full Markdown content; status flow: `generating → completed | failed`
+- **SSE streaming**: `POST /api/profile/{taxpayer_id}/report?year=2025` — SSE events: `meta` (report_id), `stage` (progress), `chunk` (LLM delta), `done` (full content)
+- **Report management API**:
+  - `GET /api/profile/reports?taxpayer_id=&page=&size=` — paginated list; `sys`/`admin` see all, others see own reports only
+  - `GET /api/profile/reports/{report_id}` — full report with content
+  - `DELETE /api/profile/reports/{report_id}` — delete; `sys`/`admin` or owner
+- **Frontend**: two new pages (`profile-report`, `profile-report-list`) + two buttons on ProfileHeader (生成报告, 查看报告); report rendered via `react-markdown`; print/PDF via `window.print()` with `@media print` hiding all app chrome
+- **Disclaimer**: AI-generated report disclaimer always displayed at top of report page — clarifies non-binding nature, recommends professional review
+- **Config**: `PROFILE_REPORT_ENABLED`, `PROFILE_REPORT_LLM_MODEL` (deepseek-chat), `PROFILE_REPORT_MAX_TOKENS` (8000), `PROFILE_REPORT_TEMPERATURE` (0.3)
+- **Route registration**: `profile_report.router` registered BEFORE `profile.router` in `api/main.py` to prevent `/api/profile/reports` from being matched by `/api/profile/{taxpayer_id}`
 
 ### User Authentication & Permissions (`api/auth.py`, `api/routes/auth.py`, `api/routes/users.py`)
 
@@ -390,6 +408,8 @@ Detection in `entity_preprocessor.py` follows this priority:
 
 NL2SQL never touches detail tables directly. 18 core views join detail tables with `taxpayer_info` and serve as the only query entry points. Views use `ROW_NUMBER()` window function to auto-select latest `revision_no`. Financial statements split by accounting standard (EAS/SAS), VAT split by taxpayer type (一般纳税人/小规模纳税人).
 
+`profile_reports` table stores generated analysis reports: `(id, taxpayer_id, taxpayer_name, year, user_id, username, status, content, error_msg, created_at, completed_at)`. Status flow: `generating → completed | failed`. Indexed on `(taxpayer_id, year)` and `(user_id)`. Migration: `database/migrate_profile_reports.py` (auto-runs on startup, `CREATE TABLE IF NOT EXISTS`).
+
 
 Composite PK pattern: `(taxpayer_id, period_year, period_month, item_type, time_range, revision_no)` (VAT); `(taxpayer_id, period_year, period_month, gaap_type, item_code, revision_no)` (balance sheet, profit statement, cash flow)
 
@@ -423,6 +443,10 @@ All config in `config/settings.py`:
 - `MIXED_ANALYSIS_LLM_MODEL` — LLM model for synthesis (default: `deepseek-chat`)
 - `MIXED_ANALYSIS_MAX_CONTEXT_TOKENS` — max tokens for historical context (default: 8000)
 - `MIXED_ANALYSIS_STREAM_CHUNK_SIZE` — streaming chunk size (default: 50)
+- `PROFILE_REPORT_ENABLED` — profile report generation master switch (default: `True`)
+- `PROFILE_REPORT_LLM_MODEL` — LLM model for report generation (default: `deepseek-chat`)
+- `PROFILE_REPORT_MAX_TOKENS` — max output tokens for report (default: 8000)
+- `PROFILE_REPORT_TEMPERATURE` — LLM temperature for report (default: 0.3)
 
 ### Externalized Config Directory (`config/`)
 
@@ -560,7 +584,7 @@ Tier 2: Cross-Route Mixed Analysis (comprehensive synthesis, bypasses original 3
 - react-markdown (Markdown rendering for LLM interpretation)
 - lucide-react (icon library)
 - React.lazy + Suspense (code splitting), virtual scrolling (history list), debounce/throttle (search input)
-- 5-page layout: 工作台 (Dashboard), AI智问 (Chat), 企业画像 (Profile), 数据管理 (Data Management), 系统设置 (Settings)
+- 7-page layout: 工作台 (Dashboard), AI智问 (Chat), 企业画像 (Profile), 企业画像报告 (Profile Report), 报告列表 (Report List), 数据管理 (Data Management), 系统设置 (Settings)
 
 ## Permission Matrix
 
@@ -576,6 +600,10 @@ Tier 2: Cross-Route Mixed Analysis (comprehensive synthesis, bypasses original 3
 | Session management | ✓ | ✓ | ✗ | ✗ | ✗ |
 | Clear cache | ✓ | ✗ | ✗ | ✗ | ✗ |
 | Data quality check | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Generate profile report | ✓ | ✓ | ✓ | ✓ | ✓ |
+| View all reports | ✓ | ✓ | ✗ | ✗ | ✗ |
+| View own reports | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Delete own reports | ✓ | ✓ | ✓ | ✓ | ✓ |
 
 ## Data Security
 

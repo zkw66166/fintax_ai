@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import s from './Header.module.css'
 import { Building2, Bell, User as UserIcon, LogOut, Clock } from 'lucide-react'
 
-export default function Header({ selectedCompanyId, onCompanyChange, user, onLogout }) {
+export default function Header({ selectedCompanyId, onCompanyChange, user, onLogout, className }) {
   const [time, setTime] = useState(new Date())
   const [companies, setCompanies] = useState([])
 
@@ -47,14 +47,14 @@ export default function Header({ selectedCompanyId, onCompanyChange, user, onLog
   const roleLabel = ROLE_LABELS[user?.role] || '企业用户'
 
   return (
-    <header className={s.header}>
+    <header className={`${s.header} ${className || ''}`}>
       <div className={s.logoArea}>
         <div className={s.logo}>
           <div className={s.logoImg}>
             <BriefcaseFill />
           </div>
           <div className={s.logoText}>
-            <div className={s.logoTitle}>智能财税咨询系统</div>
+            <div className={s.logoTitle}>慧经盈智能科技</div>
             <div className={s.logoSub}>ENTERPRISE FINANCIAL & TAX INTELLIGENCE PLATFORM</div>
           </div>
         </div>

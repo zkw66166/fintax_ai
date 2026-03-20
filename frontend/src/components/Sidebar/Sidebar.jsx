@@ -9,9 +9,9 @@ const MENU = [
   { icon: Settings, label: '系统设置', key: 'settings' },
 ]
 
-export default function Sidebar({ currentPage, onPageChange }) {
+export default function Sidebar({ currentPage, onPageChange, className }) {
   return (
-    <nav className={s.sidebar}>
+    <nav className={`${s.sidebar} ${className || ''}`}>
       <div className={s.menuList}>
         {MENU.map((m) => {
           const Icon = m.icon

@@ -12,7 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 
-from api.routes import chat, history, company, profile, data_management, data_browser, auth, users, interpret, dashboard, cache_stats
+from api.routes import chat, history, company, profile, profile_report, data_management, data_browser, auth, users, interpret, dashboard, cache_stats
 
 # Ensure database is ready (reuse app.py logic)
 from config.settings import DB_PATH
@@ -30,6 +30,10 @@ def ensure_db():
         insert_sample_data()
         migrate_users()              # Auto-seed 2 initial users
         migrate_permissions()        # Auto-expand to 7 users + company access
+
+    # profile_reports 表（无论DB是否新建都需要执行，IF NOT EXISTS 保证幂等）
+    from database.migrate_profile_reports import migrate as migrate_profile_reports
+    migrate_profile_reports()
 
 ensure_db()
 
@@ -54,6 +58,7 @@ app.include_router(users.router, prefix="/api")
 app.include_router(chat.router, prefix="/api")
 app.include_router(history.router, prefix="/api")
 app.include_router(company.router, prefix="/api")
+app.include_router(profile_report.router, prefix="/api")  # Must be before profile to avoid route conflict
 app.include_router(profile.router, prefix="/api")
 app.include_router(data_management.router, prefix="/api")
 app.include_router(data_browser.router, prefix="/api")

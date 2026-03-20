@@ -137,6 +137,11 @@ def extract_context_data(
                 assistant_msg = recent_messages[i + 1]
                 route = assistant_msg.get('metadata', {}).get('route', 'unknown')
                 result_content = assistant_msg.get('content', '')
+                # If content is empty but metadata has result_data (financial_data route), use it
+                if not result_content.strip():
+                    result_data = assistant_msg.get('metadata', {}).get('result_data', '')
+                    if result_data:
+                        result_content = result_data
 
                 data_by_route[route].append({
                     'query': user_query,
