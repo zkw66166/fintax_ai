@@ -4,6 +4,7 @@
   padding: 20px 24px;
   background: var(--color-body-bg);
 }
+
 .moduleGrid {
   display: flex;
   flex-direction: column;
@@ -13,29 +14,68 @@
 }
 
 /* ── 子区域网格 ── */
-.subGrid2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0; }
-.subGrid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; }
-.subGrid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; }
-.subGrid5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0; }
+.subGrid2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0;
+}
+
+.subGrid3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+}
+
+.subGrid4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+}
+
+.subGrid5 {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0;
+}
 
 /* 子卡片之间用左边框模拟竖线分隔 */
-.subGrid2 > .subCard + .subCard,
-.subGrid3 > .subCard + .subCard,
-.subGrid4 > .subCard + .subCard,
-.subGrid5 > .subCard + .subCard {
+.subGrid2>.subCard+.subCard,
+.subGrid3>.subCard+.subCard,
+.subGrid4>.subCard+.subCard,
+.subGrid5>.subCard+.subCard {
   border-left: 1px solid var(--color-border-light);
 }
 
 @media (max-width: 1400px) {
-  .subGrid5 { grid-template-columns: repeat(3, 1fr); }
-  .subGrid4 { grid-template-columns: repeat(3, 1fr); }
+  .subGrid5 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .subGrid4 {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
+
 @media (max-width: 1200px) {
-  .subGrid5, .subGrid4 { grid-template-columns: repeat(2, 1fr); }
-  .subGrid3 { grid-template-columns: repeat(2, 1fr); }
+
+  .subGrid5,
+  .subGrid4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .subGrid3 {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
+
 @media (max-width: 900px) {
-  .subGrid5, .subGrid4, .subGrid3, .subGrid2 { grid-template-columns: 1fr; }
+
+  .subGrid5,
+  .subGrid4,
+  .subGrid3,
+  .subGrid2 {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* ── 子卡片 ── */
@@ -43,6 +83,7 @@
   background: #ffffff;
   padding: 10px 12px;
 }
+
 .subTitle {
   font-size: 14px;
   font-weight: 600;
@@ -54,6 +95,7 @@
   align-items: center;
   gap: 6px;
 }
+
 .subTitleDot {
   width: 8px;
   height: 8px;
@@ -62,10 +104,22 @@
 }
 
 /* ── 子卡片浅色背景（不使用） ── */
-.bgPurple, .bgOrange, .bgBlue, .bgCyan, .bgGreen, .bgWhite { background: #ffffff; }
+.bgPurple,
+.bgOrange,
+.bgBlue,
+.bgCyan,
+.bgGreen,
+.bgWhite {
+  background: #ffffff;
+}
 
 /* ── 图表容器背景 ── */
-.bgGradientBlue, .bgGradientPurple, .bgGradientGreen, .bgGradientOrange { background: #ffffff; }
+.bgGradientBlue,
+.bgGradientPurple,
+.bgGradientGreen,
+.bgGradientOrange {
+  background: #ffffff;
+}
 
 /* ── 加载/错误/空状态 ── */
 .stateWrap {
@@ -79,6 +133,7 @@
   font-size: 15px;
   gap: 12px;
 }
+
 .spinner {
   display: inline-block;
   width: 24px;
@@ -88,7 +143,12 @@
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
-@keyframes spin { to { transform: rotate(360deg); } }
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 
 /* ── 图表底部指标 ── */
 .chartFooter {
@@ -100,8 +160,117 @@
   font-size: 12px;
   color: var(--color-text-secondary);
 }
+
 .chartFooterValue {
   font-weight: 600;
   font-size: 14px;
   color: var(--color-text);
+}
+
+/* ── Custom Confirm Modal ── */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.modalContent {
+  background: #ffffff;
+  width: 420px;
+  border-radius: var(--radius-xl);
+  padding: 24px 28px;
+  box-shadow: var(--shadow-xl);
+  animation: modalFadeIn 0.2s ease-out;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.modalTitle {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.modalBody {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  white-space: pre-wrap;
+  margin-bottom: 24px;
+  padding: 12px;
+  background: var(--color-body-bg);
+  border-radius: var(--radius-md);
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.btnCancel,
+.btnView,
+.btnRegenerate {
+  padding: 8px 18px;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btnCancel {
+  background: #ffffff;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+}
+
+.btnCancel:hover {
+  background: var(--color-body-bg);
+  color: var(--color-text);
+}
+
+.btnView {
+  background: var(--color-primary-50);
+  border: 1px solid var(--color-border-light);
+  color: var(--color-primary-dark);
+}
+
+.btnView:hover {
+  background: #dbeafe;
+}
+
+.btnRegenerate {
+  background: var(--color-primary);
+  border: 1px solid transparent;
+  color: #ffffff;
+}
+
+.btnRegenerate:hover {
+  background: var(--color-primary-hover);
 }

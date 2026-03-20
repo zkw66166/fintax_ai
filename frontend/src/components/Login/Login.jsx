@@ -26,7 +26,7 @@ export default function Login({ onLogin }) {
     <div className={s.page}>
       <div className={s.card}>
         <div className={s.logo}>FT</div>
-        <h1 className={s.title}>智能财税咨询系统</h1>
+        <h1 className={s.title}>慧经盈智能科技</h1>
         <p className={s.subtitle}>
           ENTERPRISE FINANCIAL &amp; TAX INTELLIGENCE
         </p>

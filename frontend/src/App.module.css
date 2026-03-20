@@ -1,18 +1,25 @@
 .layout {
   display: grid;
   grid-template:
-    "header  header  header"  var(--header-height)
-    "sidebar main    history" 1fr
-    "footer  footer  footer"  var(--footer-height)
-    / var(--sidebar-width) 1fr var(--history-width);
+    "header  header  header" var(--header-height) "sidebar main    history" 1fr
+    "footer  footer  footer" var(--footer-height) / var(--sidebar-width) 1fr var(--history-width);
   height: 100vh;
 }
+
 .layout[data-page="profile"],
+.layout[data-page="profile-report"],
+.layout[data-page="profile-report-list"],
 .layout[data-page="data-management"],
 .layout[data-page="settings"] {
   grid-template:
-    "header  header  header"  var(--header-height)
-    "sidebar main    main"    1fr
-    "footer  footer  footer"  var(--footer-height)
-    / var(--sidebar-width) 1fr 0px;
+    "header  header  header" var(--header-height) "sidebar main    main" 1fr
+    "footer  footer  footer" var(--footer-height) / var(--sidebar-width) 1fr 0px;
+}
+
+@media print {
+  .layout[data-page="profile-report"] {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
 }

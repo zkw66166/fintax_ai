@@ -84,6 +84,39 @@ export async function fetchProfile(taxpayerId, year) {
   return res.json()
 }
 
+// --- Profile Report APIs ---
+
+export function generateReportStream(taxpayerId, year, signal) {
+  return fetch(`${BASE}/profile/${taxpayerId}/report?year=${year}`, {
+    method: 'POST',
+    headers: authHeaders(),
+    signal,
+  })
+}
+
+export async function fetchReports(taxpayerId = '', page = 1, size = 20) {
+  const params = new URLSearchParams({ page, size })
+  if (taxpayerId) params.set('taxpayer_id', taxpayerId)
+  const res = await fetch(`${BASE}/profile/reports?${params}`, { headers: authHeaders() })
+  if (!res.ok) throw new Error(`Fetch reports failed: ${res.status}`)
+  return res.json()
+}
+
+export async function fetchReport(reportId) {
+  const res = await fetch(`${BASE}/profile/reports/${reportId}`, { headers: authHeaders() })
+  if (!res.ok) throw new Error(`Fetch report failed: ${res.status}`)
+  return res.json()
+}
+
+export async function deleteReport(reportId) {
+  const res = await fetch(`${BASE}/profile/reports/${reportId}`, {
+    method: 'DELETE',
+    headers: authHeaders(),
+  })
+  if (!res.ok) throw new Error(`Delete report failed: ${res.status}`)
+  return res.json()
+}
+
 /**
  * POST /api/chat with SSE streaming.
  * Returns the raw Response for SSE parsing.

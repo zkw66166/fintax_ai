@@ -11,6 +11,8 @@ import CompanyProfile from './components/CompanyProfile/CompanyProfile'
 import DataManagementPage from './components/DataManagement/DataManagementPage'
 import SystemSettingsPage from './components/SystemSettings/SystemSettingsPage'
 import Dashboard from './components/Dashboard/Dashboard'
+import ProfileReport from './components/ProfileReport/ProfileReport'
+import ReportList from './components/ReportList/ReportList'
 import Footer from './components/Footer/Footer'
 
 export default function App() {
@@ -23,6 +25,7 @@ export default function App() {
   const [pendingInputText, setPendingInputText] = useState('')
   const [currentPage, setCurrentPage] = useState('dashboard')
   const [captchaVerified, setCaptchaVerified] = useState(false)
+  const [reportContext, setReportContext] = useState(null)
   const chatAreaRef = useRef(null)
   const historyNavRef = useRef({})
 
@@ -98,7 +101,28 @@ export default function App() {
           </>
         )
       case 'profile':
-        return <CompanyProfile selectedCompanyId={selectedCompanyId} />
+        return (
+          <CompanyProfile
+            selectedCompanyId={selectedCompanyId}
+            onGenerateReport={(ctx) => { setReportContext(ctx); setCurrentPage('profile-report') }}
+            onViewReports={() => setCurrentPage('profile-report-list')}
+          />
+        )
+      case 'profile-report':
+        return (
+          <ProfileReport
+            context={reportContext}
+            onBack={() => setCurrentPage('profile-report-list')}
+          />
+        )
+      case 'profile-report-list':
+        return (
+          <ReportList
+            companyId={selectedCompanyId}
+            onViewReport={(ctx) => { setReportContext(ctx); setCurrentPage('profile-report') }}
+            onBack={() => setCurrentPage('profile')}
+          />
+        )
       case 'data-management':
         return <DataManagementPage selectedCompanyId={selectedCompanyId} />
       case 'settings':
@@ -108,6 +132,8 @@ export default function App() {
     }
   }
 
+  const isPrintPage = currentPage === 'profile-report'
+
   return (
     <div className={styles.layout} data-page={currentPage}>
       <Header
@@ -115,10 +141,11 @@ export default function App() {
         onCompanyChange={setSelectedCompanyId}
         user={user}
         onLogout={handleLogout}
+        className={isPrintPage ? 'no-print' : undefined}
       />
-      <Sidebar currentPage={currentPage} onPageChange={setCurrentPage} />
+      <Sidebar currentPage={currentPage} onPageChange={setCurrentPage} className={isPrintPage ? 'no-print' : undefined} />
       {renderMainContent()}
-      <Footer />
+      <Footer className={isPrintPage ? 'no-print' : undefined} />
     </div>
   )
 }

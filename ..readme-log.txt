@@ -1,0 +1,16 @@
+## fintax_ai项目备忘：
+1.本地代码目录：
+- [ ] "D:\fintax_ai"
+- [ ] 本地log：..readme-log.txt
+- [ ] 常用命令：.fintax_ai.bat
+- [ ] git命令：github推送命令.txt
+2.本地资料文档：
+- [ ]"D:\fintax_ai - .docs and context"
+3.git备份两份：
+- [ ] fintax_ai：私人 https://github.com/zkw66166/fintax_ai
+- [ ] fintax_ai-main：惠经营main+0320分枝 https://git-devcenter.hjysmart.com/nodejs_server/fintax_ai-main/-/tree/feature/zkw/20260320
+4.git命令:豆包（1+2）
+5.阿里云：【see 阿里云log】
+6.api key：
+- [ ] 豆包每月更新
+- [ ] deepseek购买更新
