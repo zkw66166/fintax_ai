@@ -104,7 +104,7 @@ def generate_report_stream(
         }
         return
 
-    yield {"type": "stage", "text": f"已采集 {available_count} 个画像模块，正在生成分析报告..."}
+    yield {"type": "stage", "text": f"已采集 {available_count} 个模块数据，正在生成分析报告..."}
 
     prompt = _build_prompt(profile_data)
     logger.info(
