@@ -1,10 +1,11 @@
 import s from './Sidebar.module.css'
-import { LayoutDashboard, MessageSquare, Briefcase, Database, Settings } from 'lucide-react'
+import { LayoutDashboard, MessageSquare, Briefcase, FileText, Database, Settings } from 'lucide-react'
 
 const MENU = [
   { icon: LayoutDashboard, label: '工作台', key: 'dashboard' },
   { icon: MessageSquare, label: 'AI智问', key: 'chat' },
   { icon: Briefcase, label: '企业画像', key: 'profile' },
+  { icon: FileText, label: '分析报告', key: 'profile-report-list' },
   { icon: Database, label: '数据管理', key: 'data-management' },
   { icon: Settings, label: '系统设置', key: 'settings' },
 ]

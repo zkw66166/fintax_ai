@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { ArrowLeft, Eye, Trash2, Loader2, FileText } from 'lucide-react'
+import { ArrowLeft, Eye, Trash2, Loader2, FileText, Plus } from 'lucide-react'
 import { fetchReports, deleteReport } from '../../services/api'
 import s from './ReportList.module.css'
 
@@ -9,7 +9,7 @@ const STATUS_MAP = {
   failed: { label: '失败', cls: 'statusFailed' },
 }
 
-export default function ReportList({ companyId, onViewReport, onBack }) {
+export default function ReportList({ companyId, onViewReport, onBack, showBackButton = true, onGenerateReport }) {
   const [reports, setReports] = useState([])
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
@@ -48,13 +48,22 @@ export default function ReportList({ companyId, onViewReport, onBack }) {
   return (
     <div className={s.listPage}>
       <div className={s.header}>
-        <button className={s.backBtn} onClick={onBack}>
-          <ArrowLeft size={16} /> 返回画像
-        </button>
+        {showBackButton && onBack && (
+          <button className={s.backBtn} onClick={onBack}>
+            <ArrowLeft size={16} /> 返回画像
+          </button>
+        )}
         <h2 className={s.title}>
           <FileText size={18} /> 分析报告列表
         </h2>
-        <span className={s.count}>共 {total} 份报告</span>
+        <div className={s.headerActions}>
+          {onGenerateReport && (
+            <button className={s.generateBtn} onClick={onGenerateReport} title="生成分析报告">
+              <Plus size={14} /> 生成报告
+            </button>
+          )}
+          <span className={s.count}>共 {total} 份报告</span>
+        </div>
       </div>
 
       {error && <div className={s.errorBar}>{error}</div>}
