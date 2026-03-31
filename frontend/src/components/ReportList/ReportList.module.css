@@ -46,9 +46,33 @@
 }
 
 .count {
-  margin-left: auto;
   font-size: 13px;
   color: var(--color-text-secondary);
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+}
+
+.generateBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-full);
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.generateBtn:hover {
+  background: var(--color-primary-dark, #4338ca);
 }
 
 .errorBar {

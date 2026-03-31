@@ -67,17 +67,29 @@ def _build_prompt(profile_data: dict) -> str:
     basic_info_text = json.dumps(basic_info, ensure_ascii=False, indent=2) if basic_info else "无"
 
     available = _filter_available_sections(profile_data)
-    # 移除 basic_info（已单独展示）
     available.pop("basic_info", None)
 
     sections_text_parts = []
+    section_index = 1
     for key, value in available.items():
         name = SECTION_NAMES.get(key, key)
-        sections_text_parts.append(f"### {name}\n```json\n{json.dumps(value, ensure_ascii=False, indent=2)}\n```")
+        sections_text_parts.append(f"### {section_index}. {name}\n```json\n{json.dumps(value, ensure_ascii=False, indent=2)}\n```")
+        section_index += 1
 
     available_sections_text = "\n\n".join(sections_text_parts) if sections_text_parts else "无可用画像数据"
 
-    return template.replace("{basic_info}", basic_info_text).replace("{available_sections}", available_sections_text)
+    prompt = template.replace("{basic_info}", basic_info_text).replace("{available_sections}", available_sections_text)
+
+    section_counter = [1]
+    def replace_placeholder(match):
+        result = f"### {section_counter[0]}"
+        section_counter[0] += 1
+        return result
+
+    import re
+    prompt = re.sub(r'###\s*\{序号\}', replace_placeholder, prompt)
+
+    return prompt
 
 
 def generate_report_stream(

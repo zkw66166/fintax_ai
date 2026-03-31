@@ -3,8 +3,8 @@ import { login } from '../../services/authApi'
 import s from './Login.module.css'
 
 export default function Login({ onLogin }) {
-  const [username, setUsername] = useState('admin')
-  const [password, setPassword] = useState('admin123')
+  const [username, setUsername] = useState('guest001')
+  const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -54,7 +54,7 @@ export default function Login({ onLogin }) {
           </button>
         </form>
         <div className={s.hint}>
-          测试账号: admin / admin123 或 user1 / 123456
+          测试账号:guest001 / 测试密码联系管理员
         </div>
       </div>
     </div>

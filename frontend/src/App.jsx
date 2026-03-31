@@ -13,6 +13,7 @@ import SystemSettingsPage from './components/SystemSettings/SystemSettingsPage'
 import Dashboard from './components/Dashboard/Dashboard'
 import ProfileReport from './components/ProfileReport/ProfileReport'
 import ReportList from './components/ReportList/ReportList'
+import ReportGenerateModal from './components/ReportList/ReportGenerateModal'
 import Footer from './components/Footer/Footer'
 
 export default function App() {
@@ -26,6 +27,7 @@ export default function App() {
   const [currentPage, setCurrentPage] = useState('dashboard')
   const [captchaVerified, setCaptchaVerified] = useState(false)
   const [reportContext, setReportContext] = useState(null)
+  const [showReportModal, setShowReportModal] = useState(false)
   const chatAreaRef = useRef(null)
   const historyNavRef = useRef({})
 
@@ -47,11 +49,15 @@ export default function App() {
   }, [messages])
 
   const handleReinvoke = useCallback((historyIndex) => {
-    // Trigger re-invocation via ChatArea
     if (chatAreaRef.current?.handleReinvoke) {
       chatAreaRef.current.handleReinvoke(historyIndex, thinkingMode)
     }
   }, [thinkingMode])
+
+  const handleReportGenerate = useCallback((ctx) => {
+    setReportContext(ctx)
+    setCurrentPage('profile-report')
+  }, [])
 
   if (loading) {
     return (
@@ -104,8 +110,6 @@ export default function App() {
         return (
           <CompanyProfile
             selectedCompanyId={selectedCompanyId}
-            onGenerateReport={(ctx) => { setReportContext(ctx); setCurrentPage('profile-report') }}
-            onViewReports={() => setCurrentPage('profile-report-list')}
           />
         )
       case 'profile-report':
@@ -120,7 +124,8 @@ export default function App() {
           <ReportList
             companyId={selectedCompanyId}
             onViewReport={(ctx) => { setReportContext(ctx); setCurrentPage('profile-report') }}
-            onBack={() => setCurrentPage('profile')}
+            showBackButton={false}
+            onGenerateReport={() => setShowReportModal(true)}
           />
         )
       case 'data-management':
@@ -146,6 +151,13 @@ export default function App() {
       <Sidebar currentPage={currentPage} onPageChange={setCurrentPage} className={isPrintPage ? 'no-print' : undefined} />
       {renderMainContent()}
       <Footer className={isPrintPage ? 'no-print' : undefined} />
+      {showReportModal && (
+        <ReportGenerateModal
+          onClose={() => setShowReportModal(false)}
+          onGenerate={handleReportGenerate}
+          defaultCompanyId={selectedCompanyId}
+        />
+      )}
     </div>
   )
 }
