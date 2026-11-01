@@ -54,7 +54,7 @@ export default function Header({ selectedCompanyId, onCompanyChange, user, onLog
             <BriefcaseFill />
           </div>
           <div className={s.logoText}>
-            <div className={s.logoTitle}>慧经盈智能科技</div>
+            <div className={s.logoTitle}>智能财税分析</div>
             <div className={s.logoSub}>ENTERPRISE FINANCIAL & TAX INTELLIGENCE PLATFORM</div>
           </div>
         </div>

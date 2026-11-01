@@ -199,7 +199,7 @@ export default function HistoryPanel({ items, setItems, onSelect, onReinvoke, cu
         <h3>历史记录</h3>
         {selected.size > 0 && (
           <button className={s.deleteBtn} onClick={handleDelete}>
-            删除历史
+            删除
           </button>
         )}
       </div>
