@@ -10,6 +10,11 @@ export ALLOWED_ORIGINS="http://121.41.87.137,http://121.41.87.137:8000,http://12
 
 mkdir -p "$ROOT_DIR/logs"
 
+if [[ ! -f "$ROOT_DIR/.env" ]]; then
+    echo "[ERROR] 缺少 $ROOT_DIR/.env，请复制 .env.example 并填写真实密钥" >&2
+    exit 1
+fi
+
 wait_http() {
     local name="$1"
     local url="$2"

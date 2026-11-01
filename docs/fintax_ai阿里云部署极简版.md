@@ -8,7 +8,7 @@ fintax_ai阿里云部署极简版
 
 通过 SSH 登录服务器并切换到指定目录：
 ssh root@121.41.87.137
-密码: [REMOVED_SERVER_PASSWORD]
+密码：使用本地安全凭据，不要写入文档或提交到仓库。
 
 进入项目目录
 cd /var/www/fintax_ai
@@ -106,4 +106,4 @@ API 文档：访问 http://121.41.87.137:8000/docs 可测试接口。
 
 代码修改：由于开启了 --reload，您在本地修改代码并重新上传（如 scp）后，服务会自动重启生效，无需手动重启。
 
-Hardcoded 配置：目前系统直接使用代码中的 API Key 和配置，符合您“暂不修改”的要求。
+环境变量配置：复制 `.env.example` 为 `.env`，填写 `LLM_API_KEY`、`COZE_PAT_TOKEN` 和 `JWT_SECRET_KEY`。`.env` 不得提交到仓库。

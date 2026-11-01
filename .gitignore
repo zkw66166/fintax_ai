@@ -25,6 +25,16 @@ Thumbs.db
 # Environment / secrets
 .env
 .env.*
+!.env.example
+.fintax.bat
+.fintax.txt
+.阿里云log.txt
+
+# Security cleanup / local tools
+.security_backup/
+.history_rewrite/
+.codebuddy/
+CLAUDE.md.bak
 
 # Claude Code / MCP local config
 .claude/settings.local.json

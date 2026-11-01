@@ -1,12 +1,26 @@
 """fintax_ai 配置文件"""
+import os
 from pathlib import Path
 
+from dotenv import load_dotenv
+
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
+load_dotenv(PROJECT_ROOT / ".env")
+
 DB_PATH = PROJECT_ROOT / "database" / "fintax_ai.db"
 PROMPTS_DIR = PROJECT_ROOT / "prompts"
 
+
+def _required_env(name: str) -> str:
+    """读取必需环境变量，缺失时给出明确配置指引。"""
+    value = os.getenv(name)
+    if not value:
+        raise RuntimeError(f"缺少环境变量 {name}，请参考项目根目录 .env.example 配置 .env")
+    return value
+
+
 # DeepSeek API (OpenAI-compatible)
-LLM_API_KEY = "[REMOVED_API_KEY]"
+LLM_API_KEY = _required_env("LLM_API_KEY")
 LLM_API_BASE = "https://api.deepseek.com"
 LLM_MODEL = "deepseek-chat"  # DeepSeek-V3
 LLM_MAX_RETRIES = 3
@@ -36,7 +50,7 @@ TAX_INCENTIVES_DB_PATH = PROJECT_ROOT / "database" / "tax_incentives.db"
 
 # 外部法规知识库 (Coze API)
 COZE_API_URL = "https://api.coze.cn/v3/chat"
-COZE_PAT_TOKEN = "[REMOVED_COZE_TOKEN]"
+COZE_PAT_TOKEN = _required_env("COZE_PAT_TOKEN")
 COZE_BOT_ID = "7592905400907989034"
 COZE_USER_ID = "123"
 COZE_TIMEOUT = 180
@@ -45,7 +59,7 @@ COZE_TIMEOUT = 180
 ROUTER_ENABLED = True
 
 # JWT 认证
-JWT_SECRET_KEY = "[REMOVED_JWT_SECRET]"
+JWT_SECRET_KEY = _required_env("JWT_SECRET_KEY")
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRE_MINUTES = 1440  # 24小时
 
