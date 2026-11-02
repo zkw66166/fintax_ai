@@ -47,6 +47,7 @@ def query_regulation(question: str, progress_callback=None) -> dict:
         "bot_id": COZE_BOT_ID,
         "user_id": COZE_USER_ID,
         "stream": True,
+        "reasoning_effort": "minimal",
         "auto_save_history": False,
         "additional_messages": [
             {"role": "user", "content": question, "content_type": "text"}
@@ -121,7 +122,12 @@ def query_regulation(question: str, progress_callback=None) -> dict:
                     continue
 
                 # 只累积 type=answer 的纯文本内容，跳过卡片模板等 JSON 结构
-                if isinstance(data, dict) and data.get("type") == "answer" and data.get("content"):
+                if (
+                    current_event == "conversation.message.delta"
+                    and isinstance(data, dict)
+                    and data.get("type") == "answer"
+                    and data.get("content")
+                ):
                     content = data["content"]
                     # 跳过 Coze 卡片模板（以 JSON 对象开头的非文本内容）
                     stripped = content.strip()
@@ -163,6 +169,7 @@ def query_regulation_stream(question: str, progress_callback=None):
         "bot_id": COZE_BOT_ID,
         "user_id": COZE_USER_ID,
         "stream": True,
+        "reasoning_effort": "minimal",
         "auto_save_history": False,
         "additional_messages": [
             {"role": "user", "content": question, "content_type": "text"}
@@ -233,7 +240,12 @@ def query_regulation_stream(question: str, progress_callback=None):
                 except (json.JSONDecodeError, ValueError):
                     continue
 
-                if isinstance(data, dict) and data.get("type") == "answer" and data.get("content"):
+                if (
+                    current_event == "conversation.message.delta"
+                    and isinstance(data, dict)
+                    and data.get("type") == "answer"
+                    and data.get("content")
+                ):
                     content = data["content"]
                     stripped = content.strip()
                     if stripped.startswith("{") and "card_type" in stripped:
